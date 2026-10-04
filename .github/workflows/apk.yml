@@ -20,7 +20,9 @@ jobs:
           java-version: '17'
 
       - name: Gradle
-        uses: gradle-version: '8.7'
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
       - name: Compiler l'APK debug
         run: gradle assembleDebug
