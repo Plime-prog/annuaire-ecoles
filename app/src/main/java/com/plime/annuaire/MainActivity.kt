@@ -139,7 +139,8 @@ fun AnnuaireApp(store: SecureStore, repo: Repo, unlockedState: MutableState<Bool
     val back: () -> Unit = { if (stack.size > 1) stack = stack.dropLast(1) }
     BackHandler(enabled = stack.size > 1) { back() }
 
-    Column(Modifier.fillMaxSize().background(ScreenBg)) {
+        Column(Modifier.fillMaxSize().background(ScreenBg)) {
+        TricoloreBar()
         Box(Modifier.weight(1f)) {
             when (val s = stack.last()) {
                 is Screen.Home -> HomeScreen(
