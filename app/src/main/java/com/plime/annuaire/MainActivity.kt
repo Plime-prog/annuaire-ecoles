@@ -706,7 +706,7 @@ fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Uni
         Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Slate400)
     }
 }
-
+        title = { Text("Code PIN requis", fontWeight = FontWeight.Bold) },
 /* ---------- Dialog PIN ---------- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
