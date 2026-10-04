@@ -697,7 +697,7 @@ fun BottomBar(
 @Composable
 fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Unit) {
     Column(
-        horizontalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick)
             .padding(horizontal = 14.dp)
     ) {
@@ -706,7 +706,6 @@ fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Uni
         Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Slate400)
     }
 }
-        title = { Text("Code PIN requis", fontWeight = FontWeight.Bold) },
 /* ---------- Dialog PIN ---------- */
 @Composable
 fun PinDialog(expected: String, onSuccess: () -> Unit, onDismiss: () -> Unit) {
