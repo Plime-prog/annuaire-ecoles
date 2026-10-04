@@ -708,29 +708,27 @@ fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Uni
 }
         title = { Text("Code PIN requis", fontWeight = FontWeight.Bold) },
 /* ---------- Dialog PIN ---------- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PinDialog(expected: String, onSuccess: () -> Unit, onDismiss: () -> Unit) {
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Lock, null, tint = Indigo)
-                Spacer(Modifier.width(8.dp))
-                Text("Code PIN requis", fontWeight = FontWeight.Bold)
-            }
-        },
+        title = { Text("Code PIN requis", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                Text("Saisissez le code pour afficher les coordonnées.",
-                    fontSize = 13.sp, color = Slate400)
+                Text(
+                    "Saisissez le code pour afficher les coordonnées.",
+                    fontSize = 13.sp, color = Slate400
+                )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = pin,
                     onValueChange = {
-                        if (it.length <= 4 && it.all(Char::isDigit)) { pin = it; error = false }
+                        if (it.length <= 4 && it.all(Char::isDigit)) {
+                            pin = it
+                            error = false
+                        }
                     },
                     placeholder = { Text("••••") },
                     visualTransformation = PasswordVisualTransformation(),
@@ -746,7 +744,14 @@ fun PinDialog(expected: String, onSuccess: () -> Unit, onDismiss: () -> Unit) {
             }
         },
         confirmButton = {
-            TextButton(onClick = { if (pin == expected) onSuccess() else { error = true; pin = "" } }) {
+            TextButton(onClick = {
+                if (pin == expected) {
+                    onSuccess()
+                } else {
+                    error = true
+                    pin = ""
+                }
+            }) {
                 Text("Déverrouiller", fontWeight = FontWeight.Bold)
             }
         },
