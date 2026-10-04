@@ -61,7 +61,7 @@ class Repo(private val store: SecureStore) {
         communes = list
         store.data = list.toJson()
     }
-    fun replaceAll(list: List<Commune>) = save(list)
+
     fun replaceAll(list: List<Commune>) = save(list)
     fun addCommune(c: Commune) = save(communes + c)
     fun deleteCommune(id: String) = save(communes.filter { it.id != id })
@@ -70,7 +70,6 @@ class Repo(private val store: SecureStore) {
     fun editEcole(cid: String, eid: String, f: (Ecole) -> Ecole) =
         editCommune(cid) { c -> c.copy(ecoles = c.ecoles.map { if (it.id == eid) f(it) else it }) }
 }
-
 /* ---------- Formulaires ---------- */
 class Form(
     val title: String,
