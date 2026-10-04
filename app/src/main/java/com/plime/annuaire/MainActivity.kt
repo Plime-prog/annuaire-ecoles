@@ -48,7 +48,7 @@ val ScreenBg = Color(0xFFF8FAFC)
 val LineGray = Color(0xFFF1F5F9)
 val HeaderBrush = Brush.linearGradient(listOf(Indigo, Violet))
 val AmberBrush = Brush.linearGradient(listOf(Color(0xFFF59E0B), Color(0xFFEA580C)))
-val VioletBrush = Brush.linearGradient(listOf(Color(0xFF8B5CF6), Indigo))
+val VioletBrush = Brush.linearGradient(listOf(Color(0xFF5B93D1), Indigo))
 
 /* ---------- Données (stockage local chiffré) ---------- */
 class Repo(private val store: SecureStore) {
