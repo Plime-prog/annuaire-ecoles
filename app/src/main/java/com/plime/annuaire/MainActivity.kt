@@ -61,7 +61,7 @@ class Repo(private val store: SecureStore) {
         communes = list
         store.data = list.toJson()
     }
-
+    fun replaceAll(list: List<Commune>) = save(list)
     fun addCommune(c: Commune) = save(communes + c)
     fun deleteCommune(id: String) = save(communes.filter { it.id != id })
     fun editCommune(id: String, f: (Commune) -> Commune) =
@@ -200,13 +200,7 @@ fun AnnuaireApp(store: SecureStore, repo: Repo, unlockedState: MutableState<Bool
 /* ---------- Accueil ---------- */
 @Composable
 fun HomeScreen(
-    repo: Repo, ui: Ui,
-    query: String, onQuery: (String) -> Unit,
-    mode: String, onMode: (String) -> Unit,
-    isUnlocked: Boolean,
-    onOpenCommune: (Commune) -> Unit,
-    onOpenDirecteur: (DirecteurEntry) -> Unit
-) {
+    store: SecureStore, {
     val all = repo.communes.sortedBy { it.nom.normalized() }
     val q = query.normalized()
     val communes: List<Commune> =
