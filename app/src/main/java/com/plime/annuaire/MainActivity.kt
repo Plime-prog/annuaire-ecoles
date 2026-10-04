@@ -62,6 +62,7 @@ class Repo(private val store: SecureStore) {
         store.data = list.toJson()
     }
     fun replaceAll(list: List<Commune>) = save(list)
+    fun replaceAll(list: List<Commune>) = save(list)
     fun addCommune(c: Commune) = save(communes + c)
     fun deleteCommune(id: String) = save(communes.filter { it.id != id })
     fun editCommune(id: String, f: (Commune) -> Commune) =
@@ -87,7 +88,8 @@ val communeLabels = listOf(
 val ecoleLabels = listOf(
     "Nom de l'école", "Adresse", "Téléphone", "Nom du directeur", "Tél. du directeur"
 )
-val profLabels = listOf("Nom du professeur", "Classe", "Téléphone")
+val profLabels = listOf("Nom du professeur
+                        ", "Classe", "Téléphone")
 
 /* ---------- Activité ---------- */
 class MainActivity : ComponentActivity() {
