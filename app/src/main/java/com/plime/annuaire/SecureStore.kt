@@ -12,13 +12,12 @@ class SecureStore(context: Context) {
         .build()
 
     private val prefs = EncryptedSharedPreferences.create(
+        context,
         "annuaire_secure",
         masterKey,
-        context,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
-
     var pin: String
         get() = prefs.getString("pin", DEFAULT_PIN) ?: DEFAULT_PIN
         set(value) = prefs.edit().putString("pin", value).apply()
