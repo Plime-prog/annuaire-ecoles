@@ -639,3 +639,233 @@ fun DirecteurDetailScreen(
         }
     }
 }
+/* ---------- Composants réutilisables ---------- */
+private val SectionStyle = androidx.compose.ui.text.TextStyle(
+    fontSize = 11.sp, fontWeight = FontWeight.Bold,
+    color = Slate400, letterSpacing = 1.2.sp
+)
+
+@Composable
+fun SectionTitle(text: String) {
+    Text(text.uppercase(), style = SectionStyle,
+        modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 8.dp))
+}
+
+@Composable
+fun EmptyState(message: String) {
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 40.dp, horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(message, color = Slate400, fontSize = 14.sp, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+fun ActionButton(
+    label: String, icon: ImageVector, color: Color,
+    onClick: () -> Unit, modifier: Modifier = Modifier
+) {
+    Row(
+        modifier.clip(RoundedCornerShape(14.dp))
+            .background(color.copy(alpha = 0.12f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Icon(icon, null, tint = color, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+fun IconBox(icon: ImageVector, tint: Color, onClick: () -> Unit) {
+    Box(
+        Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
+            .background(tint.copy(alpha = 0.12f)).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) { Icon(icon, null, tint = tint, modifier = Modifier.size(16.dp)) }
+}
+
+@Composable
+fun HeaderBack(label: String, onBack: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onBack).padding(4.dp)
+    ) {
+        Icon(Icons.Filled.ArrowBack, null, tint = Color(0xFFDCE8F7), modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(label, color = Color(0xFFDCE8F7), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+@Composable
+fun ModeChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier.clip(RoundedCornerShape(12.dp))
+            .background(if (selected) Color.White else Color.White.copy(alpha = 0.15f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold,
+            color = if (selected) Indigo else Color(0xFFDCE8F7))
+    }
+}
+
+@Composable
+fun StatCard(icon: ImageVector, value: String, label: String, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, tint = Indigo, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.height(4.dp))
+            Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Slate900)
+            Text(label, fontSize = 10.sp, color = Slate400)
+        }
+    }
+}
+
+@Composable
+fun CommuneCard(c: Commune, onClick: () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(HeaderBrush),
+                contentAlignment = Alignment.Center
+            ) { Icon(Icons.Filled.LocationCity, null, tint = Color.White, modifier = Modifier.size(20.dp)) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(c.nom, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Slate900)
+                Text(c.departement + " · " + c.ecoles.size + " écoles", fontSize = 11.sp, color = Slate400)
+            }
+        }
+    }
+}
+
+@Composable
+fun DirecteurCard(entry: DirecteurEntry, isUnlocked: Boolean, onClick: () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(44.dp).clip(CircleShape).background(AmberBrush),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(initials(entry.ecole.directeur.nom), color = Color.White,
+                    fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(entry.ecole.directeur.nom, fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold, color = Slate900, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(entry.ecole.nom + " · " + entry.commune.nom, fontSize = 11.sp,
+                    color = Slate400, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Text(
+                if (isUnlocked) entry.ecole.directeur.tel else "•••••",
+                fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                color = if (isUnlocked) Emerald else Slate400,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (isUnlocked) Color(0xFFECFDF5) else Color(0xFFF1F5F9))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ContactRow(icon: ImageVector, label: String, value: String, unlocked: Boolean) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFFE8F0FA)),
+            contentAlignment = Alignment.Center
+        ) { Icon(icon, null, tint = Indigo, modifier = Modifier.size(18.dp)) }
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(label, fontSize = 10.sp, color = Slate400, fontWeight = FontWeight.SemiBold, letterSpacing = 1.sp)
+            PrivateValue(value, unlocked)
+        }
+    }
+}
+
+@Composable
+fun PrivateValue(value: String, unlocked: Boolean) {
+    if (unlocked) Text(value.ifBlank { "—" }, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Slate700)
+    else Text("••••••••", fontSize = 14.sp, color = Slate400, letterSpacing = 2.sp)
+}
+
+@Composable
+fun TeacherRow(t: Professeur, unlocked: Boolean, onEdit: () -> Unit, onDelete: () -> Unit) {
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(36.dp).clip(CircleShape).background(VioletBrush),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(initials(t.nom), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(t.nom, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Slate700)
+                Row {
+                    Text(t.classe + " · ", fontSize = 11.sp, color = Slate400)
+                    if (unlocked) Text(t.tel, fontSize = 11.sp, color = Slate400)
+                    else Text("••••••••", fontSize = 11.sp, color = Slate400, letterSpacing = 1.5.sp)
+                }
+            }
+            if (unlocked) {
+                IconBox(Icons.Filled.Edit, Indigo, onEdit)
+                Spacer(Modifier.width(6.dp))
+                IconBox(Icons.Filled.Delete, Red, onDelete)
+            }
+        }
+    }
+}
+
+@Composable
+fun HLine() {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(LineGray))
+}
+
+@Composable
+fun BottomBar(
+    isUnlocked: Boolean,
+    onHome: () -> Unit, onDirecteurs: () -> Unit, onToggleLock: () -> Unit
+) {
+    Surface(shadowElevation = 8.dp, color = Color.White) {
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            BottomItem(Icons.Filled.Home, "Accueil", Indigo, onHome)
+            BottomItem(Icons.Filled.LocationCity, "Communes", Indigo, onHome)
+            BottomItem(Icons.Filled.Person, "Directeurs", Indigo, onDirecteurs)
+            BottomItem(
+                if (isUnlocked) Icons.Filled.LockOpen else Icons.Filled.Lock,
+                "Privé", if (isUnlocked) Amber else Emerald, onToggleLock
+            )
+        }
+    }
+}
+
+@Composable
+fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
