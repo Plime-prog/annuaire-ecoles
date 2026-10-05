@@ -895,12 +895,52 @@ fun TricoloreBar() {
     }
 }
 
-/* ---------- Panneau Réglages (PIN, import, export) ---------- */
+
+
+/* ---------- Panneau Réglages (PIN, import/export Excel) ---------- */
 @Composable
 fun SettingsPanel(store: SecureStore, repo: Repo) {
-    val clipboard = LocalClipboardManager.current
+    val context = LocalContext.current
     var changePin by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+
+    val xlsxMime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    val templateLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(xlsxMime)
+    ) { uri ->
+        if (uri != null) {
+            try {
+                ExcelIO.writeTemplate(context, uri)
+                message = "Modèle créé ! Ouvrez-le avec Excel, remplissez-le, puis « Importer »."
+            } catch (e: Exception) { message = "Erreur lors de la création du modèle." }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                val list = ExcelIO.import(context, uri)
+                if (list.isEmpty()) message = "Aucune donnée trouvée dans le fichier."
+                else {
+                    repo.replaceAll(list)
+                    message = "Import réussi : ${list.size} commune(s), " +
+                        "${list.sumOf { it.ecoles.size }} école(s)."
+                }
+            } catch (e: Exception) { message = "Fichier invalide : import annulé (format .xlsx attendu)." }
+        }
+    }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(xlsxMime)
+    ) { uri ->
+        if (uri != null) {
+            try {
+                ExcelIO.export(context, uri, repo.communes)
+                message = "Annuaire exporté vers le fichier Excel."
+            } catch (e: Exception) { message = "Erreur lors de l'export." }
+        }
+    }
 
     Card(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
@@ -911,28 +951,20 @@ fun SettingsPanel(store: SecureStore, repo: Repo) {
             Text("RÉGLAGES", style = SectionStyle)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ActionButton("Changer le PIN", Icons.Filled.Lock, Indigo, {
-                    changePin = true
+                ActionButton("Changer le PIN", Icons.Filled.Lock, Indigo,
+                    { changePin = true }, Modifier.weight(1f))
+                ActionButton("Créer le modèle d'import", Icons.Filled.GridOn, Violet,
+                    { templateLauncher.launch("modele-annuaire.xlsx") }, Modifier.weight(1f))
+            }
+            Row(Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ActionButton("Importer un fichier Excel", Icons.Filled.UploadFile, Emerald, {
+                    importLauncher.launch(arrayOf(xlsxMime))
                 }, Modifier.weight(1f))
-                ActionButton("Exporter", Icons.Filled.IosShare, Emerald, {
-                    clipboard.setText(AnnotatedString(store.data))
-                    message = "Annuaire copié : collez-le dans une note ou un e-mail privé."
+                ActionButton("Exporter vers Excel", Icons.Filled.IosShare, Amber, {
+                    exportLauncher.launch("annuaire-ecoles.xlsx")
                 }, Modifier.weight(1f))
             }
-            ActionButton("Importer depuis le presse-papiers", Icons.Filled.ContentPaste, Violet, {
-                val text = clipboard.getText()?.text ?: ""
-                try {
-                    val list = parseCommunes(text)
-                    if (list.isEmpty()) {
-                        message = "Aucune donnée trouvée dans le presse-papiers."
-                    } else {
-                        repo.replaceAll(list)
-                        message = "Import réussi : ${list.size} commune(s)."
-                    }
-                } catch (e: Exception) {
-                    message = "Contenu invalide : import annulé."
-                }
-            }, Modifier.fillMaxWidth().padding(top = 8.dp))
             message?.let {
                 Spacer(Modifier.height(8.dp))
                 Text(it, fontSize = 11.sp, color = Slate400)
@@ -943,51 +975,6 @@ fun SettingsPanel(store: SecureStore, repo: Repo) {
     if (changePin) {
         PinChangeDialog(store) { changePin = false }
     }
-}
-
-@Composable
-fun PinChangeDialog(store: SecureStore, onDismiss: () -> Unit) {
-    var oldPin by remember { mutableStateOf("") }
-    var newPin by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf<String?>(null) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Changer le code PIN", fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = oldPin,
-                    onValueChange = { if (it.length <= 4 && it.all(Char::isDigit)) oldPin = it },
-                    label = { Text("PIN actuel") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                OutlinedTextField(
-                    value = newPin,
-                    onValueChange = { if (it.length <= 4 && it.all(Char::isDigit)) newPin = it },
-                    label = { Text("Nouveau PIN (4 chiffres)") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                error?.let { Text(it, color = Red, fontSize = 12.sp) }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                when {
-                    oldPin != store.pin -> error = "PIN actuel incorrect."
-                    newPin.length != 4 || !newPin.all(Char::isDigit) ->
-                        error = "Le nouveau PIN doit contenir 4 chiffres."
-                    else -> { store.pin = newPin; onDismiss() }
-                }
-            }) { Text("Enregistrer", fontWeight = FontWeight.Bold) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
-    )
 }
 
 /* ---------- Dialogues ---------- */
