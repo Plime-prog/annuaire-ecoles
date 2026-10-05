@@ -22,12 +22,13 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -640,6 +641,7 @@ fun DirecteurDetailScreen(
         }
     }
 }
+
 /* ---------- Composants réutilisables ---------- */
 private val SectionStyle = androidx.compose.ui.text.TextStyle(
     fontSize = 11.sp, fontWeight = FontWeight.Bold,
@@ -845,6 +847,26 @@ fun HLine() {
     Box(Modifier.fillMaxWidth().height(1.dp).background(LineGray))
 }
 
+@Composable
+fun BottomBar(
+    isUnlocked: Boolean,
+    onHome: () -> Unit, onDirecteurs: () -> Unit, onToggleLock: () -> Unit
+) {
+    Surface(shadowElevation = 8.dp, color = Color.White) {
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            BottomItem(Icons.Filled.Home, "Accueil", Indigo, onHome)
+            BottomItem(Icons.Filled.LocationCity, "Communes", Indigo, onHome)
+            BottomItem(Icons.Filled.Person, "Directeurs", Indigo, onDirecteurs)
+            BottomItem(
+                if (isUnlocked) Icons.Filled.LockOpen else Icons.Filled.Lock,
+                "Privé", if (isUnlocked) Amber else Emerald, onToggleLock
+            )
+        }
+    }
+}
 
 @Composable
 fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Unit) {
