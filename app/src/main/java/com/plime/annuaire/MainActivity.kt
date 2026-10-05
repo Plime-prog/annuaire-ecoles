@@ -577,11 +577,15 @@ fun DirecteurDetailScreen(
                             .background(Color.White.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(initials(ecole.directeur.nom), color = Color.White,
-                            fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            initials(ecole.directeur.nom),
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     Spacer(Modifier.width(12.dp))
-                                        Column {
+                    Column {
                         Text(
                             ecole.directeur.nom,
                             color = Color.White,
@@ -596,3 +600,42 @@ fun DirecteurDetailScreen(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+                }
+                Spacer(Modifier.height(18.dp))
+            }
+        }
+        item {
+            Column(Modifier.padding(horizontal = 16.dp)) {
+                Card(
+                    Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                ) {
+                    Column(Modifier.padding(horizontal = 14.dp, vertical = 6.dp)) {
+                        ContactRow(Icons.Filled.Phone, "Téléphone (privé)", ecole.directeur.tel, isUnlocked)
+                        HLine()
+                        ContactRow(Icons.Filled.School, "École", ecole.nom, isUnlocked)
+                        HLine()
+                        ContactRow(Icons.Filled.Place, "Adresse", ecole.adresse, isUnlocked)
+                        HLine()
+                        ContactRow(Icons.Filled.Phone, "Tél. école", ecole.tel, isUnlocked)
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Voir l'école et les professeurs",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Indigo)
+                        .clickable { onOpenEcole() }
+                        .padding(vertical = 14.dp)
+                )
+            }
+        }
+    }
+}
