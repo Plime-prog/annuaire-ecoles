@@ -845,28 +845,210 @@ fun HLine() {
     Box(Modifier.fillMaxWidth().height(1.dp).background(LineGray))
 }
 
-@Composable
-fun BottomBar(
-    isUnlocked: Boolean,
-    onHome: () -> Unit, onDirecteurs: () -> Unit, onToggleLock: () -> Unit
-) {
-    Surface(shadowElevation = 8.dp, color = Color.White) {
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            BottomItem(Icons.Filled.Home, "Accueil", Indigo, onHome)
-            BottomItem(Icons.Filled.LocationCity, "Communes", Indigo, onHome)
-            BottomItem(Icons.Filled.Person, "Directeurs", Indigo, onDirecteurs)
-            BottomItem(
-                if (isUnlocked) Icons.Filled.LockOpen else Icons.Filled.Lock,
-                "Privé", if (isUnlocked) Amber else Emerald, onToggleLock
-            )
-        }
-    }
-}
 
 @Composable
 fun BottomItem(icon: ImageVector, label: String, tint: Color, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick)
+            .padding(horizontal = 14.dp)
+    ) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(3.dp))
+        Text(label, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Slate400)
+    }
+}
+
+/* ---------- Barre tricolore décorative ---------- */
+@Composable
+fun TricoloreBar() {
+    Row(Modifier.fillMaxWidth().height(4.dp)) {
+        Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFF0055A4)))
+        Box(Modifier.weight(1f).fillMaxHeight().background(Color.White))
+        Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFFEF4135)))
+    }
+}
+
+/* ---------- Panneau Réglages (PIN, import, export) ---------- */
+@Composable
+fun SettingsPanel(store: SecureStore, repo: Repo) {
+    val clipboard = LocalClipboardManager.current
+    var changePin by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+
+    Card(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Text("RÉGLAGES", style = SectionStyle)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ActionButton("Changer le PIN", Icons.Filled.Lock, Indigo, {
+                    changePin = true
+                }, Modifier.weight(1f))
+                ActionButton("Exporter", Icons.Filled.IosShare, Emerald, {
+                    clipboard.setText(AnnotatedString(store.data))
+                    message = "Annuaire copié : collez-le dans une note ou un e-mail privé."
+                }, Modifier.weight(1f))
+            }
+            ActionButton("Importer depuis le presse-papiers", Icons.Filled.ContentPaste, Violet, {
+                val text = clipboard.getText()?.text ?: ""
+                try {
+                    val list = parseCommunes(text)
+                    if (list.isEmpty()) {
+                        message = "Aucune donnée trouvée dans le presse-papiers."
+                    } else {
+                        repo.replaceAll(list)
+                        message = "Import réussi : ${list.size} commune(s)."
+                    }
+                } catch (e: Exception) {
+                    message = "Contenu invalide : import annulé."
+                }
+            }, Modifier.fillMaxWidth().padding(top = 8.dp))
+            message?.let {
+                Spacer(Modifier.height(8.dp))
+                Text(it, fontSize = 11.sp, color = Slate400)
+            }
+        }
+    }
+
+    if (changePin) {
+        PinChangeDialog(store) { changePin = false }
+    }
+}
+
+@Composable
+fun PinChangeDialog(store: SecureStore, onDismiss: () -> Unit) {
+    var oldPin by remember { mutableStateOf("") }
+    var newPin by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Changer le code PIN", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = oldPin,
+                    onValueChange = { if (it.length <= 4 && it.all(Char::isDigit)) oldPin = it },
+                    label = { Text("PIN actuel") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+                OutlinedTextField(
+                    value = newPin,
+                    onValueChange = { if (it.length <= 4 && it.all(Char::isDigit)) newPin = it },
+                    label = { Text("Nouveau PIN (4 chiffres)") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+                error?.let { Text(it, color = Red, fontSize = 12.sp) }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                when {
+                    oldPin != store.pin -> error = "PIN actuel incorrect."
+                    newPin.length != 4 || !newPin.all(Char::isDigit) ->
+                        error = "Le nouveau PIN doit contenir 4 chiffres."
+                    else -> { store.pin = newPin; onDismiss() }
+                }
+            }) { Text("Enregistrer", fontWeight = FontWeight.Bold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+    )
+}
+
+/* ---------- Dialogues ---------- */
+@Composable
+fun PinDialog(expected: String, onSuccess: () -> Unit, onDismiss: () -> Unit) {
+    var pin by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Lock, null, tint = Indigo)
+                Spacer(Modifier.width(8.dp))
+                Text("Code PIN requis", fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column {
+                Text("Saisissez le code pour afficher les coordonnées.",
+                    fontSize = 13.sp, color = Slate400)
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = pin,
+                    onValueChange = {
+                        if (it.length <= 4 && it.all(Char::isDigit)) { pin = it; error = false }
+                    },
+                    placeholder = { Text("••••") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    isError = error,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (error) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("Code incorrect", color = Red, fontSize = 12.sp)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { if (pin == expected) onSuccess() else { error = true; pin = "" } }) {
+                Text("Déverrouiller", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+    )
+}
+
+@Composable
+fun FormDialog(form: Form, onDismiss: () -> Unit) {
+    var values by remember { mutableStateOf(form.values) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(form.title, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                form.labels.forEachIndexed { i, label ->
+                    OutlinedTextField(
+                        value = values[i],
+                        onValueChange = { v -> values = values.toMutableList().also { it[i] = v } },
+                        label = { Text(label, fontSize = 13.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { form.onSave(values); onDismiss() }) {
+                Text("Enregistrer", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+    )
+}
+
+@Composable
+fun ConfirmDialog(confirm: Confirm, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Confirmer", fontWeight = FontWeight.Bold) },
+        text = { Text(confirm.text, fontSize = 14.sp) },
+        confirmButton = {
+            TextButton(onClick = { confirm.onYes(); onDismiss() }) {
+                Text("Supprimer", color = Red, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+    )
+}
