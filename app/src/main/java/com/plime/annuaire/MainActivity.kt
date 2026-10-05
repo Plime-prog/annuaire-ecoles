@@ -581,8 +581,18 @@ fun DirecteurDetailScreen(
                             fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(Modifier.width(12.dp))
-                    Column {
-                        Text(ecole.directeur.nom, color = Color.White,
-                            fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                        Text("${ecole.nom} · ${commune.nom}",
-                            color = Color.
+                                        Column {
+                        Text(
+                            ecole.directeur.nom,
+                            color = Color.White,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            ecole.nom + " · " + commune.nom,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
