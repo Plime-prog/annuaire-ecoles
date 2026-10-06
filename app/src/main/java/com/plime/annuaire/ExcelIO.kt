@@ -156,7 +156,7 @@ object ExcelIO {
                             val idx = text.trim().toIntOrNull() ?: -1
                             text = if (idx in shared.indices) shared[idx] else ""
                         }
-                        cells.add(if (col >= 0) col else cells.size to text)
+                        cells.add(Pair(if (col >= 0) col else cells.size, text))
                     }
                     "row" -> if (inRow) {
                         inRow = false
