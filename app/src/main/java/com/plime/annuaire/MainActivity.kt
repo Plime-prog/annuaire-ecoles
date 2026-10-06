@@ -977,6 +977,54 @@ fun SettingsPanel(store: SecureStore, repo: Repo) {
     }
 }
 
+
+
+@Composable
+fun PinChangeDialog(store: SecureStore, onDismiss: () -> Unit) {
+    var oldPin by remember { mutableStateOf("") }
+    var newPin by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Changer le code PIN", fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = oldPin,
+                    onValueChange = { if (it.length <= 4 && it.all(Char::isDigit)) oldPin = it },
+                    label = { Text("PIN actuel") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+                OutlinedTextField(
+                    value = newPin,
+                    onValueChange = { if (it.length <= 4 && it.all(Char::isDigit)) newPin = it },
+                    label = { Text("Nouveau PIN (4 chiffres)") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+                error?.let { Text(it, color = Red, fontSize = 12.sp) }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                when {
+                    oldPin != store.pin -> error = "PIN actuel incorrect."
+                    newPin.length != 4 || !newPin.all(Char::isDigit) ->
+                        error = "Le nouveau PIN doit contenir 4 chiffres."
+                    else -> { store.pin = newPin; onDismiss() }
+                }
+            }) { Text("Enregistrer", fontWeight = FontWeight.Bold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Annuler") } }
+    )
+}
+
+
 /* ---------- Dialogues ---------- */
 @Composable
 fun PinDialog(expected: String, onSuccess: () -> Unit, onDismiss: () -> Unit) {
