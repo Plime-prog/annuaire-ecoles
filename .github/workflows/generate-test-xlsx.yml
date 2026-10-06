@@ -1,0 +1,25 @@
+name: Fichier Excel de test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le projet
+        uses: actions/checkout@v4
+
+      - name: Générer test-annuaire-xxl.xlsx
+        run: python scripts/generate_test_xlsx.py
+
+      - name: Publier le fichier dans le dépôt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add test-annuaire-xxl.xlsx
+          git commit -m "Fichier Excel de test : 40 communes, 120 écoles, 350 professeurs" || echo "rien à committer"
+          git push
