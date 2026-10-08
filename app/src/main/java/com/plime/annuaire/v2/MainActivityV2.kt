@@ -261,6 +261,7 @@ private fun PinEnterScreen(onError: () -> Unit, onSuccess: (String) -> Unit) {
 /* ==================== PANNEAU RÉGLAGES ==================== */
 
 @Composable
+
 private fun SettingsDialogV2(
     message: String,
     onDismiss: () -> Unit,
@@ -278,48 +279,50 @@ private fun SettingsDialogV2(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("RÉGLAGES") },
-        text = Column(Modifier.verticalScroll(rememberScrollState())) {
-            Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Icon(Icons.Filled.UploadFile, null); Spacer(Modifier.width(8.dp)); Text("Importer un fichier Excel")
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.UploadFile, null); Spacer(Modifier.width(8.dp)); Text("Importer un fichier Excel")
+                }
+                Button(onClick = onExport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.Download, null); Spacer(Modifier.width(8.dp)); Text("Exporter vers Excel")
+                }
+                Button(onClick = onTemplate, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("Créer le modèle d'import")
+                }
+                OutlinedButton(onClick = { showPinForm = !showPinForm }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.Password, null); Spacer(Modifier.width(8.dp)); Text("Changer le code PIN")
+                }
+                if (showPinForm) {
+                    OutlinedTextField(
+                        value = oldPin, onValueChange = { oldPin = it },
+                        label = { Text("Ancien code") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    )
+                    OutlinedTextField(
+                        value = newPin, onValueChange = { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
+                        label = { Text("Nouveau code (4 chiffres min.)") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    )
+                    Button(
+                        onClick = { onChangePin(oldPin, newPin); oldPin = ""; newPin = "" },
+                        enabled = newPin.length >= 4,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Enregistrer le nouveau code") }
+                }
+                OutlinedButton(onClick = onLock, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.Lock, null); Spacer(Modifier.width(8.dp)); Text("Verrouiller maintenant")
+                }
+                TextButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
+                    Text("Tout effacer", color = MaterialTheme.colorScheme.error)
+                }
+                if (message.isNotBlank())
+                    Text(message, fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp))
             }
-            Button(onClick = onExport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Icon(Icons.Filled.Download, null); Spacer(Modifier.width(8.dp)); Text("Exporter vers Excel")
-            }
-            Button(onClick = onTemplate, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("Créer le modèle d'import")
-            }
-            OutlinedButton(onClick = { showPinForm = !showPinForm }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Icon(Icons.Filled.Password, null); Spacer(Modifier.width(8.dp)); Text("Changer le code PIN")
-            }
-            if (showPinForm) {
-                OutlinedTextField(
-                    value = oldPin, onValueChange = { oldPin = it },
-                    label = { Text("Ancien code") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                OutlinedTextField(
-                    value = newPin, onValueChange = { if (it.length <= 8 && it.all(Char::isDigit)) newPin = it },
-                    label = { Text("Nouveau code (4 chiffres min.)") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                Button(
-                    onClick = { onChangePin(oldPin, newPin); oldPin = ""; newPin = "" },
-                    enabled = newPin.length >= 4,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Enregistrer le nouveau code") }
-            }
-            OutlinedButton(onClick = onLock, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                Icon(Icons.Filled.Lock, null); Spacer(Modifier.width(8.dp)); Text("Verrouiller maintenant")
-            }
-            TextButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
-                Text("Tout effacer", color = MaterialTheme.colorScheme.error)
-            }
-            if (message.isNotBlank())
-                Text(message, fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp))
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } }
     )
