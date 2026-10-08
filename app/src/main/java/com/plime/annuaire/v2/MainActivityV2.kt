@@ -38,9 +38,10 @@ private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnnuaireV2App() {
-    val ctx = LocalContext.current
+        val ctx = LocalContext.current
     var annuaire by remember { mutableStateOf(AnnuaireV2()) }
     var unlocked by remember { mutableStateOf(false) }
+    var hasPin by remember { mutableStateOf(false) }
     var tab by remember { mutableStateOf(TabV2.COMMUNES) }
     var query by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
@@ -48,8 +49,12 @@ fun AnnuaireV2App() {
     var detailEcole by remember { mutableStateOf<Pair<CommuneV2, EcoleV2>?>(null) }
     var message by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) { annuaire = StorageV2.load(ctx) }
+    LaunchedEffect(Unit) {
+        annuaire = StorageV2.load(ctx)
+        hasPin = StorageV2.hasPin(ctx)
+    }
 
+    
     val importer = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -88,13 +93,14 @@ fun AnnuaireV2App() {
     }
 
     MaterialTheme {
-        if (!StorageV2.hasPin(ctx)) {
+                if (!hasPin) {
             PinDefineScreen { pin ->
                 StorageV2.setPin(ctx, pin)
                 StorageV2.setUnlocked(ctx, true)
                 unlocked = true
+                hasPin = true
             }
-        } else if (!StorageV2.isUnlocked(ctx) && !unlocked) {
+        } else if (!unlocked) {
             PinEnterScreen(
                 onError = { message = "Code incorrect." }
             ) { pin ->
