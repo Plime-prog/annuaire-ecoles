@@ -35,10 +35,8 @@ private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphi
     COLLEGES("Collèges", Icons.Filled.School)
 }
 
-@Composable
-
 @OptIn(ExperimentalMaterial3Api::class)
-class MainActivityV2 : ComponentActivity() {
+@Composable
 fun AnnuaireV2App() {
     val ctx = LocalContext.current
     var annuaire by remember { mutableStateOf(AnnuaireV2()) }
@@ -49,9 +47,7 @@ fun AnnuaireV2App() {
     var detailCommune by remember { mutableStateOf<CommuneV2?>(null) }
     var detailEcole by remember { mutableStateOf<Pair<CommuneV2, EcoleV2>?>(null) }
     var message by remember { mutableStateOf("") }
-    var pinSetup by remember { mutableStateOf(false) }
 
-    // Chargement initial
     LaunchedEffect(Unit) { annuaire = StorageV2.load(ctx) }
 
     val importer = rememberLauncherForActivityResult(
@@ -93,7 +89,6 @@ fun AnnuaireV2App() {
 
     MaterialTheme {
         if (!StorageV2.hasPin(ctx)) {
-            // Premier lancement : définir un PIN
             PinDefineScreen { pin ->
                 StorageV2.setPin(ctx, pin)
                 StorageV2.setUnlocked(ctx, true)
@@ -253,16 +248,13 @@ private fun PinEnterScreen(onError: () -> Unit, onSuccess: (String) -> Unit) {
             singleLine = true
         )
         Spacer(Modifier.height(16.dp))
-        Button(onClick = {
-            if (pin.isNotBlank()) onSuccess(pin).also { }
-        }) { Text("Déverrouiller") }
+        Button(onClick = { if (pin.isNotBlank()) onSuccess(pin) }) { Text("Déverrouiller") }
     }
 }
 
 /* ==================== PANNEAU RÉGLAGES ==================== */
 
 @Composable
-
 private fun SettingsDialogV2(
     message: String,
     onDismiss: () -> Unit,
