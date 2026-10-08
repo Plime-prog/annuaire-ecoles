@@ -36,8 +36,9 @@ private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphi
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 
+@OptIn(ExperimentalMaterial3Api::class)
+class MainActivityV2 : ComponentActivity() {
 fun AnnuaireV2App() {
     val ctx = LocalContext.current
     var annuaire by remember { mutableStateOf(AnnuaireV2()) }
