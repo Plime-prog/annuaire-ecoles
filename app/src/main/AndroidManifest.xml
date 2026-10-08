@@ -8,7 +8,7 @@
         android:allowBackup="false">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".v2.MainActivityV2"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
