@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -195,7 +197,19 @@ fun AnnuaireV2App() {
         }
     }
 }
-
+                topBar = {
+                    Column {
+                        TopAppBar(
+                            title = { Text(appName, fontWeight = FontWeight.Bold) },
+                            actions = {
+                                IconButton(onClick = { showSettings = true }) {
+                                    Icon(Icons.Filled.Settings, "Réglages")
+                                }
+                            }
+                        )
+                        BandeauFrance()
+                    }
+                },
 /* ==================== ÉCRAN PIN : définition ==================== */
 
 @Composable
@@ -312,6 +326,7 @@ private fun SettingsDialogV2(
                     ) { Text("Enregistrer le nouveau code") }
                 }
                 OutlinedButton(onClick = onLock, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    
                     Icon(Icons.Filled.Lock, null); Spacer(Modifier.width(8.dp)); Text("Verrouiller maintenant")
                 }
                 TextButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
@@ -324,5 +339,17 @@ private fun SettingsDialogV2(
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } }
+
+        @Composable
+private fun BandeauFrance() {
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().height(10.dp)) {
+            Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFF2F6DB5)))
+            Box(Modifier.weight(1f).fillMaxHeight().background(Color.White))
+            Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFFDC2626)))
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE2E8F0)))
+    }
+}
     )
 }
