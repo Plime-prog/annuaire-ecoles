@@ -298,9 +298,13 @@ object ExcelIOV2 {
                 it.getOrElse(5) { "" }, it.getOrElse(6) { "" }, it.getOrElse(7) { "" },
                 it.getOrElse(8) { "" })
         }
-
-        return AnnuaireV2(communes, rased, circo, pial, colleges)
-    }
+           return AnnuaireV2(
+            communes,
+            rased.toMutableList(),
+            circo.toMutableList(),
+            pial.toMutableList(),
+            colleges.toMutableList()
+        ) }
 
     /* ---------- ÉCRITURE ---------- */
 
