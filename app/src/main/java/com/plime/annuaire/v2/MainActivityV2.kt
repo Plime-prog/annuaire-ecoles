@@ -6,8 +6,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -36,6 +34,15 @@ private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphi
     COLLEGES("Collèges", Icons.Filled.School)
 }
 
+/* Type de fiche en cours d'édition (pour la boîte de dialogue) */
+private sealed class EditTarget {
+    data class Commune(val c: CommuneV2, val isNew: Boolean) : EditTarget()
+    data class Ecole(val c: CommuneV2, val e: EcoleV2, val isNew: Boolean) : EditTarget()
+    data class Prof(val e: EcoleV2, val p: ProfesseurV2, val isNew: Boolean) : EditTarget()
+    data class Contact(val kind: Int, val entry: Any, val isNew: Boolean) : EditTarget() // kind: 0=RASED 1=Circo 2=PIAL
+    data class College(val col: CollegeV2, val isNew: Boolean) : EditTarget()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnnuaireV2App() {
@@ -50,6 +57,17 @@ fun AnnuaireV2App() {
     var detailCommune by remember { mutableStateOf<CommuneV2?>(null) }
     var detailEcole by remember { mutableStateOf<Pair<CommuneV2, EcoleV2>?>(null) }
     var message by remember { mutableStateOf("") }
+    var editTarget by remember { mutableStateOf<EditTarget?>(null) }
+
+    /* Le Jetpack ne détecte pas les mutations internes (var des objets) :
+       on force le rafraîchissement avec un compteur à chaque sauvegarde. */
+    var revision by remember { mutableStateOf(0) }
+    val refresh: () -> Unit = { revision++ }
+
+    fun saveAll() {
+        StorageV2.save(ctx, annuaire)
+        refresh()
+    }
 
     LaunchedEffect(Unit) {
         annuaire = StorageV2.load(ctx)
@@ -63,6 +81,7 @@ fun AnnuaireV2App() {
         if (uri != null) try {
             annuaire = ExcelIOV2.import(ctx, uri)
             StorageV2.save(ctx, annuaire)
+            refresh()
             message = "Import réussi : ${annuaire.communes.size} commune(s), " +
                 "${annuaire.communes.sumOf { it.ecoles.size }} école(s), " +
                 "${annuaire.rased.size + annuaire.circo.size + annuaire.pial.size} contact(s), " +
@@ -112,6 +131,99 @@ fun AnnuaireV2App() {
                 }
             }
         } else {
+            /* Affichage de la boîte de dialogue d'édition si ouverte */
+            val target = editTarget
+            if (target != null) EditDialogFor(
+                target = target,
+                onSave = { m ->
+                    when (target) {
+                        is EditTarget.Commune -> {
+                            val c = target.c
+                            val ancienNom = c.nom
+                            applyCommune(c, m)
+                            if (target.isNew) {
+                                annuaire.communes.add(c)
+                                editTarget = null
+                                saveAll()
+                            } else {
+                                if (c.nom != ancienNom) detailCommune = c
+                                editTarget = null
+                                saveAll()
+                            }
+                        }
+                        is EditTarget.Ecole -> {
+                            applyEcole(target.e, m)
+                            if (target.isNew) target.c.ecoles.add(target.e)
+                            editTarget = null
+                            saveAll()
+                        }
+                        is EditTarget.Prof -> {
+                            applyProf(target.p, m)
+                            if (target.isNew) target.e.professeurs.add(target.p)
+                            editTarget = null
+                            saveAll()
+                        }
+                        is EditTarget.Contact -> {
+                            when (target.entry) {
+                                is RasedEntry -> applyContact(target.entry, m)
+                                is CircoEntry -> applyContact(target.entry, m)
+                                is PialEntry -> applyContact(target.entry, m)
+                            }
+                            if (target.isNew) {
+                                when (target.kind) {
+                                    0 -> annuaire.rased.add(target.entry as RasedEntry)
+                                    1 -> annuaire.circo.add(target.entry as CircoEntry)
+                                    2 -> annuaire.pial.add(target.entry as PialEntry)
+                                }
+                            }
+                            editTarget = null
+                            saveAll()
+                        }
+                        is EditTarget.College -> {
+                            applyCollege(target.col, m)
+                            if (target.isNew) annuaire.colleges.add(target.col)
+                            editTarget = null
+                            saveAll()
+                        }
+                    }
+                    message = "Modifications enregistrées."
+                },
+                onCancel = { editTarget = null },
+                onDelete = if (target.isNew) null else {{
+                    when (target) {
+                        is EditTarget.Commune -> {
+                            annuaire.communes.remove(target.c)
+                            if (detailCommune == target.c) detailCommune = null
+                            message = "Commune supprimée."
+                        }
+                        is EditTarget.Ecole -> {
+                            target.c.ecoles.remove(target.e)
+                            if (detailEcole?.second == target.e) detailEcole = null
+                            if (detailCommune == target.c) detailCommune = target.c
+                            message = "École supprimée."
+                        }
+                        is EditTarget.Prof -> {
+                            target.e.professeurs.remove(target.p)
+                            message = "Professeur supprimé."
+                        }
+                        is EditTarget.Contact -> {
+                            when (target.entry) {
+                                is RasedEntry -> annuaire.rased.remove(target.entry)
+                                is CircoEntry -> annuaire.circo.remove(target.entry)
+                                is PialEntry -> annuaire.pial.remove(target.entry)
+                            }
+                            message = "Contact supprimé."
+                        }
+                        is EditTarget.College -> {
+                            annuaire.colleges.remove(target.col)
+                            message = "Collège supprimé."
+                        }
+                    }
+                    editTarget = null
+                    saveAll()
+                }}
+            )
+
             Scaffold(
                 topBar = {
                     Column {
@@ -140,6 +252,18 @@ fun AnnuaireV2App() {
                             )
                         }
                     }
+                },
+                floatingActionButton = {
+                    FloatingActionButton(onClick = {
+                        when (tab) {
+                            TabV2.COMMUNES ->
+                                editTarget = EditTarget.Commune(CommuneV2(newIdV2(), ""), true)
+                            TabV2.RASED -> editTarget = EditTarget.Contact(0, RasedEntry(newIdV2()), true)
+                            TabV2.CIRCO -> editTarget = EditTarget.Contact(1, CircoEntry(newIdV2()), true)
+                            TabV2.PIAL -> editTarget = EditTarget.Contact(2, PialEntry(newIdV2()), true)
+                            TabV2.COLLEGES -> editTarget = EditTarget.College(CollegeV2(newIdV2()), true)
+                        }
+                    }) { Icon(Icons.Filled.Add, "Ajouter") }
                 }
             ) { padding ->
                 Column(Modifier.fillMaxSize().padding(padding)) {
@@ -150,22 +274,61 @@ fun AnnuaireV2App() {
                         leadingIcon = { Icon(Icons.Filled.Search, null) },
                         singleLine = true
                     )
-                    val cm = detailCommune
-                    val ec = detailEcole
-                    when {
-                        ec != null -> EcoleDetailScreen(ec.first, ec.second) {
-                            detailEcole = null
+                    key(revision) {
+                        val cm = detailCommune
+                        val ec = detailEcole
+                        when {
+                            ec != null -> EcoleDetailScreen(
+                                c = ec.first, e = ec.second,
+                                onBack = { detailEcole = null },
+                                onEditEcole = { e -> editTarget = EditTarget.Ecole(ec.first, e, false) },
+                                onAddProf = {
+                                    editTarget = EditTarget.Prof(ec.second, ProfesseurV2(newIdV2(), ""), true)
+                                },
+                                onEditProf = { p -> editTarget = EditTarget.Prof(ec.second, p, false) },
+                                onDeleteProf = { p ->
+                                    ec.second.professeurs.remove(p)
+                                    message = "Professeur supprimé."
+                                    saveAll()
+                                }
+                            )
+                            cm != null -> CommuneDetailScreen(
+                                c = cm,
+                                onBack = { detailCommune = null },
+                                onOpenEcole = { c, e -> detailEcole = c to e },
+                                onEditCommune = { c -> editTarget = EditTarget.Commune(c, false) },
+                                onAddEcole = {
+                                    editTarget = EditTarget.Ecole(cm, EcoleV2(newIdV2(), ""), true)
+                                },
+                                onEditEcole = { c, e -> editTarget = EditTarget.Ecole(c, e, false) },
+                                onDeleteEcole = { c, e ->
+                                    c.ecoles.remove(e)
+                                    message = "École supprimée."
+                                    saveAll()
+                                }
+                            )
+                            tab == TabV2.COMMUNES -> CommunesScreen(
+                                a = annuaire, query = query,
+                                onOpenCommune = { c -> detailCommune = c },
+                                onEditCommune = { c -> editTarget = EditTarget.Commune(c, false) }
+                            )
+                            tab == TabV2.RASED -> RasedScreen(
+                                a = annuaire, query = query,
+                                onEdit = { entry -> editTarget = EditTarget.Contact(0, entry, false) }
+                            )
+                            tab == TabV2.CIRCO -> CircoScreen(
+                                a = annuaire, query = query,
+                                onEdit = { entry -> editTarget = EditTarget.Contact(1, entry, false) }
+                            )
+                            tab == TabV2.PIAL -> PialScreen(
+                                a = annuaire, query = query,
+                                onEdit = { entry -> editTarget = EditTarget.Contact(2, entry, false) }
+                            )
+                            tab == TabV2.COLLEGES -> CollegesScreen(
+                                a = annuaire, query = query,
+                                onEditCollege = { col -> editTarget = EditTarget.College(col, false) }
+                            )
                         }
-                        cm != null -> CommuneDetailScreen(cm, { detailCommune = null }) { c, e ->
-                            detailEcole = c to e
-                        }
-                        tab == TabV2.COMMUNES -> CommunesScreen(annuaire, query) { c ->
-                            detailCommune = c
-                        }
-                        tab == TabV2.RASED -> RasedScreen(annuaire, query)
-                        tab == TabV2.CIRCO -> CircoScreen(annuaire, query)
-                        tab == TabV2.PIAL -> PialScreen(annuaire, query)
-                        tab == TabV2.COLLEGES -> CollegesScreen(annuaire, query)
                     }
                 }
             }
@@ -189,6 +352,7 @@ fun AnnuaireV2App() {
                 onClear = {
                     StorageV2.clearData(ctx)
                     annuaire = AnnuaireV2()
+                    refresh()
                     message = "Toutes les données ont été effacées."
                 },
                 onChangePin = { old, new ->
@@ -204,6 +368,36 @@ fun AnnuaireV2App() {
                 }
             )
         }
+    }
+}
+
+/* ==================== BOÎTE DE DIALOGUE D'ÉDITION (aiguillage) ==================== */
+
+@Composable
+private fun EditDialogFor(
+    target: EditTarget,
+    onSave: (Map<String, String>) -> Unit,
+    onCancel: () -> Unit,
+    onDelete: (() -> Unit)? = null
+) {
+    when (target) {
+        is EditTarget.Commune ->
+            EntityDialog("Commune", communeFields(target.c), onSave, onCancel, onDelete)
+        is EditTarget.Ecole ->
+            EntityDialog("École", ecoleFields(target.e), onSave, onCancel, onDelete)
+        is EditTarget.Prof ->
+            EntityDialog("Professeur", profFields(target.p), onSave, onCancel, onDelete)
+        is EditTarget.Contact -> {
+            val f = when (val entry = target.entry) {
+                is RasedEntry -> contactFields(entry.contact, entry.fonction, entry.adresse, entry.mail, entry.tel1, entry.tel2, entry.observations)
+                is CircoEntry -> contactFields(entry.contact, entry.fonction, entry.adresse, entry.mail, entry.tel1, entry.tel2, entry.observations)
+                is PialEntry -> contactFields(entry.contact, entry.fonction, entry.adresse, entry.mail, entry.tel1, entry.tel2, entry.observations)
+                else -> linkedMapOf()
+            }
+            EntityDialog("Contact", f, onSave, onCancel, onDelete)
+        }
+        is EditTarget.College ->
+            EntityDialog("Collège", collegeFields(target.col), onSave, onCancel, onDelete)
     }
 }
 
