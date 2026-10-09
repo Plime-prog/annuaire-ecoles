@@ -6,6 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -36,11 +38,13 @@ private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphi
 
 /* Type de fiche en cours d'édition (pour la boîte de dialogue) */
 private sealed class EditTarget {
-    data class Commune(val c: CommuneV2, val isNew: Boolean) : EditTarget()
-    data class Ecole(val c: CommuneV2, val e: EcoleV2, val isNew: Boolean) : EditTarget()
-    data class Prof(val e: EcoleV2, val p: ProfesseurV2, val isNew: Boolean) : EditTarget()
-    data class Contact(val kind: Int, val entry: Any, val isNew: Boolean) : EditTarget() // kind: 0=RASED 1=Circo 2=PIAL
-    data class College(val col: CollegeV2, val isNew: Boolean) : EditTarget()
+    abstract val isNew: Boolean
+
+    data class Commune(val c: CommuneV2, override val isNew: Boolean) : EditTarget()
+    data class Ecole(val c: CommuneV2, val e: EcoleV2, override val isNew: Boolean) : EditTarget()
+    data class Prof(val e: EcoleV2, val p: ProfesseurV2, override val isNew: Boolean) : EditTarget()
+    data class Contact(val kind: Int, val entry: Any, override val isNew: Boolean) : EditTarget() // kind: 0=RASED 1=Circo 2=PIAL
+    data class College(val col: CollegeV2, override val isNew: Boolean) : EditTarget()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,15 +145,10 @@ fun AnnuaireV2App() {
                             val c = target.c
                             val ancienNom = c.nom
                             applyCommune(c, m)
-                            if (target.isNew) {
-                                annuaire.communes.add(c)
-                                editTarget = null
-                                saveAll()
-                            } else {
-                                if (c.nom != ancienNom) detailCommune = c
-                                editTarget = null
-                                saveAll()
-                            }
+                            if (target.isNew) annuaire.communes.add(c)
+                            if (c.nom != ancienNom) detailCommune = c
+                            editTarget = null
+                            saveAll()
                         }
                         is EditTarget.Ecole -> {
                             applyEcole(target.e, m)
@@ -199,7 +198,6 @@ fun AnnuaireV2App() {
                         is EditTarget.Ecole -> {
                             target.c.ecoles.remove(target.e)
                             if (detailEcole?.second == target.e) detailEcole = null
-                            if (detailCommune == target.c) detailCommune = target.c
                             message = "École supprimée."
                         }
                         is EditTarget.Prof -> {
