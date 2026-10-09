@@ -16,6 +16,7 @@ object StorageV2 {
     private const val KEY_DATA = "annuaire_json"
     private const val KEY_PIN_HASH = "pin_hash_v2"
     private const val KEY_UNLOCKED = "unlocked_v2"
+    private const val KEY_TITRE = "titre_app"
 
     private var prefs: SharedPreferences? = null
 
@@ -52,6 +53,15 @@ object StorageV2 {
 
     fun clearData(ctx: Context) {
         getPrefs(ctx).edit().remove(KEY_DATA).apply()
+    }
+
+    /* ---------- Titre de l'application (modifiable dans les réglages) ---------- */
+
+    fun getTitre(ctx: Context): String =
+        getPrefs(ctx).getString(KEY_TITRE, null) ?: "Circonscription"
+
+    fun setTitre(ctx: Context, titre: String) {
+        getPrefs(ctx).edit().putString(KEY_TITRE, titre).apply()
     }
 
     /* ---------- Code PIN ---------- */
