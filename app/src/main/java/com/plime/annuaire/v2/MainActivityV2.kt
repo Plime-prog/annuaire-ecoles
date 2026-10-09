@@ -21,9 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.plime.annuaire.BandeauFrance
 
-/* ====== TITRE DE L'APPLICATION : MODIFIEZ LE TEXTE ICI ====== */
-private const val TITRE_APP = "Annuaire des écoles"
-
 class MainActivityV2 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +43,7 @@ fun AnnuaireV2App() {
     var annuaire by remember { mutableStateOf(AnnuaireV2()) }
     var unlocked by remember { mutableStateOf(false) }
     var hasPin by remember { mutableStateOf(false) }
+    var titre by remember { mutableStateOf("Circonscription") }
     var tab by remember { mutableStateOf(TabV2.COMMUNES) }
     var query by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
@@ -56,6 +54,7 @@ fun AnnuaireV2App() {
     LaunchedEffect(Unit) {
         annuaire = StorageV2.load(ctx)
         hasPin = StorageV2.hasPin(ctx)
+        titre = StorageV2.getTitre(ctx)
     }
 
     val importer = rememberLauncherForActivityResult(
@@ -117,7 +116,7 @@ fun AnnuaireV2App() {
                 topBar = {
                     Column {
                         TopAppBar(
-                            title = { Text(TITRE_APP, fontWeight = FontWeight.Bold) },
+                            title = { Text(titre, fontWeight = FontWeight.Bold) },
                             actions = {
                                 IconButton(onClick = { showSettings = true }) {
                                     Icon(Icons.Filled.Settings, "Réglages")
@@ -172,6 +171,7 @@ fun AnnuaireV2App() {
             }
             if (showSettings) SettingsDialogV2(
                 message = message,
+                titre = titre,
                 onDismiss = { showSettings = false; message = "" },
                 onImport = {
                     showSettings = false
@@ -196,6 +196,11 @@ fun AnnuaireV2App() {
                         StorageV2.setPin(ctx, new)
                         message = "Code PIN modifié."
                     } else message = "Ancien code incorrect."
+                },
+                onChangeTitre = { nouveau ->
+                    titre = nouveau
+                    StorageV2.setTitre(ctx, nouveau)
+                    message = "Titre modifié."
                 }
             )
         }
@@ -269,23 +274,43 @@ private fun PinEnterScreen(onError: () -> Unit, onSuccess: (String) -> Unit) {
 @Composable
 private fun SettingsDialogV2(
     message: String,
+    titre: String,
     onDismiss: () -> Unit,
     onImport: () -> Unit,
     onExport: () -> Unit,
     onTemplate: () -> Unit,
     onLock: () -> Unit,
     onClear: () -> Unit,
-    onChangePin: (String, String) -> Unit
+    onChangePin: (String, String) -> Unit,
+    onChangeTitre: (String) -> Unit
 ) {
     var showPinForm by remember { mutableStateOf(false) }
     var oldPin by remember { mutableStateOf("") }
     var newPin by remember { mutableStateOf("") }
+    var titreSaisi by remember { mutableStateOf(titre) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("RÉGLAGES") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                /* --- Titre de l'application --- */
+                OutlinedTextField(
+                    value = titreSaisi,
+                    onValueChange = { titreSaisi = it },
+                    label = { Text("Titre de l'application") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                )
+                Button(
+                    onClick = { onChangeTitre(titreSaisi) },
+                    enabled = titreSaisi.isNotBlank() && titreSaisi != titre,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Enregistrer le titre") }
+
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+                /* --- Import / Export / Modèle --- */
                 Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.UploadFile, null); Spacer(Modifier.width(8.dp)); Text("Importer un fichier Excel")
                 }
@@ -295,6 +320,10 @@ private fun SettingsDialogV2(
                 Button(onClick = onTemplate, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("Créer le modèle d'import")
                 }
+
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+                /* --- Code PIN --- */
                 OutlinedButton(onClick = { showPinForm = !showPinForm }, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Password, null); Spacer(Modifier.width(8.dp)); Text("Changer le code PIN")
                 }
@@ -317,6 +346,7 @@ private fun SettingsDialogV2(
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("Enregistrer le nouveau code") }
                 }
+
                 OutlinedButton(onClick = onLock, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Lock, null); Spacer(Modifier.width(8.dp)); Text("Verrouiller maintenant")
                 }
