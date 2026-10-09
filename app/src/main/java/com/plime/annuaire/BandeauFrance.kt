@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun BandeauFrance() {
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().height(10.dp)) {
+        Row(Modifier.fillMaxWidth().height(16.dp)) {
             Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFF2F6DB5)))
             Box(Modifier.weight(1f).fillMaxHeight().background(Color.White))
             Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFFDC2626)))
