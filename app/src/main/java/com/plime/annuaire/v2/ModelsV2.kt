@@ -8,7 +8,7 @@ import java.util.UUID
 
 data class CommuneV2(
     val id: String,
-    val nom: String,
+    var nom: String,
     var maire: String = "",
     var telMaire: String = "",
     var adresseMairie: String = "",
@@ -23,7 +23,7 @@ data class CommuneV2(
 
 data class EcoleV2(
     val id: String,
-    val nom: String,
+    var nom: String,
     var codeUai: String = "",
     var adresse: String = "",
     var tel: String = "",
