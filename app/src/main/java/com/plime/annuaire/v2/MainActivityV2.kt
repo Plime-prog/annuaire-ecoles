@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.plime.annuaire.BandeauFrance
 
+/* ====== TITRE DE L'APPLICATION : MODIFIEZ LE TEXTE ICI ====== */
+private const val TITRE_APP = "Annuaire des écoles"
+
 class MainActivityV2 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +34,7 @@ class MainActivityV2 : ComponentActivity() {
 private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     COMMUNES("Communes", Icons.Filled.LocationCity),
     RASED("RASED", Icons.Filled.Groups),
-    CIRCO("Circonscription", Icons.Filled.SupervisorAccount),
+    CIRCO("Circo.", Icons.Filled.SupervisorAccount),
     PIAL("PIAL & ER", Icons.Filled.Devices),
     COLLEGES("Collèges", Icons.Filled.School)
 }
@@ -114,7 +117,7 @@ fun AnnuaireV2App() {
                 topBar = {
                     Column {
                         TopAppBar(
-                            title = { Text("Annuaire V2", fontWeight = FontWeight.Bold) },
+                            title = { Text(TITRE_APP, fontWeight = FontWeight.Bold) },
                             actions = {
                                 IconButton(onClick = { showSettings = true }) {
                                     Icon(Icons.Filled.Settings, "Réglages")
