@@ -6,8 +6,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
-import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.plime.annuaire.BandeauFrance
 
 class MainActivityV2 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,7 +39,7 @@ private enum class TabV2(val label: String, val icon: androidx.compose.ui.graphi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnnuaireV2App() {
-        val ctx = LocalContext.current
+    val ctx = LocalContext.current
     var annuaire by remember { mutableStateOf(AnnuaireV2()) }
     var unlocked by remember { mutableStateOf(false) }
     var hasPin by remember { mutableStateOf(false) }
@@ -56,7 +55,6 @@ fun AnnuaireV2App() {
         hasPin = StorageV2.hasPin(ctx)
     }
 
-    
     val importer = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -95,7 +93,7 @@ fun AnnuaireV2App() {
     }
 
     MaterialTheme {
-                if (!hasPin) {
+        if (!hasPin) {
             PinDefineScreen { pin ->
                 StorageV2.setPin(ctx, pin)
                 StorageV2.setUnlocked(ctx, true)
@@ -114,14 +112,17 @@ fun AnnuaireV2App() {
         } else {
             Scaffold(
                 topBar = {
-                    TopAppBar(
-                        title = { Text("Annuaire V2", fontWeight = FontWeight.Bold) },
-                        actions = {
-                            IconButton(onClick = { showSettings = true }) {
-                                Icon(Icons.Filled.Settings, "Réglages")
+                    Column {
+                        TopAppBar(
+                            title = { Text("Annuaire V2", fontWeight = FontWeight.Bold) },
+                            actions = {
+                                IconButton(onClick = { showSettings = true }) {
+                                    Icon(Icons.Filled.Settings, "Réglages")
+                                }
                             }
-                        }
-                    )
+                        )
+                        BandeauFrance()
+                    }
                 },
                 bottomBar = {
                     NavigationBar {
@@ -197,19 +198,7 @@ fun AnnuaireV2App() {
         }
     }
 }
-                topBar = {
-                    Column {
-                        TopAppBar(
-                            title = { Text(appName, fontWeight = FontWeight.Bold) },
-                            actions = {
-                                IconButton(onClick = { showSettings = true }) {
-                                    Icon(Icons.Filled.Settings, "Réglages")
-                                }
-                            }
-                        )
-                        BandeauFrance()
-                    }
-                },
+
 /* ==================== ÉCRAN PIN : définition ==================== */
 
 @Composable
@@ -326,7 +315,6 @@ private fun SettingsDialogV2(
                     ) { Text("Enregistrer le nouveau code") }
                 }
                 OutlinedButton(onClick = onLock, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    
                     Icon(Icons.Filled.Lock, null); Spacer(Modifier.width(8.dp)); Text("Verrouiller maintenant")
                 }
                 TextButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
@@ -339,17 +327,5 @@ private fun SettingsDialogV2(
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } }
-
-        @Composable
-private fun BandeauFrance() {
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().height(10.dp)) {
-            Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFF2F6DB5)))
-            Box(Modifier.weight(1f).fillMaxHeight().background(Color.White))
-            Box(Modifier.weight(1f).fillMaxHeight().background(Color(0xFFDC2626)))
-        }
-        Box(Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE2E8F0)))
-    }
-}
     )
 }
