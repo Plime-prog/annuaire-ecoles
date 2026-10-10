@@ -1,0 +1,21 @@
+name: Annuaire Aube
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-xlsx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Générer le classeur Excel
+        run: python3 scripts/gen_annuaire_xlsx.py
+
+      - name: Publier l'artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: annuaire-aube-2026-10-10.xlsx
+          path: annuaire-aube-2026-10-10.xlsx
+          retention-days: 30
