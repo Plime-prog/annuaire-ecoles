@@ -212,20 +212,54 @@ object ExcelIOV3 {
                 tab.rows.add(m)
             }
             // Regroupement automatique selon le NOM du champ (pas la position) :
-            //  - Communes  -> le champ qui s'appelle « Commune »
+            //  - Communes  -> le champ « Commune »
             //  - Collèges  -> le champ « Nom » (nom du collège)
+            //  - Circonscription -> aucun : liste à plat des personnes
             val nomOnglet = normV3(tab.name)
-            val prefs: List<String> = when {
-                nomOnglet.contains("commune") -> listOf("commune")
+            tab.groupBy = when {
+                nomOnglet.contains("commune") ->
+                    tab.fields.firstOrNull { normV3(it.label).contains("commune") }?.key ?: ""
                 nomOnglet.contains("college") || nomOnglet.contains("collège") ->
-                    listOf("nom", "collège", "college")
-                else -> emptyList()
+                    tab.fields.firstOrNull {
+                        normV3(it.label) == "nom" || normV3(it.label).contains("college")
+                    }?.key ?: ""
+                else -> ""
             }
-            tab.groupBy = prefs.firstNotNullOfOrNull { p ->
-                tab.fields.firstOrNull { normV3(it.label).contains(p) }?.key
-            } ?: tab.fields[0].key
             a.tabs.add(tab)
         }
+
+        /* PIAL-ER et RASED sont fusionnés dans l'onglet Circonscription :
+           leurs personnes reçoivent « Circonscription élargie » = Oui. */
+        val aFusionner = a.tabs.filter {
+            val n = normV3(it.name)
+            n.contains("pial") || n.contains("rased") || n.contains("er/")
+        }
+        if (aFusionner.isNotEmpty()) {
+            val cible = a.tabs.firstOrNull {
+                normV3(it.name).contains("circonscription")
+            } ?: TabV3(newKeyV3(), "Circonscription").also { a.tabs.add(it) }
+            val fEl = cible.fields.firstOrNull {
+                normV3(it.label).contains("elargie")
+            } ?: FieldV3(newKeyV3(), "Circonscription élargie").also { cible.fields.add(it) }
+            aFusionner.forEach { source ->
+                source.rows.forEach { r ->
+                    val m = mutableMapOf("_id" to newKeyV3())
+                    source.fields.forEach { sf ->
+                        val v = r[sf.key] ?: ""
+                        if (v.isNotBlank()) {
+                            val cf = cible.fields.firstOrNull {
+                                it.label.equals(sf.label, ignoreCase = true)
+                            } ?: FieldV3(newKeyV3(), sf.label).also { cible.fields.add(it) }
+                            m[cf.key] = v
+                        }
+                    }
+                    m[fEl.key] = "Oui"
+                    cible.rows.add(m)
+                }
+            }
+            a.tabs.removeAll(aFusionner)
+        }
+
         if (a.tabs.isEmpty()) throw IllegalArgumentException("classeur vide")
         return a
     }
