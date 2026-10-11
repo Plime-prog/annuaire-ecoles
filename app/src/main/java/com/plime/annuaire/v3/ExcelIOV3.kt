@@ -211,8 +211,10 @@ object ExcelIOV3 {
                 for ((i, key) in colKeys) m[key] = row.getOrElse(i) { "" }
                 tab.rows.add(m)
             }
-            // Par défaut : regroupement sur le 1er champ pour l'onglet Communes
-            if (tab.name.equals("Communes", ignoreCase = true) && tab.fields.isNotEmpty())
+            // Par défaut : regroupement sur le 1er champ pour Communes et Collèges
+            if ((tab.name.equals("Communes", ignoreCase = true) ||
+                 tab.name.equals("Collèges", ignoreCase = true) ||
+                 tab.name.equals("Colleges", ignoreCase = true)) && tab.fields.isNotEmpty())
                 tab.groupBy = tab.fields[0].key
             a.tabs.add(tab)
         }
