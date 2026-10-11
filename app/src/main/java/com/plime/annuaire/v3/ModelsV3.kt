@@ -122,8 +122,6 @@ fun defaultSchemaV3(): AnnuaireV3 {
         listOf("Nom", "Adresse", "Contact", "Fonction contact", "Adresse contact",
             "Mail contact", "Tél. 1", "Tél. 2", "Observations")
             .forEach { fields.add(fld(it)) }
-        /* 8 champs vides supplémentaires, toujours éditables via 🧪 */
-        (1..8).forEach { fields.add(FieldV3(newKeyV3(), "Champ $it")) }
         groupBy = fields[0].key   /* « Nom » = nom du collège */
     }
     return AnnuaireV3(mutableListOf(
