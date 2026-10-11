@@ -53,6 +53,10 @@ fun AnnuaireV3App() {
     /* Ligne d'origine pour l'édition (null si nouvelle) */
     var editOriginal by remember { mutableStateOf<MutableMap<String, String>?>(null) }
 
+    /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. école) */
+    var openGroup by remember { mutableStateOf<String?>(null) }
+    var openRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
+
     fun saveAll() {
         StorageV3.save(ctx, annuaire)
         revision++
@@ -179,7 +183,10 @@ fun AnnuaireV3App() {
                                     annuaire.tabs.forEachIndexed { i, tabV ->
                                         Tab(
                                             selected = i == safeIndex,
-                                            onClick = { tabIndex = i; query = "" },
+                                            onClick = {
+                                                tabIndex = i; query = ""
+                                                openGroup = null; openRow = null
+                                            },
                                             text = { Text(tabV.name, maxLines = 1) }
                                         )
                                     }
@@ -205,15 +212,52 @@ fun AnnuaireV3App() {
                             singleLine = true
                         )
                         key(revision, safeIndex, query) {
-                            if (currentTab != null) TabScreenV3(
-                                tab = currentTab, query = query,
-                                onEdit = { row ->
-                                    editTab = currentTab
-                                    editOriginal = row
-                                    editIsNew = false
-                                    editRow = LinkedHashMap(row)
+                            if (currentTab != null) {
+                                val rowOuverte = openRow
+                                val groupeOuvert = openGroup
+                                when {
+                                    /* Niveau 3 : détail d'une fiche (école, collège…) */
+                                    rowOuverte != null -> RowDetailScreen(
+                                        tab = currentTab, row = rowOuverte,
+                                        onBack = { openRow = null },
+                                        onEdit = {
+                                            editTab = currentTab
+                                            editOriginal = rowOuverte
+                                            editIsNew = false
+                                            editRow = LinkedHashMap(rowOuverte)
+                                        },
+                                        onDelete = {
+                                            currentTab.rows.removeIf { it === rowOuverte }
+                                            openRow = null
+                                            saveAll()
+                                            message = "Fiche supprimée."
+                                        }
+                                    )
+                                    /* Niveau 2 : détail d'un groupe (commune…) */
+                                    groupeOuvert != null -> GroupDetailScreen(
+                                        tab = currentTab,
+                                        groupName = groupeOuvert,
+                                        rows = currentTab.rows.filter {
+                                            (it[currentTab.groupBy] ?: "") == groupeOuvert
+                                        },
+                                        onBack = { openGroup = null },
+                                        onOpenRow = { openRow = it }
+                                    )
+                                    /* Niveau 1 : liste des noms */
+                                    else -> TabScreenV3(
+                                        tab = currentTab, query = query,
+                                        onOpenGroup = { name ->
+                                            val rows = currentTab.rows.filter {
+                                                (it[currentTab.groupBy] ?: "") == name
+                                            }
+                                            /* Un collège = 1 seule fiche : on va directement au détail */
+                                            if (rows.size == 1) openRow = rows[0]
+                                            else openGroup = name
+                                        },
+                                        onOpenRow = { openRow = it }
+                                    )
                                 }
-                            ) else Text(
+                            } else Text(
                                 "Aucun onglet. Touchez 🧪 pour créer la structure.",
                                 Modifier.padding(16.dp)
                             )
@@ -258,22 +302,19 @@ fun AnnuaireV3App() {
     }
 }
 
-/* ==================== ÉCRAN D'UN ONGLET (affichage hiérarchique style V2) ==================== */
+/* ==================== NIVEAU 1 : LISTE D'UN ONGLET ==================== */
 
-/* Un groupe de lignes : toutes partagent la même valeur du champ groupBy. */
-private data class GroupV3(val name: String, val rows: List<MutableMap<String, String>>)
-
-/** Résumé du groupe : valeurs identiques dans toutes les lignes (ex. maire, tél. mairie). */
-private fun resumeGroupe(tab: TabV3, rows: List<Map<String, String>>): String =
+/** Champs identiques dans toutes les fiches du groupe (ex. maire, mairie). */
+private fun champsConstants(tab: TabV3, rows: List<Map<String, String>>): List<Pair<String, String>> =
     tab.fields.mapNotNull { f ->
         if (f.key == tab.groupBy) null
         else {
             val v = rows.first()[f.key] ?: ""
-            if (v.isNotBlank() && rows.all { (it[f.key] ?: "") == v }) v else null
+            if (v.isNotBlank() && rows.all { (it[f.key] ?: "") == v }) f.label to v else null
         }
-    }.take(3).joinToString(" · ")
+    }
 
-/** Champs qui varient à l'intérieur du groupe (ex. école, professeur). */
+/** Valeurs qui changent d'une fiche à l'autre dans le groupe (ex. école). */
 private fun valeursVariables(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): List<String> =
     tab.fields.mapNotNull { f ->
         if (f.key == tab.groupBy) null
@@ -284,81 +325,53 @@ private fun valeursVariables(tab: TabV3, rows: List<Map<String, String>>, row: M
         }
     }
 
-/** Titre d'une ligne dans un groupe : 1ère valeur variable (ex. le nom de l'école). */
+/** Titre d'une fiche du groupe : 1ère valeur variable (ex. nom de l'école). */
 private fun titreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): String =
     valeursVariables(tab, rows, row).firstOrNull()
         ?: tab.fields.firstNotNullOfOrNull { f ->
             if (f.key != tab.groupBy) (row[f.key] ?: "").takeIf { it.isNotBlank() } else null
         }
-        ?: "(sans titre)"
+        ?: "(détails)"
 
-/** Sous-titre d'une ligne dans un groupe : les 2 valeurs variables suivantes. */
+/** Sous-titre d'une fiche du groupe : les 2 valeurs variables suivantes. */
 private fun sousTitreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): String {
     val vals = valeursVariables(tab, rows, row)
     return if (vals.size > 1) vals.drop(1).take(2).joinToString(" · ") else ""
 }
 
+/** Liste : noms des groupes seulement (ou fiches si pas de regroupement). */
 @Composable
-private fun TabScreenV3(tab: TabV3, query: String, onEdit: (MutableMap<String, String>) -> Unit) {
+private fun TabScreenV3(
+    tab: TabV3,
+    query: String,
+    onOpenGroup: (String) -> Unit,
+    onOpenRow: (MutableMap<String, String>) -> Unit
+) {
     val q = normV3(query)
     val filtered = if (q.isBlank()) tab.rows
     else tab.rows.filter { row -> row.values.any { normV3(it).contains(q) } }
 
-    val expanded = remember(tab.id) { mutableStateMapOf<String, Boolean>() }
-
     LazyColumn(Modifier.fillMaxSize()) {
         if (tab.groupBy.isNotBlank() && filtered.isNotEmpty()) {
             val groups = filtered.groupBy { it[tab.groupBy] ?: "" }
-                .map { (k, v) -> GroupV3(k.ifBlank { "(sans titre)" }, v) }
-                .sortedBy { normV3(it.name) }
-            var index = 0
-            groups.forEach { g ->
-                val open = expanded[g.name] ?: true
-                item(key = "h_${index++}") {
-                    Column(
-                        Modifier.fillMaxWidth()
-                            .clickable { expanded[g.name] = !open }
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                if (open) Icons.Filled.ExpandMore else Icons.Filled.ChevronRight,
-                                null, tint = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                "${g.name}  (${g.rows.size})",
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        val resume = resumeGroupe(tab, g.rows)
-                        if (resume.isNotBlank())
-                            Text(resume, fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 32.dp))
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                .map { (k, v) -> k.ifBlank { "(sans titre)" } to v.size }
+                .sortedBy { normV3(it.first) }
+            items(groups, key = { it.first }) { (name, count) ->
+                Column(
+                    Modifier.fillMaxWidth().clickable { onOpenGroup(name) }
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
+                ) {
+                    Text(name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text("$count fiche(s)", fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (open) {
-                    items(g.rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
-                        Column(
-                            Modifier.fillMaxWidth().clickable { onEdit(row) }
-                                .padding(start = 28.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-                        ) {
-                            Text(titreDansGroupe(tab, g.rows, row), fontWeight = FontWeight.SemiBold)
-                            val sub = sousTitreDansGroupe(tab, g.rows, row)
-                            if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    }
-                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         } else {
             items(filtered, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
                 Column(
-                    Modifier.fillMaxWidth().clickable { onEdit(row) }
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                    Modifier.fillMaxWidth().clickable { onOpenRow(row) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(rowTitleV3(tab, row), fontWeight = FontWeight.SemiBold)
                     val sub = rowSubtitleV3(tab, row)
@@ -370,12 +383,120 @@ private fun TabScreenV3(tab: TabV3, query: String, onEdit: (MutableMap<String, S
         }
         if (filtered.isEmpty()) item {
             Text(
-                if (query.isBlank()) "Aucune ligne. Touchez ➕ pour en ajouter."
+                if (query.isBlank()) "Aucune fiche. Touchez ➕ pour en ajouter."
                 else "Aucun résultat.",
                 Modifier.padding(16.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+/* ==================== NIVEAU 2 : DÉTAIL D'UN GROUPE (ex. une commune) ==================== */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupDetailScreen(
+    tab: TabV3,
+    groupName: String,
+    rows: List<MutableMap<String, String>>,
+    onBack: () -> Unit,
+    onOpenRow: (MutableMap<String, String>) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(groupName, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+            /* Infos du groupe : maire, adresse mairie… */
+            item {
+                Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                    champsConstants(tab, rows).forEach { (label, value) ->
+                        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                        Text(value, fontSize = 15.sp)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            /* Les fiches du groupe : les écoles de CETTE commune… */
+            items(rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
+                Column(
+                    Modifier.fillMaxWidth().clickable { onOpenRow(row) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                ) {
+                    Text(titreDansGroupe(tab, rows, row), fontWeight = FontWeight.SemiBold)
+                    val sub = sousTitreDansGroupe(tab, rows, row)
+                    if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+    }
+}
+
+/* ==================== NIVEAU 3 : DÉTAIL D'UNE FICHE (ex. une école, un collège) ==================== */
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RowDetailScreen(
+    tab: TabV3,
+    row: MutableMap<String, String>,
+    onBack: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var confirmDelete by remember { mutableStateOf(false) }
+    val titre =
+        if (tab.groupBy.isNotBlank()) titreDansGroupe(tab, listOf(row), row)
+        else rowTitleV3(tab, row)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(titre, fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
+                },
+                actions = {
+                    IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, "Modifier") }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            Modifier.fillMaxSize().padding(padding)
+                .verticalScroll(rememberScrollState()).padding(16.dp)
+        ) {
+            var auMoinsUn = false
+            tab.fields.forEach { f ->
+                val v = row[f.key] ?: ""
+                if (v.isNotBlank()) {
+                    auMoinsUn = true
+                    Text(f.label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                    Text(v, fontSize = 15.sp)
+                    Spacer(Modifier.height(10.dp))
+                }
+            }
+            if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(16.dp))
+            TextButton(onClick = { confirmDelete = true }) {
+                Text("Supprimer cette fiche", color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+    if (confirmDelete) ConfirmDialog(
+        "Supprimer cette fiche ?",
+        onDismiss = { confirmDelete = false }
+    ) {
+        confirmDelete = false
+        onDelete()
     }
 }
 
