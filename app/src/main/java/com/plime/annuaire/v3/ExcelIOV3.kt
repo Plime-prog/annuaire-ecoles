@@ -211,11 +211,23 @@ object ExcelIOV3 {
                 for ((i, key) in colKeys) m[key] = row.getOrElse(i) { "" }
                 tab.rows.add(m)
             }
-            // Par défaut : regroupement sur le 1er champ pour Communes et Collèges
-            if ((tab.name.equals("Communes", ignoreCase = true) ||
-                 tab.name.equals("Collèges", ignoreCase = true) ||
-                 tab.name.equals("Colleges", ignoreCase = true)) && tab.fields.isNotEmpty())
-                tab.groupBy = tab.fields[0].key
+            // Regroupement automatique selon le NOM du champ (pas la position) :
+            //  - Communes  -> le champ qui s'appelle « Commune »
+            //  - Collèges  -> le champ « Nom » (nom du collège)
+            val nomOnglet = normV3(tab.name)
+            val prefs: List<String> = when {
+                nomOnglet.contains("commune") -> listOf("commune")
+                nomOnglet.contains("college") || nomOnglet.contains("collège") ->
+                    listOf("nom", "collège", "college")
+                else -> emptyList()
+            }
+            tab.groupBy = prefs.firstNotNullOfOrNull { p ->
+                tab.fields.firstOrNull { normV3(it.label).contains(p) }?.key
+            } ?: tab.fields[0].key
+            // Collèges : ajouter 8 champs vides éditables après les colonnes du fichier
+            if (nomOnglet.contains("college") || nomOnglet.contains("collège")) {
+                (1..8).forEach { tab.fields.add(FieldV3(newKeyV3(), "Champ $it")) }
+            }
             a.tabs.add(tab)
         }
         if (a.tabs.isEmpty()) throw IllegalArgumentException("classeur vide")
