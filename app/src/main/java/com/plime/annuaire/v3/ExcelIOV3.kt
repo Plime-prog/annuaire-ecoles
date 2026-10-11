@@ -224,10 +224,6 @@ object ExcelIOV3 {
             tab.groupBy = prefs.firstNotNullOfOrNull { p ->
                 tab.fields.firstOrNull { normV3(it.label).contains(p) }?.key
             } ?: tab.fields[0].key
-            // Collèges : ajouter 8 champs vides éditables après les colonnes du fichier
-            if (nomOnglet.contains("college") || nomOnglet.contains("collège")) {
-                (1..8).forEach { tab.fields.add(FieldV3(newKeyV3(), "Champ $it")) }
-            }
             a.tabs.add(tab)
         }
         if (a.tabs.isEmpty()) throw IllegalArgumentException("classeur vide")
