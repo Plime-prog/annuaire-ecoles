@@ -118,10 +118,10 @@ fun defaultSchemaV3(): AnnuaireV3 {
         listOf("Contact", "Fonction", "Adresse", "Mail", "Tél. 1", "Tél. 2", "Observations")
             .forEach { fields.add(fld(it)) }
     }
-    val colleges = TabV3(newKeyV3(), "Colleges").apply {
-        listOf("Nom", "Adresse", "Contact", "Fonction contact", "Adresse contact",
-            "Mail contact", "Tél. 1", "Tél. 2", "Observations")
-            .forEach { fields.add(fld(it)) }
+    val colleges = TabV3(newKeyV3(), "Collèges").apply {
+        /* 8 champs génériques, à nommer plus tard via l'éditeur de structure 🧪 */
+        (1..8).forEach { fields.add(FieldV3(newKeyV3(), "Champ $it")) }
+        groupBy = fields[0].key
     }
     return AnnuaireV3(mutableListOf(
         communes, contacts("RASED"), contacts("Circonscription"), contacts("PIAL_ER"), colleges
