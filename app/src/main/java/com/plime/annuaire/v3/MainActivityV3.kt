@@ -313,8 +313,8 @@ private fun TabScreenV3(tab: TabV3, query: String, onEdit: (MutableMap<String, S
                 .sortedBy { normV3(it.name) }
             var index = 0
             groups.forEach { g ->
+                val open = expanded[g.name] ?: true
                 item(key = "h_${index++}") {
-                    val open = expanded[g.name] ?: true
                     Column(
                         Modifier.fillMaxWidth()
                             .clickable { expanded[g.name] = !open }
