@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Génère annuaire-aube-2026-10-10.xlsx à partir de data/annuaire-aube-2026-10-10.json.
-Format identique à ExcelIOV2 (5 feuilles, inlineStr). Bibliothèque standard uniquement.
-Usage : python3 scripts/gen_annuaire_xlsx.py
+"""Génère annuaire-aube-2026-10-10.xlsx à partir des données existantes
+(data/annuaire-aube-2026-10-10.json) enrichies de la liste des personnels
+(data/annuaire-aube-personnels-2026-10-11.json).
+Format V3 : 3 feuilles (Communes, Circonscription, Collèges), inlineStr.
+Bibliothèque standard uniquement. Usage : python3 scripts/gen_annuaire_xlsx.py
 """
 import json
 import zipfile
@@ -10,6 +12,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 DATA = REPO / "data" / "annuaire-aube-2026-10-10.json"
+PERS = REPO / "data" / "annuaire-aube-personnels-2026-10-11.json"
 OUT = REPO / "annuaire-aube-2026-10-10.xlsx"
 
 H_COMMUNES = [
@@ -21,16 +24,12 @@ H_COMMUNES = [
     "Horaires après-midi", "Observations école",
     "Professeur", "Classe", "Nb élèves (classe)", "Tél. professeur", "Observations prof."
 ]
-H_CONTACTS = ["Contact", "Fonction", "Adresse", "Mail", "Tél. 1", "Tél. 2", "Observations"]
 H_COLLEGES = [
     "Nom", "Adresse", "Contact", "Fonction contact", "Adresse contact",
     "Mail contact", "Tél. 1", "Tél. 2", "Observations"
 ]
-HEADERS = {
-    "Communes": H_COMMUNES, "RASED": H_CONTACTS, "Circonscription": H_CONTACTS,
-    "PIAL_ER": H_CONTACTS, "Colleges": H_COLLEGES,
-}
-SHEET_ORDER = ["Communes", "RASED", "Circonscription", "PIAL_ER", "Colleges"]
+SHEET_ORDER = ["Communes", "Circonscription", "Collèges"]
+HEADERS = {"Communes": H_COMMUNES, "Collèges": H_COLLEGES}
 
 
 def esc(s):
@@ -66,6 +65,14 @@ def sheet_xml(rows):
 def main():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     sheets = data["sheets"]
+
+    # Circonscription : remplacée par la liste des personnes
+    pers = json.loads(PERS.read_text(encoding="utf-8"))
+    HEADERS["Circonscription"] = pers["headers"]
+    sheets["Circonscription"] = pers["Circonscription"]
+
+    # Collèges : on reprend la feuille « Colleges » existante (accent ajouté)
+    sheets["Collèges"] = sheets.pop("Colleges")
 
     with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:
 
