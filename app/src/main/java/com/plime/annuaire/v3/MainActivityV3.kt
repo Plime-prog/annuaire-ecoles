@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.plime.annuaire.BandeauFrance
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border.BorderStroke
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
