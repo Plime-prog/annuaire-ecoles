@@ -4,6 +4,11 @@
 (data/annuaire-aube-2026-10-10.json) enrichies de la liste des personnels
 (data/annuaire-aube-personnels-2026-10-11.json).
 Format V3 : 3 feuilles (Communes, Circonscription, Collèges), inlineStr.
+- Circonscription : personnes par circonscription (regroupées dans l'application
+  par la colonne « Circonscription »).
+- Collèges : la liste existante est enrichie des principaux et principaux
+  adjoints trouvés en open data (champ « PrincipauxColleges » du fichier
+  des personnels).
 Bibliothèque standard uniquement. Usage : python3 scripts/gen_annuaire_xlsx.py
 """
 import json
@@ -29,7 +34,6 @@ H_COLLEGES = [
     "Mail contact", "Tél. 1", "Tél. 2", "Observations"
 ]
 SHEET_ORDER = ["Communes", "Circonscription", "Collèges"]
-HEADERS = {"Communes": H_COMMUNES, "Collèges": H_COLLEGES}
 
 
 def esc(s):
@@ -62,17 +66,59 @@ def sheet_xml(rows):
     return "".join(parts)
 
 
+def enrichit_colleges(colleges, principaux):
+    """Ajoute principal / principal adjoint aux lignes des collèges."""
+    resultats = []
+    ajoutes = 0
+    for row in colleges:
+        nom = str(row[0])
+        nouveau = list(row)
+        if not nom.startswith("Section"):
+            for p in principaux:
+                if p["nom"] not in nom:
+                    continue
+                if p.get("adresse") and p["adresse"].lower() not in str(row[1]).lower():
+                    continue
+                if nouveau[2] == "":
+                    nouveau[2] = p.get("contact", "")
+                if nouveau[3] == "":
+                    nouveau[3] = p.get("fonction", "")
+                if p.get("tel2") and nouveau[7] == "":
+                    nouveau[7] = p["tel2"]
+                obs = p.get("observations", "")
+                if obs and obs not in str(nouveau[8]):
+                    if nouveau[8]:
+                        nouveau[8] = str(nouveau[8]) + " — " + obs
+                    else:
+                        nouveau[8] = obs
+                resultats.append(nouveau)
+                adj = p.get("adjoint")
+                if adj:
+                    resultats.append([
+                        nom, "", adj.get("contact", ""), adj.get("fonction", ""),
+                        "", "", "", adj.get("tel2", ""), adj.get("observations", "")
+                    ])
+                    ajoutes += 1
+                break
+            else:
+                resultats.append(nouveau)
+        else:
+            resultats.append(nouveau)
+    return resultats, ajoutes
+
+
 def main():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     sheets = data["sheets"]
-
-    # Circonscription : remplacée par la liste des personnes
     pers = json.loads(PERS.read_text(encoding="utf-8"))
-    HEADERS["Circonscription"] = pers["headers"]
+
+    headers = {"Communes": H_COMMUNES, "Collèges": H_COLLEGES}
+    headers["Circonscription"] = pers["headers"]
     sheets["Circonscription"] = pers["Circonscription"]
 
-    # Collèges : on reprend la feuille « Colleges » existante (accent ajouté)
-    sheets["Collèges"] = sheets.pop("Colleges")
+    colleges = sheets.pop("Colleges")
+    sheets["Collèges"], nb_ajoutes = enrichit_colleges(colleges, pers.get("PrincipauxColleges", []))
+    print("Principaux adjoints ajoutés :", nb_ajoutes)
 
     with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED) as z:
 
@@ -120,7 +166,7 @@ def main():
         put("xl/_rels/workbook.xml.rels", "".join(rels))
 
         for i, name in enumerate(SHEET_ORDER, 1):
-            rows = [HEADERS[name]] + [
+            rows = [headers[name]] + [
                 [str(v) if v is not None else "" for v in row]
                 for row in sheets.get(name, [])
             ]
