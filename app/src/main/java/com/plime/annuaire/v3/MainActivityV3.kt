@@ -46,7 +46,7 @@ fun AnnuaireV3App() {
     var annuaire by remember { mutableStateOf(AnnuaireV3()) }
     var unlocked by remember { mutableStateOf(false) }
     var hasPin by remember { mutableStateOf(false) }
-    var titre by remember { mutableStateOf("Circonscription") }
+    var titre by remember { mutableStateOf("Annuaire des écoles") }
     var tabIndex by remember { mutableStateOf(0) }
     var query by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
@@ -131,7 +131,27 @@ fun AnnuaireV3App() {
         }
     }
 
-    MaterialTheme {
+    /* Thème : fond blanc partout, écriture noire ; accents vert menthe. */
+    MaterialTheme(
+        colorScheme = lightColorScheme(
+            background = Color.White,
+            surface = Color.White,
+            surfaceVariant = Color.White,
+            surfaceTint = Color.White,
+            surfaceContainer = Color.White,
+            surfaceContainerLow = Color.White,
+            onBackground = Color.Black,
+            onSurface = Color.Black,
+            onSurfaceVariant = Color(0xFF333333),
+            primary = VertMenthe,
+            onPrimary = Color.White,
+            primaryContainer = Color.White,
+            onPrimaryContainer = Color.Black,
+            secondary = VertMenthe,
+            onSecondary = Color.White,
+            outlineVariant = Color(0xFFDDDDDD)
+        )
+    ) {
         if (!hasPin) {
             PinDefineScreen { pin ->
                 StorageV3.setPin(ctx, pin)
