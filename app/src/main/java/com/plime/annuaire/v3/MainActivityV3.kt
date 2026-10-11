@@ -23,6 +23,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.plime.annuaire.BandeauFrance
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import java.io.File
 
 class MainActivityV3 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +64,9 @@ fun AnnuaireV3App() {
     /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. école) */
     var openGroup by remember { mutableStateOf<String?>(null) }
     var openRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
+
+    /* Logo .jpg affiché au-dessus du bandeau tricolore */
+    var logoVersion by remember { mutableStateOf(0) }
 
     fun saveAll() {
         StorageV3.save(ctx, annuaire)
@@ -102,6 +113,21 @@ fun AnnuaireV3App() {
             message = "Modèle créé (en-têtes actuels, sans données)."
         } catch (e: Exception) {
             message = "Échec : ${e.message ?: "erreur"}"
+        }
+    }
+
+    val logoPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) try {
+            val dest = File(ctx.filesDir, "logo.jpg")
+            ctx.contentResolver.openInputStream(uri)?.use { input ->
+                dest.outputStream().use { input.copyTo(it) }
+            }
+            logoVersion++
+            message = "Logo ajouté."
+        } catch (e: Exception) {
+            message = "Échec du logo : ${e.message ?: "erreur"}"
         }
     }
 
@@ -173,6 +199,18 @@ fun AnnuaireV3App() {
                                         Icon(Icons.Filled.Settings, "Réglages")
                                     }
                                 }
+                            )
+                            val logo = remember(logoVersion) {
+                                File(ctx.filesDir, "logo.jpg").takeIf { it.exists() }
+                                    ?.let { BitmapFactory.decodeFile(it.absolutePath)?.asImageBitmap() }
+                            }
+                            if (logo != null) Image(
+                                bitmap = logo,
+                                contentDescription = "Logo",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxWidth()
+                                    .heightIn(max = 100.dp)
+                                    .padding(horizontal = 16.dp, vertical = 4.dp)
                             )
                             BandeauFrance()
                             if (annuaire.tabs.isNotEmpty()) {
@@ -279,6 +317,10 @@ fun AnnuaireV3App() {
                 },
                 onExport = { showSettings = false; exporter.launch("annuaire-v3.xlsx") },
                 onTemplate = { showSettings = false; modeleur.launch("modele-annuaire-v3.xlsx") },
+                onLogo = {
+                    showSettings = false
+                    logoPicker.launch(arrayOf("image/*"))
+                },
                 onLock = { showSettings = false; unlocked = false },
                 onClear = {
                     annuaire = defaultSchemaV3()
@@ -300,6 +342,47 @@ fun AnnuaireV3App() {
             )
         }
     }
+}
+
+/* ==================== STYLE : encadré vert menthe sur fond blanc ==================== */
+
+private val VertMenthe = Color(0xFF3CB371)
+
+/** Encadré vert menthe, fond blanc, texte taille 16 — utilisé sur toutes les pages. */
+@Composable
+private fun Encadre(
+    onClick: (() -> Unit)? = null,
+    contenu: @Composable () -> Unit
+) {
+    val base = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp)
+    Surface(
+        modifier = if (onClick != null) base.clickable(onClick = onClick) else base,
+        shape = RoundedCornerShape(12.dp),
+        color = Color.White,
+        border = BorderStroke(2.dp, VertMenthe)
+    ) {
+        Column(Modifier.padding(12.dp)) { contenu() }
+    }
+}
+
+/* ==================== TITRES DE FICHES ==================== */
+
+/** Titre d'une fiche : « École » pour les communes, « Nom » pour les collèges,
+    « Contact » pour la circonscription — sinon 1ère valeur du groupe. */
+private fun titreDetail(tab: TabV3, row: Map<String, String>): String {
+    for (p in listOf("école", "ecole", "nom")) {
+        tab.fields.firstOrNull {
+            it.key != tab.groupBy && normV3(it.label).contains(p) &&
+                !(row[it.key] ?: "").isBlank()
+        }?.let { return row[it.key] ?: "" }
+    }
+    if (normV3(tab.name).contains("circonscription")) {
+        tab.fields.firstOrNull {
+            normV3(it.label).contains("contact") && !(row[it.key] ?: "").isBlank()
+        }?.let { return row[it.key] ?: "" }
+    }
+    (row[tab.groupBy] ?: "").takeIf { it.isNotBlank() }?.let { return it }
+    return rowTitleV3(tab, row)
 }
 
 /* ==================== NIVEAU 1 : LISTE D'UN ONGLET ==================== */
@@ -339,7 +422,7 @@ private fun sousTitreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row
     return if (vals.size > 1) vals.drop(1).take(2).joinToString(" · ") else ""
 }
 
-/** Liste : noms des groupes seulement (ou fiches si pas de regroupement). */
+/** Liste : noms seulement (communes, collèges) ou personnes (circonscription). */
 @Composable
 private fun TabScreenV3(
     tab: TabV3,
@@ -351,34 +434,60 @@ private fun TabScreenV3(
     val filtered = if (q.isBlank()) tab.rows
     else tab.rows.filter { row -> row.values.any { normV3(it).contains(q) } }
 
-    LazyColumn(Modifier.fillMaxSize()) {
-        if (tab.groupBy.isNotBlank() && filtered.isNotEmpty()) {
-            val groups = filtered.groupBy { it[tab.groupBy] ?: "" }
-                .map { (k, v) -> k.ifBlank { "(sans titre)" } to v.size }
-                .sortedBy { normV3(it.first) }
-            items(groups, key = { it.first }) { (name, count) ->
-                Column(
-                    Modifier.fillMaxWidth().clickable { onOpenGroup(name) }
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    Text(name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                    Text("$count fiche(s)", fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+    /* Champ « Circonscription élargie » éventuel */
+    val keyEl = tab.fields.firstOrNull { normV3(it.label).contains("elargie") }?.key
+    val normales = if (keyEl != null) filtered.filter { normV3(it[keyEl] ?: "") != "oui" } else filtered
+    val elargies = if (keyEl != null) filtered.filter { normV3(it[keyEl] ?: "") == "oui" } else emptyList()
+    var elargieOuvert by remember(tab.id) { mutableStateOf(false) }
+
+    LazyColumn(Modifier.fillMaxSize().padding(vertical = 4.dp)) {
+        /* Bascule « Circonscription élargie (PIAL-ER) » */
+        if (keyEl != null && elargies.isNotEmpty()) {
+            item(key = "elargie_titre") {
+                Encadre(onClick = { elargieOuvert = !elargieOuvert }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            if (elargieOuvert) Icons.Filled.ExpandMore else Icons.Filled.Add,
+                            null, tint = VertMenthe
+                        )
+                        Text(
+                            "Circonscription élargie  (${elargies.size})",
+                            fontSize = 16.sp, fontWeight = FontWeight.Bold, color = VertMenthe
+                        )
+                    }
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
-        } else {
-            items(filtered, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
-                Column(
-                    Modifier.fillMaxWidth().clickable { onOpenRow(row) }
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                ) {
-                    Text(rowTitleV3(tab, row), fontWeight = FontWeight.SemiBold)
+            if (elargieOuvert) items(elargies, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
+                Encadre(onClick = { onOpenRow(row) }) {
+                    Text(titreDetail(tab, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     val sub = rowSubtitleV3(tab, row)
                     if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+        }
+
+        if (tab.groupBy.isNotBlank() && normales.isNotEmpty()) {
+            /* Liste des noms de groupes : communes, collèges… */
+            val groups = normales.groupBy { it[tab.groupBy] ?: "" }
+                .map { (k, v) -> k.ifBlank { "(sans titre)" } to v.size }
+                .sortedBy { normV3(it.first) }
+            items(groups, key = { it.first }) { (name, count) ->
+                Encadre(onClick = { onOpenGroup(name) }) {
+                    Text(name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("$count fiche(s)", fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        } else {
+            /* Liste à plat : les personnes de la circonscription… */
+            items(normales, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
+                Encadre(onClick = { onOpenRow(row) }) {
+                    Text(titreDetail(tab, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    val sub = rowSubtitleV3(tab, row)
+                    if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
         if (filtered.isEmpty()) item {
@@ -413,36 +522,33 @@ private fun GroupDetailScreen(
             )
         }
     ) { padding ->
-        LazyColumn(Modifier.fillMaxSize().padding(padding)) {
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding).padding(vertical = 4.dp)
+        ) {
             /* Infos du groupe : maire, adresse mairie… */
-            item {
-                Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            if (rows.isNotEmpty()) item(key = "infos") {
+                Encadre {
                     champsConstants(tab, rows).forEach { (label, value) ->
-                        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                        Text(label, fontSize = 11.sp, color = VertMenthe)
                         Text(value, fontSize = 15.sp)
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(6.dp))
                     }
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
             /* Les fiches du groupe : les écoles de CETTE commune… */
             items(rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
-                Column(
-                    Modifier.fillMaxWidth().clickable { onOpenRow(row) }
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                ) {
-                    Text(titreDansGroupe(tab, rows, row), fontWeight = FontWeight.SemiBold)
+                Encadre(onClick = { onOpenRow(row) }) {
+                    Text(titreDansGroupe(tab, rows, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     val sub = sousTitreDansGroupe(tab, rows, row)
                     if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
     }
 }
 
-/* ==================== NIVEAU 3 : DÉTAIL D'UNE FICHE (ex. une école, un collège) ==================== */
+/* ==================== NIVEAU 3 : DÉTAIL D'UNE FICHE (école, collège, personne) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -454,13 +560,10 @@ private fun RowDetailScreen(
     onDelete: () -> Unit
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
-    val titre =
-        if (tab.groupBy.isNotBlank()) titreDansGroupe(tab, listOf(row), row)
-        else rowTitleV3(tab, row)
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(titre, fontWeight = FontWeight.Bold) },
+                title = { Text(titreDetail(tab, row), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
@@ -472,20 +575,22 @@ private fun RowDetailScreen(
     ) { padding ->
         Column(
             Modifier.fillMaxSize().padding(padding)
-                .verticalScroll(rememberScrollState()).padding(16.dp)
+                .verticalScroll(rememberScrollState()).padding(12.dp)
         ) {
-            var auMoinsUn = false
-            tab.fields.forEach { f ->
-                val v = row[f.key] ?: ""
-                if (v.isNotBlank()) {
-                    auMoinsUn = true
-                    Text(f.label, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
-                    Text(v, fontSize = 15.sp)
-                    Spacer(Modifier.height(10.dp))
+            Encadre {
+                var auMoinsUn = false
+                tab.fields.forEach { f ->
+                    val v = row[f.key] ?: ""
+                    if (v.isNotBlank()) {
+                        auMoinsUn = true
+                        Text(f.label, fontSize = 11.sp, color = VertMenthe)
+                        Text(v, fontSize = 16.sp)
+                        Spacer(Modifier.height(8.dp))
+                    }
                 }
+                if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
             TextButton(onClick = { confirmDelete = true }) {
                 Text("Supprimer cette fiche", color = MaterialTheme.colorScheme.error)
             }
@@ -576,7 +681,7 @@ private fun SchemaEditorScreen(
         )
         HorizontalDivider()
         Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(16.dp)) {
-            Text("ONGLETS", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Onglets", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             annuaire.tabs.forEach { t ->
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = 6.dp),
@@ -856,6 +961,7 @@ private fun SettingsDialogV3(
     onImport: () -> Unit,
     onExport: () -> Unit,
     onTemplate: () -> Unit,
+    onLogo: () -> Unit,
     onLock: () -> Unit,
     onClear: () -> Unit,
     onChangePin: (String, String) -> Unit,
@@ -868,7 +974,7 @@ private fun SettingsDialogV3(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("RÉGLAGES") },
+        title = { Text("Réglages") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
@@ -894,6 +1000,9 @@ private fun SettingsDialogV3(
                 }
                 Button(onClick = onTemplate, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("Créer le modèle d'import")
+                }
+                OutlinedButton(onClick = onLogo, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.Image, null); Spacer(Modifier.width(8.dp)); Text("Choisir le logo (image)")
                 }
                 Text(
                     "Astuce : l'import reconstruit onglets et champs d'après les en-têtes du fichier.",
