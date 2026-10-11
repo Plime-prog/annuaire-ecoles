@@ -114,9 +114,12 @@ fun defaultSchemaV3(): AnnuaireV3 {
         ).forEach { fields.add(fld(it)) }
         groupBy = fields[0].key
     }
-    fun contacts(name: String): TabV3 = TabV3(newKeyV3(), name).apply {
-        listOf("Contact", "Fonction", "Adresse", "Mail", "Tél. 1", "Tél. 2", "Observations")
+    val circo = TabV3(newKeyV3(), "Circonscription").apply {
+        /* Liste des personnes : IEN, CPC, assistantes, ERUN… */
+        listOf("Contact", "Fonction", "Adresse", "Mail", "Tél. 1", "Tél. 2",
+            "Observations", "Circonscription élargie")
             .forEach { fields.add(fld(it)) }
+        groupBy = ""   /* liste à plat des personnes, pas de regroupement */
     }
     val colleges = TabV3(newKeyV3(), "Collèges").apply {
         listOf("Nom", "Adresse", "Contact", "Fonction contact", "Adresse contact",
@@ -125,7 +128,7 @@ fun defaultSchemaV3(): AnnuaireV3 {
         groupBy = fields[0].key   /* « Nom » = nom du collège */
     }
     return AnnuaireV3(mutableListOf(
-        communes, contacts("RASED"), contacts("Circonscription"), contacts("PIAL_ER"), colleges
+        communes, circo, colleges
     ))
 }
 
