@@ -258,7 +258,45 @@ fun AnnuaireV3App() {
     }
 }
 
-/* ==================== ÉCRAN D'UN ONGLET (groupes pliables) ==================== */
+/* ==================== ÉCRAN D'UN ONGLET (affichage hiérarchique style V2) ==================== */
+
+/* Un groupe de lignes : toutes partagent la même valeur du champ groupBy. */
+private data class GroupV3(val name: String, val rows: List<MutableMap<String, String>>)
+
+/** Résumé du groupe : valeurs identiques dans toutes les lignes (ex. maire, tél. mairie). */
+private fun resumeGroupe(tab: TabV3, rows: List<Map<String, String>>): String =
+    tab.fields.mapNotNull { f ->
+        if (f.key == tab.groupBy) null
+        else {
+            val v = rows.first()[f.key] ?: ""
+            if (v.isNotBlank() && rows.all { (it[f.key] ?: "") == v }) v else null
+        }
+    }.take(3).joinToString(" · ")
+
+/** Champs qui varient à l'intérieur du groupe (ex. école, professeur). */
+private fun valeursVariables(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): List<String> =
+    tab.fields.mapNotNull { f ->
+        if (f.key == tab.groupBy) null
+        else {
+            val v = row[f.key] ?: ""
+            val varie = rows.map { it[f.key] ?: "" }.distinct().size > 1
+            if (v.isNotBlank() && varie) v else null
+        }
+    }
+
+/** Titre d'une ligne dans un groupe : 1ère valeur variable (ex. le nom de l'école). */
+private fun titreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): String =
+    valeursVariables(tab, rows, row).firstOrNull()
+        ?: tab.fields.firstNotNullOfOrNull { f ->
+            if (f.key != tab.groupBy) (row[f.key] ?: "").takeIf { it.isNotBlank() } else null
+        }
+        ?: "(sans titre)"
+
+/** Sous-titre d'une ligne dans un groupe : les 2 valeurs variables suivantes. */
+private fun sousTitreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): String {
+    val vals = valeursVariables(tab, rows, row)
+    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" · ") else ""
+}
 
 @Composable
 private fun TabScreenV3(tab: TabV3, query: String, onEdit: (MutableMap<String, String>) -> Unit) {
@@ -266,57 +304,71 @@ private fun TabScreenV3(tab: TabV3, query: String, onEdit: (MutableMap<String, S
     val filtered = if (q.isBlank()) tab.rows
     else tab.rows.filter { row -> row.values.any { normV3(it).contains(q) } }
 
-    val groups: List<Pair<String, List<MutableMap<String, String>>>> =
-        if (tab.groupBy.isNotBlank()) {
-            filtered.groupBy { it[tab.groupBy] ?: "" }
-                .toSortedMap(compareBy { normV3(it) })
-                .map { (k, v) -> (k.ifBlank { "(sans groupe)" }) to v }
-        } else listOf(("" to filtered))
-
     val expanded = remember(tab.id) { mutableStateMapOf<String, Boolean>() }
 
     LazyColumn(Modifier.fillMaxSize()) {
-        groups.forEach { (gName, rows) ->
-            if (tab.groupBy.isNotBlank()) {
-                item(key = "h_$gName") {
-                    val open = expanded[gName] ?: true
-                    Row(
+        if (tab.groupBy.isNotBlank() && filtered.isNotEmpty()) {
+            val groups = filtered.groupBy { it[tab.groupBy] ?: "" }
+                .map { (k, v) -> GroupV3(k.ifBlank { "(sans titre)" }, v) }
+                .sortedBy { normV3(it.name) }
+            var index = 0
+            groups.forEach { g ->
+                item(key = "h_${index++}") {
+                    val open = expanded[g.name] ?: true
+                    Column(
                         Modifier.fillMaxWidth()
-                            .clickable { expanded[gName] = !open }
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .clickable { expanded[g.name] = !open }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {
-                        Icon(
-                            if (open) Icons.Filled.ExpandMore else Icons.Filled.ChevronRight,
-                            null, tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            "$gName  (${rows.size})",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (open) Icons.Filled.ExpandMore else Icons.Filled.ChevronRight,
+                                null, tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "${g.name}  (${g.rows.size})",
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        val resume = resumeGroupe(tab, g.rows)
+                        if (resume.isNotBlank())
+                            Text(resume, fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 32.dp))
                     }
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+                if (open) {
+                    items(g.rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
+                        Column(
+                            Modifier.fillMaxWidth().clickable { onEdit(row) }
+                                .padding(start = 28.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+                        ) {
+                            Text(titreDansGroupe(tab, g.rows, row), fontWeight = FontWeight.SemiBold)
+                            val sub = sousTitreDansGroupe(tab, g.rows, row)
+                            if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
                 }
             }
-            val open = expanded[gName] ?: true
-            if (open || tab.groupBy.isBlank()) {
-                items(rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
-                    Column(
-                        Modifier.fillMaxWidth().clickable { onEdit(row) }.padding(
-                            horizontal = 16.dp, vertical = 10.dp
-                        )
-                    ) {
-                        Text(rowTitleV3(tab, row), fontWeight = FontWeight.SemiBold)
-                        val sub = rowSubtitleV3(tab, row)
-                        if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        } else {
+            items(filtered, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
+                Column(
+                    Modifier.fillMaxWidth().clickable { onEdit(row) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                ) {
+                    Text(rowTitleV3(tab, row), fontWeight = FontWeight.SemiBold)
+                    val sub = rowSubtitleV3(tab, row)
+                    if (sub.isNotBlank()) Text(sub, fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
-        if (groups.all { it.second.isEmpty() }) item {
+        if (filtered.isEmpty()) item {
             Text(
                 if (query.isBlank()) "Aucune ligne. Touchez ➕ pour en ajouter."
                 else "Aucun résultat.",
