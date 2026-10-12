@@ -6,6 +6,7 @@
     ["Pôle départemental (DSDEN de l'Aube)", "Ludivine CHENEL", "Psychologue conseillère technique santé mentale", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 43", "", "Organigramme DSDEN 2026-2027", "Oui"],
     ["Pôle départemental (DSDEN de l'Aube)", "Marie-Isabelle BLAIZE", "Conseillère technique de service social", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 43", "", "Organigramme DSDEN 2026-2027", "Oui"],
     ["Pôle départemental (DSDEN de l'Aube)", "Agnès LAMBERT", "Secrétariat santé et action sociales élèves", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 43", "", "Annuaire DSDEN de l'Aube", "Oui"],
+
     ["Pôle départemental (DSDEN de l'Aube)", "Charlène PRULHIÈRE", "Professeure ressource troubles du neurodéveloppement", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 46", "", "Annuaire DSDEN de l'Aube", "Oui"],
     ["Pôle départemental (DSDEN de l'Aube)", "Eloïse SOYER", "Professeure ressource troubles du neurodéveloppement", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 46", "", "Annuaire DSDEN de l'Aube", "Oui"],
     ["Pôle départemental (DSDEN de l'Aube)", "Reine-Rose FOURNEL", "Assistante sociale des personnels", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 47 32", "", "Annuaire DSDEN de l'Aube", "Oui"],
@@ -22,7 +23,9 @@
     ["Pôle départemental (DSDEN de l'Aube)", "Bettina BEAUFORT", "Gestion des accidents du travail (de A à L)", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 60", "", "Annuaire DSDEN de l'Aube", "Oui"],
     ["Pôle départemental (DSDEN de l'Aube)", "Magali REDON", "Gestion des accidents du travail (de M à Z)", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 54", "", "Annuaire DSDEN de l'Aube", "Oui"],
     ["Pôle départemental (DSDEN de l'Aube)", "Nathalie MONIOT", "Frais de déplacement", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 58", "", "Annuaire DSDEN de l'Aube", "Oui"],
-    ["Pôle départemental (DSDEN de l'Aube)", "Frédéric PAGNEY", "Chef de service DES — carte scolaire des écoles, constructions scolaires", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 24", "", "Organigramme DSDEN 2026-2027", "Oui"]],
+    ["Pôle départemental (DSDEN de l'Aube)", "Frédéric PAGNEY", "Chef de service DES — carte scolaire des écoles, constructions scolaires", "DSDEN de l'Aube, 30 rue Mitantier, 10000 Troyes", "", "03 25 76 22 24", "", "Organigramme DSDEN 2026-2027", "Oui"]
+  ],
+
   "PrincipauxColleges": [
     {"nom": "Collège Albert Camus", "contact": "Benoîte CHABIN", "fonction": "Principale", "tel2": "", "observations": "Principale : Mme Benoîte CHABIN (rentrée 2026)"},
     {"nom": "Collège Amadis Jamyn", "contact": "Frédéric GARNIER", "fonction": "Principal", "tel2": "", "observations": "Principal : M. Frédéric GARNIER (rentrée 2025)"},
@@ -48,4 +51,4 @@
     {"nom": "Collège Saint-Pierre en l'Isle", "contact": "Céline DULIN", "fonction": "Cheffe d'établissement", "tel2": "03 25 80 09 00", "observations": "Cheffe d'établissement : Mme Céline DULIN (annuaire Didec)"},
     {"nom": "Collège Henri Breton", "contact": "Nathalie JOLY", "fonction": "Cheffe d'établissement", "tel2": "", "observations": "Cheffe d'établissement : Mme Nathalie JOLY (annuaire Didec)"}
   ]
-    }
+}
