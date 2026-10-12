@@ -68,6 +68,13 @@ fun AnnuaireV3App() {
     /* Logo .jpg affiché au-dessus du bandeau tricolore */
     var logoVersion by remember { mutableStateOf(0) }
 
+    /* V5 : écran en cours ("" = normal, "dsden" = accueil DSDEN,
+       sinon = code UAI de la circonscription ouverte) */
+    var ecranV5 by remember { mutableStateOf("") }
+    var dsdenV5 by remember { mutableStateOf<DsdenV5?>(null) }
+    var circosV5 by remember { mutableStateOf(listOf<CircoV5>()) }
+
+    
     fun saveAll() {
         StorageV3.save(ctx, annuaire)
         revision++
