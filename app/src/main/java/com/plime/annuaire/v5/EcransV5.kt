@@ -109,9 +109,10 @@ fun EcranDsdenV5(
 @Composable
 fun EcranCircoV5(
     circo: CircoV5,
-        communes: List<Pair<String, List<MutableMap<String, String>>>>,  /* (commune, lignes écoles) */
+    communes: List<Pair<String, List<MutableMap<String, String>>>>,  /* (commune, lignes écoles) */
     titreEcole: (Map<String, String>) -> String,
     onOpenRow: (MutableMap<String, String>) -> Unit,
+    onBack: () -> Unit
 ) {
     var ouvertes by remember { mutableStateOf(setOf<String>()) }
     LazyColumn(Modifier.fillMaxSize()) {
