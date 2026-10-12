@@ -69,10 +69,11 @@ fun AnnuaireV5App() {
 
     /* Logo .jpg affiché au-dessus du bandeau tricolore */
     var logoVersion by remember { mutableStateOf(0) }
+    var filtreV5 by remember { mutableStateOf("dsden") }
+    var ongletV5 by remember { mutableStateOf(0) }
+    var openTabV5 by remember { mutableStateOf<TabV3?>(null) }
 
-/* V5 : ecran en cours ("" = normal, "dsden" = accueil DSDEN, sinon code circonscription) */
-    var ecranV5 by remember { mutableStateOf("") }
-    var dsdenV5 by remember { mutableStateOf<DsdenV5?>(null) }
+    /* V6 : données des circonscriptions (chips du filtre) */
     var circosV5 by remember { mutableStateOf(listOf<CircoV5>()) }
 
     fun saveAll() {
@@ -84,8 +85,11 @@ fun AnnuaireV5App() {
         annuaire = StorageV3.load(ctx)
         hasPin = StorageV3.hasPin(ctx)
         titre = StorageV3.getTitre(ctx)
-        dsdenV5 = loadDsdenV5(ctx)
         circosV5 = loadCircosV5(ctx)
+        if (annuaire.tabs.none { it.id.startsWith("v5_") }) {
+            assureTabsV5(annuaire, ctx)
+            StorageV3.save(ctx, annuaire)
+        }
     }
 
     val importer = rememberLauncherForActivityResult(
@@ -237,6 +241,11 @@ fun AnnuaireV5App() {
                     if (annuaire.tabs.isEmpty()) 0
                     else tabIndex.coerceIn(0, annuaire.tabs.size - 1)
                 val currentTab = annuaire.tabs.getOrNull(safeIndex)
+
+                val logoV5 = remember(logoVersion) {
+                    File(ctx.filesDir, "logo.jpg").takeIf { it.exists() }
+                        ?.let { BitmapFactory.decodeFile(it.absolutePath)?.asImageBitmap() }
+                }
                 Scaffold(
                     topBar = {
                         Column {
@@ -249,9 +258,6 @@ fun AnnuaireV5App() {
                                     )
                                 },
                                 actions = {
-                                    IconButton(onClick = { ecranV5 = "dsden"; openGroup = null; openRow = null }) {
-Icon(Icons.Filled.AccountBalance, "DSDEN")
-}
 IconButton(onClick = { showSchema = true }) {
                                         Icon(Icons.Filled.Science, "Éditer la structure")
                                     }
@@ -260,41 +266,14 @@ IconButton(onClick = { showSchema = true }) {
                                     }
                                 }
                             )
-                            val logo = remember(logoVersion) {
-                                File(ctx.filesDir, "logo.jpg").takeIf { it.exists() }
-                                    ?.let { BitmapFactory.decodeFile(it.absolutePath)?.asImageBitmap() }
-                            }
-                            if (logo != null) Image(
-                                bitmap = logo,
-                                contentDescription = "Logo",
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier.fillMaxWidth()
-                                    .heightIn(max = 100.dp)
-                                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                            )
                             BandeauFrance()
-                            if (annuaire.tabs.isNotEmpty()) {
-                                ScrollableTabRow(
-                                    selectedTabIndex = safeIndex,
-                                    edgePadding = 8.dp
-                                ) {
-                                    annuaire.tabs.forEachIndexed { i, tabV ->
-                                        Tab(
-                                            selected = i == safeIndex,
-                                            onClick = {
-                                                tabIndex = i; query = ""
-                                                openGroup = null; openRow = null
-                                            },
-                                            text = { Text(tabV.name, maxLines = 1) }
-                                        )
-                                    }
-                                }
-                            }
                         }
                     },
                     floatingActionButton = {
-                        if (currentTab != null) FloatingActionButton(onClick = {
-                            editTab = currentTab
+                        val og5 = ongletsDuFiltre(annuaire, filtreV5)
+                        val t5 = if (og5.isEmpty()) null else og5[ongletV5.coerceIn(0, og5.size - 1)].second
+                        if (t5 != null) FloatingActionButton(onClick = {
+                            editTab = t5
                             editOriginal = null
                             editIsNew = true
                             editRow = mutableMapOf("_id" to newKeyV3())
@@ -309,82 +288,79 @@ IconButton(onClick = { showSchema = true }) {
                             leadingIcon = { Icon(Icons.Filled.Search, null) },
                             singleLine = true
                         )
-                        key(revision, safeIndex, query) {
-                            val tabCommunes = annuaire.tabs.firstOrNull {
-                                it.name.equals("Communes", ignoreCase = true)
-                            }
-                            val circoOuverte = circosV5.firstOrNull { it.code == ecranV5 }
-                            when {
-                                /* V5 : accueil DSDEN */
-                                ecranV5 == "dsden" -> EcranDsdenV5(
-                                    dsden = dsdenV5,
-                                    circos = circosV5,
-                                    onOpenCirco = { ecranV5 = it; openGroup = null; openRow = null },
-                                    onBack = { ecranV5 = "" }
+                        key(revision, filtreV5, ongletV5, query) {
+                            val og5 = ongletsDuFiltre(annuaire, filtreV5)
+                            val t5 = if (og5.isEmpty()) null else og5[ongletV5.coerceIn(0, og5.size - 1)].second
+                            val circoOuverte = circosV5.firstOrNull { it.code == filtreV5 }
+                            val tabCommunes = annuaire.tabs.firstOrNull { it.name.equals("Communes", ignoreCase = true) }
+                            val fiche = openRow
+                            val tabFiche = openTabV5 ?: tabCommunes
+                            val grp = openGroup
+                            if (fiche != null && tabFiche != null) {
+                                RowDetailScreen(
+                                    tab = tabFiche,
+                                    row = fiche,
+                                    onBack = { openRow = null; openTabV5 = null },
+                                    onEdit = {
+                                        editTab = tabFiche
+                                        editOriginal = fiche
+                                        editIsNew = false
+                                        editRow = LinkedHashMap(fiche)
+                                    },
+                                    onDelete = {
+                                        tabFiche.rows.removeIf { it === fiche }
+                                        openRow = null; openTabV5 = null
+                                        saveAll()
+                                        message = "Fiche supprimée."
+                                    }
                                 )
-                                /* V5 : ecran d une circonscription */
-                                ecranV5 != "" && circoOuverte != null && tabCommunes != null -> {
-                                    val lignes = tabCommunes.rows.filter { circoDeRow(it) == ecranV5 }
-                                    val parCommune = lignes.groupBy { it[tabCommunes.groupBy] ?: "(sans commune)" }
-                                        .toSortedMap()
-                                    EcranCircoV5(
-                                        circo = circoOuverte,
-                                        communes = parCommune.map { it.key to it.value },
-                                        titreEcole = { row -> rowTitleV3(tabCommunes, row) },
-                                        onOpenRow = { openRow = it },
-                                        onBack = { ecranV5 = "" }
-                                    )
-                                }
-                                ecranV5 != "" -> { ecranV5 = "" }
-                                else -> if (currentTab != null) {
-                                val rowOuverte = openRow
-                                val groupeOuvert = openGroup
-                                when {
-                                    /* Niveau 3 : détail d'une fiche (école, collège…) */
-                                    rowOuverte != null -> RowDetailScreen(
-                                        tab = currentTab, row = rowOuverte,
-                                        onBack = { openRow = null },
-                                        onEdit = {
-                                            editTab = currentTab
-                                            editOriginal = rowOuverte
-                                            editIsNew = false
-                                            editRow = LinkedHashMap(rowOuverte)
-                                        },
-                                        onDelete = {
-                                            currentTab.rows.removeIf { it === rowOuverte }
-                                            openRow = null
-                                            saveAll()
-                                            message = "Fiche supprimée."
-                                        }
-                                    )
-                                    /* Niveau 2 : détail d'un groupe (commune…) */
-                                    groupeOuvert != null -> GroupDetailScreen(
-                                        tab = currentTab,
-                                        groupName = groupeOuvert,
-                                        rows = currentTab.rows.filter {
-                                            (it[currentTab.groupBy] ?: "") == groupeOuvert
-                                        },
-                                        onBack = { openGroup = null },
-                                        onOpenRow = { openRow = it }
-                                    )
-                                    /* Niveau 1 : liste des noms */
-                                    else -> TabScreenV3(
-                                        tab = currentTab, query = query,
-                                        onOpenGroup = { name ->
-                                            val rows = currentTab.rows.filter {
-                                                (it[currentTab.groupBy] ?: "") == name
+                            } else if (grp != null && t5 != null) {
+                                GroupDetailScreen(
+                                    tab = t5,
+                                    groupName = grp,
+                                    rows = t5.rows.filter { (it[t5.groupBy] ?: "") == grp },
+                                    onBack = { openGroup = null },
+                                    onOpenRow = { openTabV5 = t5; openRow = it }
+                                )
+                            } else {
+                                EcranAccueilV5(
+                                    logo = logoV5,
+                                    titre = if (filtreV5 == "dsden") "DSDEN de l'Aube" else (circoOuverte?.nom ?: filtreV5),
+                                    sousTitre = if (filtreV5 == "dsden") "Direction des services départementaux de l'Éducation nationale" else "Circonscription d'inspection du 1er degré",
+                                    filtre = filtreV5,
+                                    circos = circosV5,
+                                    onFiltre = { filtreV5 = it; ongletV5 = 0; openGroup = null; openRow = null; openTabV5 = null },
+                                    onglets = og5.map { it.first },
+                                    ongletIndex = ongletV5.coerceIn(0, (og5.size - 1).coerceAtLeast(0)),
+                                    onOnglet = { ongletV5 = it; openGroup = null; openRow = null; openTabV5 = null },
+                                    bas = {
+                                        when {
+                                            t5 != null -> TabScreenV3(
+                                                tab = t5, query = query,
+                                                onOpenGroup = { name ->
+                                                    val rows5 = t5.rows.filter { (it[t5.groupBy] ?: "") == name }
+                                                    if (rows5.size == 1) openRow = rows5[0] else openGroup = name
+                                                },
+                                                onOpenRow = { openTabV5 = t5; openRow = it }
+                                            )
+                                            filtreV5 == "dsden" -> Text("Aucun onglet DSDEN généré. Videz les données de l'application puis relancez.", Modifier.padding(16.dp), color = Color(0xFFB3261E))
+                                            tabCommunes != null -> {
+                                                val lignes = tabCommunes.rows.filter { circoDeRow(it) == filtreV5 }
+                                                if (lignes.isEmpty()) {
+                                                    Text("Aucune école rattachée à cette circonscription.", Modifier.padding(16.dp))
+                                                } else {
+                                                    val parCommune = lignes.groupBy { it[tabCommunes.groupBy] ?: "(sans commune)" }.toSortedMap()
+                                                    ListeEcolesParCommuneV5(
+                                                        communes = parCommune.map { it.key to it.value },
+                                                        titreEcole = { row -> titreDetail(tabCommunes, row) },
+                                                        onOpenRow = { openTabV5 = tabCommunes; openRow = it }
+                                                    )
+                                                }
                                             }
-                                            /* Un collège = 1 seule fiche : on va directement au détail */
-                                            if (rows.size == 1) openRow = rows[0]
-                                            else openGroup = name
-                                        },
-                                        onOpenRow = { openRow = it }
-                                    )
-                                }
-                            } else Text(
-                                "Aucun onglet. Touchez 🧪 pour créer la structure.",
-                                Modifier.padding(16.dp)
-                            )
+                                            else -> Text("Aucune école rattachée à cette circonscription.", Modifier.padding(16.dp))
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
