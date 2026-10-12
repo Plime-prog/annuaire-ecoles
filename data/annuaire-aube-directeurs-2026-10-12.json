@@ -1,5 +1,5 @@
 {
-  "meta": {"maj": "2026-10-12", "sources": "Portail famille Troyes ; villes de Romilly-sur-Seine, Pont-Sainte-Marie, Bar-sur-Aube ; annuaire Didec (enseignement catholique) ; annuaire Fabert"},
+  "meta": {"maj": "2026-10-12", "sources": "Portail famille Troyes ; villes de Romilly-sur-Seine, Pont-Sainte-Marie, Bar-sur-Aube, Arcis-sur-Aube, Verrières, Torvilliers, Mussy-sur-Seine ; annuaire des écoles municipales de La Chapelle-Saint-Luc ; annuaire Didec (enseignement catholique)"},
   "directeurs": {
     "0100567M": ["Atman TAZARHINE", "03 25 43 04 20"],
     "0100562G": ["Ludivine ROUYER-VISBECQ", "03 25 80 59 38"],
@@ -53,6 +53,25 @@
     "0100747H": ["Delphine FAYS", "03 25 27 09 94"],
     "0100748J": ["Kathy THOREY", "03 25 29 82 70"],
     "0100750L": ["Nathalie CANEPARO", "03 25 40 45 73"],
-    "0100754R": ["Amélie JOURNET", ""]
+    "0100754R": ["Amélie JOURNET", ""],
+    "0100679J": ["Richard MARTY", "03 25 74 62 29"],
+    "0100910K": ["Fabiola SANCHEZ", "03 25 74 64 77"],
+    "0100942V": ["Marylise VEISEMBURGER", "03 25 80 16 00"],
+    "0100826U": ["Angélique ROCHER", "03 25 79 32 80"],
+    "0100769G": ["Guillaume BUMANN", "03 25 45 47 58"],
+    "0100117Y": ["Aurore VAILLANT", "03 25 37 82 20"],
+    "0100119A": ["Sylvia DRION", "03 25 37 97 60"],
+    "0100615P": ["Cécile GUIBERTEAU", "03 25 41 91 82"],
+    "0100850V": ["Isabelle PERRIN", ""],
+    "0100941U": ["Thierry CHAUFFETON", "03 25 74 29 23"],
+    "0100776P": ["Isabelle TRIPIER", "03 25 21 56 06"],
+    "0100529W": ["Séverine HOHLER", "03 25 75 31 90"],
+    "0100691X": ["Céline VIRY", "03 25 76 51 63"],
+    "0100855A": ["Nathalie ROUQUET", "03 25 81 25 17"],
+    "0100452M": ["Najia SEURE", ""],
+    "0100370Y": ["Marine MAILLARD", "03 25 38 43 92"],
+    "0100402H": ["Mme BRIARD", "03 25 37 40 59"],
+    "0100610J": ["Virginie DUTHEIL", ""],
+    "0100727L": ["Mme GARNERIN", ""]
   }
 }
