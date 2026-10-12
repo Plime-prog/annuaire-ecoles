@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 """Génère annuaire-aube-2026-10-10.xlsx à partir des données existantes
 (data/annuaire-aube-2026-10-10.json) enrichies de la liste des personnels
-(data/annuaire-aube-personnels-2026-10-11.json).
+(data/annuaire-aube-personnels-2026-10-11.json) et des directeurs d'écoles
+(data/annuaire-aube-directeurs-2026-10-12.json).
 Format V3 : 3 feuilles (Communes, Circonscription, Collèges), inlineStr.
-- Circonscription : personnes par circonscription (regroupées dans l'application
-  par la colonne « Circonscription »).
-- Collèges : la liste existante est enrichie des principaux et principaux
-  adjoints trouvés en open data (champ « PrincipauxColleges » du fichier
-  des personnels).
+- Communes : colonnes « Directeur » et « Tél. directeur » remplies par UAI.
+- Circonscription : personnes par circonscription.
+- Collèges : liste enrichie des principaux et adjoints.
 Bibliothèque standard uniquement. Usage : python3 scripts/gen_annuaire_xlsx.py
 """
 import json
@@ -18,6 +17,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 DATA = REPO / "data" / "annuaire-aube-2026-10-10.json"
 PERS = REPO / "data" / "annuaire-aube-personnels-2026-10-11.json"
+DIREC = REPO / "data" / "annuaire-aube-directeurs-2026-10-12.json"
 OUT = REPO / "annuaire-aube-2026-10-10.xlsx"
 
 H_COMMUNES = [
@@ -66,6 +66,18 @@ def sheet_xml(rows):
     return "".join(parts)
 
 
+def applique_directeurs(communes, directeurs):
+    """Remplit les colonnes Directeur (15) et Tél. directeur (16) par UAI."""
+    n = 0
+    for row in communes:
+        uai = str(row[11]).strip().upper()
+        if uai in directeurs and not str(row[15]).strip():
+            row[15] = directeurs[uai][0]
+            row[16] = directeurs[uai][1]
+            n += 1
+    return n
+
+
 def enrichit_colleges(colleges, principaux):
     """Ajoute principal / principal adjoint aux lignes des collèges."""
     resultats = []
@@ -111,6 +123,14 @@ def main():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     sheets = data["sheets"]
     pers = json.loads(PERS.read_text(encoding="utf-8"))
+
+    directeurs = {}
+    nb_dir = 0
+    if DIREC.exists():
+        direc = json.loads(DIREC.read_text(encoding="utf-8"))
+        directeurs = direc.get("directeurs", {})
+        nb_dir = applique_directeurs(sheets["Communes"], directeurs)
+        print("Directeurs renseignés :", nb_dir)
 
     headers = {"Communes": H_COMMUNES, "Collèges": H_COLLEGES}
     headers["Circonscription"] = pers["headers"]
