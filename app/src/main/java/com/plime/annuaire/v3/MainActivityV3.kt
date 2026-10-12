@@ -131,24 +131,46 @@ fun AnnuaireV3App() {
         }
     }
 
-    /* Thème : fond blanc partout, écriture noire ; accents vert menthe. */
+    /* Thème : fond blanc partout, écriture noire, accents vert menthe.
+       TOUTES les cases de couleur sont remplies : plus aucune couleur
+       par défaut (rose ou violet) de Material 3 ne peut apparaître,
+       y compris dans les boîtes de dialogue (Réglages, PIN…). */
     MaterialTheme(
         colorScheme = lightColorScheme(
             background = Color.White,
-            surface = Color.White,
-            surfaceVariant = Color.White,
-            surfaceTint = Color.White,
-            surfaceContainer = Color.White,
-            surfaceContainerLow = Color.White,
             onBackground = Color.Black,
+            surface = Color.White,
             onSurface = Color.Black,
+            surfaceVariant = Color.White,
             onSurfaceVariant = Color(0xFF333333),
+            surfaceTint = Color.White,
+            surfaceDim = Color.White,
+            surfaceBright = Color.White,
+            surfaceContainerLowest = Color.White,
+            surfaceContainerLow = Color.White,
+            surfaceContainer = Color.White,
+            surfaceContainerHigh = Color.White,
+            surfaceContainerHighest = Color.White,
+            inverseSurface = Color(0xFF222222),
+            inverseOnSurface = Color.White,
+            inversePrimary = VertMenthe,
             primary = VertMenthe,
             onPrimary = Color.White,
             primaryContainer = Color.White,
             onPrimaryContainer = Color.Black,
             secondary = VertMenthe,
             onSecondary = Color.White,
+            secondaryContainer = Color.White,
+            onSecondaryContainer = Color.Black,
+            tertiary = VertMenthe,
+            onTertiary = Color.White,
+            tertiaryContainer = Color.White,
+            onTertiaryContainer = Color.Black,
+            error = Color(0xFFB3261E),
+            onError = Color.White,
+            errorContainer = Color.White,
+            onErrorContainer = Color(0xFFB3261E),
+            outline = Color(0xFF777777),
             outlineVariant = Color(0xFFDDDDDD)
         )
     ) {
@@ -210,7 +232,13 @@ fun AnnuaireV3App() {
                     topBar = {
                         Column {
                             TopAppBar(
-                                title = { Text(titre, fontWeight = FontWeight.Bold) },
+                                title = {
+                                    Text(
+                                        titre,
+                                        fontWeight = FontWeight.Bold,
+                                        color = VertMenthe
+                                    )
+                                },
                                 actions = {
                                     IconButton(onClick = { showSchema = true }) {
                                         Icon(Icons.Filled.Science, "Éditer la structure")
@@ -535,7 +563,13 @@ private fun GroupDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(groupName, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        groupName,
+                        fontWeight = FontWeight.Bold,
+                        color = VertMenthe
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 }
@@ -583,7 +617,13 @@ private fun RowDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(titreDetail(tab, row), fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        titreDetail(tab, row),
+                        fontWeight = FontWeight.Bold,
+                        color = VertMenthe
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
@@ -639,7 +679,12 @@ private fun EntityDialogV3(
     val scroll = rememberScrollState()
     AlertDialog(
         onDismissRequest = onCancel,
-        title = { Text(if (isNew) "Nouvelle ligne — ${tab.name}" else rowTitleV3(tab, values)) },
+        title = {
+            Text(
+                if (isNew) "Nouvelle ligne — ${tab.name}" else rowTitleV3(tab, values),
+                color = VertMenthe
+            )
+        },
         text = {
             Column(Modifier.verticalScroll(scroll)) {
                 tab.fields.forEach { f ->
@@ -689,7 +734,13 @@ private fun SchemaEditorScreen(
     val scroll = rememberScrollState()
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Structure", fontWeight = FontWeight.Bold) },
+            title = {
+                Text(
+                    "Structure",
+                    fontWeight = FontWeight.Bold,
+                    color = VertMenthe
+                )
+            },
             navigationIcon = {
                 IconButton(onClick = onDone) { Icon(Icons.Filled.Check, "Terminé") }
             },
@@ -848,7 +899,7 @@ private fun SchemaEditorScreen(
         val t = pickGroup!!
         AlertDialog(
             onDismissRequest = { pickGroup = null },
-            title = { Text("Regrouper les lignes par") },
+            title = { Text("Regrouper les lignes par", color = VertMenthe) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     TextButton(onClick = { t.groupBy = ""; pickGroup = null }) {
@@ -878,7 +929,7 @@ private fun TextPromptDialog(title: String, initial: String, onOk: (String) -> U
     var s by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = { onOk("") },
-        title = { Text(title) },
+        title = { Text(title, color = VertMenthe) },
         text = {
             OutlinedTextField(
                 value = s, onValueChange = { s = it },
@@ -900,7 +951,7 @@ private fun ConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Confirmer") },
+        title = { Text("Confirmer", color = VertMenthe) },
         text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
@@ -918,33 +969,41 @@ private fun PinDefineScreen(onDone: (String) -> Unit) {
     var pin by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     Column(
-        Modifier.fillMaxSize().padding(32.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Définissez votre code PIN", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(24.dp))
-        OutlinedTextField(
-            value = pin, onValueChange = { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
-            label = { Text("Code PIN") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true
+        Text(
+            "Définissez votre code PIN",
+            fontSize = 18.sp, fontWeight = FontWeight.Bold, color = VertMenthe
         )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = confirm, onValueChange = { if (it.length <= 8 && it.all(Char::isDigit)) confirm = it },
-            label = { Text("Confirmation") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true,
-            isError = confirm.isNotBlank() && confirm != pin
-        )
-        if (confirm.isNotBlank() && confirm != pin)
-            Text("Les codes ne correspondent pas.", color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
         Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = { if (pin.length >= 4 && pin == confirm) onDone(pin) },
-            enabled = pin.length >= 4 && pin == confirm
-        ) { Text("Valider") }
+        Encadre {
+            OutlinedTextField(
+                value = pin, onValueChange = { if (it.length <= 8 && it.all(Char::isDigit)) pin = it },
+                label = { Text("Code PIN") },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = confirm, onValueChange = { if (it.length <= 8 && it.all(Char::isDigit)) confirm = it },
+                label = { Text("Confirmation") },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                isError = confirm.isNotBlank() && confirm != pin,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (confirm.isNotBlank() && confirm != pin)
+                Text("Les codes ne correspondent pas.", color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { if (pin.length >= 4 && pin == confirm) onDone(pin) },
+                enabled = pin.length >= 4 && pin == confirm,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Valider") }
+        }
     }
 }
 
@@ -952,22 +1011,28 @@ private fun PinDefineScreen(onDone: (String) -> Unit) {
 private fun PinEnterScreen(onSuccess: (String) -> Unit) {
     var pin by remember { mutableStateOf("") }
     Column(
-        Modifier.fillMaxSize().padding(32.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Filled.Lock, null, Modifier.size(48.dp))
+        Icon(Icons.Filled.Lock, null, Modifier.size(48.dp), tint = VertMenthe)
+        Spacer(Modifier.height(8.dp))
+        Text("Entrez votre code PIN", fontSize = 16.sp, color = VertMenthe)
         Spacer(Modifier.height(16.dp))
-        Text("Entrez votre code PIN", fontSize = 16.sp)
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = pin, onValueChange = { pin = it },
-            label = { Text("Code PIN") },
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true
-        )
-        Spacer(Modifier.height(16.dp))
-        Button(onClick = { if (pin.isNotBlank()) onSuccess(pin) }) { Text("Déverrouiller") }
+        Encadre {
+            OutlinedTextField(
+                value = pin, onValueChange = { pin = it },
+                label = { Text("Code PIN") },
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = { if (pin.isNotBlank()) onSuccess(pin) },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Déverrouiller") }
+        }
     }
 }
 
@@ -994,7 +1059,7 @@ private fun SettingsDialogV3(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Réglages") },
+        title = { Text("Réglages", color = VertMenthe) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
