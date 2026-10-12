@@ -1,26 +1,31 @@
 package com.plime.annuaire.v5
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val VertMenthe = Color(0xFF3CB371)
+
+/** Nom affiché dans le filtre : « Troyes », « Bar-sur-Aube »… */
+fun nomCourt(nomCirco: String): String = nomCirco.removePrefix("Circonscription de ")
 
 @Composable
 private fun EncadreV5(
@@ -37,125 +42,111 @@ private fun EncadreV5(
 }
 
 @Composable
-private fun TitreSection(texte: String) {
-    Text(
-        texte, color = VertMenthe, fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        modifier = Modifier.padding(start = 16.dp, top = 14.dp, bottom = 2.dp)
-    )
-}
-
-@Composable
-private fun CarteContact(c: ContactV5, onClickTel: (() -> Unit)? = null) {
-    EncadreV5 {
-        Text(c.nom, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-        if (c.fonction.isNotBlank()) Text(c.fonction, fontSize = 13.sp, color = Color(0xFF444444))
-        if (c.tel.isNotBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Call, null, tint = VertMenthe, modifier = Modifier.padding(start = 4.dp))
-            Text("  ${c.tel}", fontSize = 13.sp, color = VertMenthe)
-        }
-        if (c.mail.isNotBlank()) Text("✉ ${c.mail}", fontSize = 12.sp, color = Color(0xFF666666))
-        if (c.note.isNotBlank()) Text(c.note, fontSize = 12.sp, color = Color(0xFF888888))
+private fun ChipFiltre(texte: String, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (selected) VertMenthe else Color.White,
+        border = BorderStroke(2.dp, VertMenthe)
+    ) {
+        Text(
+            texte,
+            Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+            color = if (selected) Color.White else Color.Black,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 14.sp
+        )
     }
 }
 
-/* ==================== ÉCRAN 1 : DSDEN ==================== */
+/* ==================== ÉCRAN D'ACCUEIL ==================== */
 
+/**
+ * Accueil coupé en deux : haut = logo + filtre DSDEN/circos,
+ * ligne de séparation, bas = onglets contextuels + contenu.
+ */
 @Composable
-fun EcranDsdenV5(
-    dsden: DsdenV5?,
+fun EcranAccueilV5(
+    logo: ImageBitmap?,
+    titre: String,
+    sousTitre: String,
+    filtre: String,
     circos: List<CircoV5>,
-    onOpenCirco: (String) -> Unit,
-    onBack: () -> Unit
+    onFiltre: (String) -> Unit,
+    onglets: List<String>,
+    ongletIndex: Int,
+    onOnglet: (Int) -> Unit,
+    bas: @Composable () -> Unit
 ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour", tint = VertMenthe) }
-            Text("DSDEN de l'Aube", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = VertMenthe)
-        }
-        if (dsden == null) {
-            Text(
-                "Fichier aube-dsden.json introuvable dans les assets.",
-                Modifier.padding(16.dp), color = Color(0xFFB3261E)
+    Column(Modifier.fillMaxSize().background(Color.White)) {
+        /* ---- MOITIÉ HAUTE : logo + filtre ---- */
+        Column(
+            Modifier.fillMaxWidth().weight(0.32f),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (logo != null) Image(
+                bitmap = logo,
+                contentDescription = "Logo",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxWidth(0.55f)
+                    .heightIn(max = 110.dp)
+                    .padding(top = 10.dp)
             )
-            return@Column
+            Text(
+                titre, fontWeight = FontWeight.Bold, fontSize = 21.sp,
+                color = VertMenthe, modifier = Modifier.padding(top = 6.dp)
+            )
+            Text(sousTitre, fontSize = 13.sp, color = Color(0xFF666666))
         }
-        TitreSection("Coordonnées")
-        CarteContact(ContactV5(dsden.coordonnees.nom, dsden.coordonnees.fonction, dsden.coordonnees.tel, dsden.coordonnees.mail))
-        TitreSection("Direction académique")
-        dsden.direction.forEach { CarteContact(it) }
-        if (dsden.secretariat.isNotEmpty()) {
-            TitreSection("Secrétariat")
-            dsden.secretariat.forEach { CarteContact(it) }
-        }
-        dsden.bureaux.forEach { b ->
-            TitreSection(b.nom)
-            b.membres.forEach { CarteContact(it) }
-        }
-        TitreSection("Les ${circos.size} circonscriptions du 1er degré")
-        circos.forEach { c ->
-            EncadreV5(onClick = { onOpenCirco(c.code) }) {
-                Text(c.nom, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("IEN : ${c.ien}", fontSize = 13.sp, color = Color(0xFF444444))
-                Text(c.tel, fontSize = 12.sp, color = Color(0xFF666666))
+        /* ---- Filtres : DSDEN puis les 7 circonscriptions ---- */
+        LazyRow(
+            Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            item { ChipFiltre("🏛 DSDEN", filtre == "dsden") { onFiltre("dsden") } }
+            items(circos) { c ->
+                ChipFiltre(nomCourt(c.nom), filtre == c.code) { onFiltre(c.code) }
             }
         }
-        Spacer(Modifier.height(24.dp))
+        HorizontalDivider(color = VertMenthe, thickness = 2.dp)
+        /* ---- MOITIÉ BASSE : onglets + contenu ---- */
+        if (onglets.isNotEmpty()) {
+            ScrollableTabRow(
+                selectedTabIndex = ongletIndex.coerceIn(0, onglets.size - 1),
+                containerColor = Color.White,
+                contentColor = Color.Black,
+                edgePadding = 8.dp
+            ) {
+                onglets.forEachIndexed { i, n ->
+                    Tab(
+                        selected = i == ongletIndex,
+                        onClick = { onOnglet(i) },
+                        text = {
+                            Text(
+                                n, maxLines = 1,
+                                color = if (i == ongletIndex) VertMenthe else Color.Black
+                            )
+                        }
+                    )
+                }
+            }
+        }
+        Box(Modifier.weight(0.68f)) { bas() }
     }
 }
 
-/* ==================== ÉCRAN 2 : CIRCONSCRIPTION ==================== */
+/* ==================== ÉCOLES DE LA CIRCO (communes dépliantes) ==================== */
 
 @Composable
-fun EcranCircoV5(
-    circo: CircoV5,
-    communes: List<Pair<String, List<MutableMap<String, String>>>>,  /* (commune, lignes écoles) */
+fun ListeEcolesParCommuneV5(
+    communes: List<Pair<String, List<MutableMap<String, String>>>>,
     titreEcole: (Map<String, String>) -> String,
-    onOpenRow: (MutableMap<String, String>) -> Unit,
-    onBack: () -> Unit
+    onOpenRow: (MutableMap<String, String>) -> Unit
 ) {
     var ouvertes by remember { mutableStateOf(setOf<String>()) }
     LazyColumn(Modifier.fillMaxSize()) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour", tint = VertMenthe) }
-                Column {
-                    Text(circo.nom, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = VertMenthe)
-                    Text("${communes.sumOf { it.second.size }} école(s) · ${communes.size} commune(s)", fontSize = 12.sp, color = Color(0xFF666666))
-                }
-            }
-        }
-        item {
-            TitreSection("Inspection")
-            EncadreV5 {
-                Text(circo.ien, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("Inspecteur de l'Éducation nationale", fontSize = 13.sp, color = Color(0xFF444444))
-                Text(circo.adresse, fontSize = 12.sp, color = Color(0xFF666666))
-                Text(circo.tel, fontSize = 12.sp, color = Color(0xFF666666))
-                Text("✉ ${circo.mail}", fontSize = 12.sp, color = Color(0xFF666666))
-            }
-        }
-        if (circo.assistante.isNotBlank()) item {
-            TitreSection("Assistante")
-            EncadreV5 { Text(circo.assistante, fontWeight = FontWeight.Bold) }
-        }
-        if (circo.cpc.isNotEmpty()) item { TitreSection("CPC") }
-        items(circo.cpc) { CarteContact(it) }
-        if (circo.erun.isNotEmpty()) item { TitreSection("ERUN") }
-        items(circo.erun) { CarteContact(it) }
-        if (circo.rased.isNotEmpty()) item { TitreSection("RASED") }
-        items(circo.rased) { CarteContact(it) }
-        if (circo.pialEr.isNotEmpty()) item { TitreSection("PIAL-ER") }
-        items(circo.pialEr) { CarteContact(it) }
-        if (circo.colleges.isNotEmpty()) {
-            item {
-                TitreSection("Collèges partenaires")
-                EncadreV5 {
-                    circo.colleges.forEach { Text("• $it", fontSize = 14.sp) }
-                }
-            }
-        }
-        item { TitreSection("Écoles de la circonscription") }
         communes.forEach { (nomCommune, ecoles) ->
             item {
                 val open = nomCommune in ouvertes
@@ -163,7 +154,10 @@ fun EcranCircoV5(
                     ouvertes = if (open) ouvertes - nomCommune else ouvertes + nomCommune
                 }) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(nomCommune, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                        Text(
+                            nomCommune, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                            modifier = Modifier.weight(1f)
+                        )
                         Text("${ecoles.size} école(s)", fontSize = 12.sp, color = Color(0xFF666666))
                         Icon(
                             if (open) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
