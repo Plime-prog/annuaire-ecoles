@@ -86,9 +86,15 @@ fun AnnuaireV5App() {
         hasPin = StorageV3.hasPin(ctx)
         titre = StorageV3.getTitre(ctx)
         circosV5 = loadCircosV5(ctx)
+    }
+
+    /* V6 : les onglets v5 sont régénérés dès qu'ils manquent — y compris
+       après un import Excel, « Tout effacer » ou « Défauts ». */
+    LaunchedEffect(annuaire) {
         if (annuaire.tabs.none { it.id.startsWith("v5_") }) {
             assureTabsV5(annuaire, ctx)
             StorageV3.save(ctx, annuaire)
+            revision++
         }
     }
 
