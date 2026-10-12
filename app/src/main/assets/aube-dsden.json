@@ -1,0 +1,44 @@
+{
+  "meta": {"maj": "2026-10-12", "sources": "Académie de Reims (organisation DSDEN, oct. 2026) ; annuaire service-public.gouv.fr"},
+  "coordonnees": {"nom": "DSDEN de l'Aube", "adresse": "30 rue Mitantier, BP 371, 10025 Troyes Cédex", "tel": "03 25 76 22 22", "mail": "contact.dsden10@ac-reims.fr"},
+  "direction": [
+    {"nom": "Damien PETITJEAN", "fonction": "Inspecteur d'académie, directeur académique des services de l'Éducation nationale (IA-DASEN)", "tel": "03 25 76 22 22", "mail": ""},
+    {"nom": "Céline COTON", "fonction": "Inspectrice de l'Éducation nationale adjointe au DASEN (A-DASEN)", "tel": "", "mail": ""},
+    {"nom": "Mario HEIL", "fonction": "Secrétaire général (depuis le 15/09/2026)", "tel": "", "mail": ""},
+    {"nom": "Rémi BOULENGER", "fonction": "Chef de cabinet", "tel": "03 25 76 22 29", "mail": ""}
+  ],
+  "secretariat": [
+    {"nom": "Bettina BEAUFORT", "fonction": "Secrétaire de direction", "tel": "03 25 76 22 31", "mail": ""},
+    {"nom": "Florence CREVOT", "fonction": "Secrétaire de direction", "tel": "03 25 76 22 30", "mail": ""}
+  ],
+  "bureaux": [
+    {"nom": "Communication", "membres": [{"nom": "Marie BASCOULERGUE", "fonction": "Chargée de communication et des relations presse", "tel": "03 25 76 22 28", "mail": ""}]},
+    {"nom": "Information et orientation", "membres": [
+      {"nom": "Sandrine PUPPINI", "fonction": "IEN - Information et Orientation", "tel": "03 25 76 22 27", "mail": ""},
+      {"nom": "CIO Troyes", "fonction": "2 mail des Charmilles, 10000 Troyes", "tel": "03 25 76 06 30", "mail": "cio-troyes@ac-reims.fr"},
+      {"nom": "CIO Romilly-sur-Seine / Sézanne", "fonction": "46 avenue du Château, 10100 Romilly-sur-Seine", "tel": "03 25 24 77 54", "mail": "cio-romilly@ac-reims.fr"}
+    ]},
+    {"nom": "Enseignement technique", "membres": [{"nom": "Amir EL ABDADI GODARD", "fonction": "IEN - Enseignement technique", "tel": "", "mail": ""}]},
+    {"nom": "Pôle École inclusive (ASH)", "membres": [
+      {"nom": "Peggy MORICELLY", "fonction": "IEN-ASH", "tel": "03 25 76 22 45", "mail": ""},
+      {"nom": "Céline MERCIER", "fonction": "Secrétaire", "tel": "03 25 76 22 45", "mail": ""}
+    ]},
+    {"nom": "JESVA (Jeunesse, Engagement, Sports, Vie associative)", "membres": [
+      {"nom": "Christophe SCHULER", "fonction": "Chef du service départemental JESVA", "tel": "", "mail": ""},
+      {"nom": "Maria BOUR", "fonction": "Adjointe administrative", "tel": "03 51 59 10 89", "mail": ""}
+    ]},
+    {"nom": "Division des établissements et de la scolarité", "membres": [{"nom": "Frédéric PAGNEY", "fonction": "Chef de division", "tel": "03 25 76 22 24", "mail": ""}]},
+    {"nom": "Division des affaires générales et financières", "membres": [{"nom": "Valérie LORNE", "fonction": "Chef de division", "tel": "03 25 76 22 55", "mail": ""}]},
+    {"nom": "Division des personnels et des enseignants", "membres": [{"nom": "", "fonction": "Chef de division", "tel": "03 25 76 22 53", "mail": ""}]},
+    {"nom": "SASE (Santé, action sociale des élèves)", "membres": [
+      {"nom": "Agnès LAMBERT", "fonction": "Secrétaire SASE", "tel": "03 25 76 22 43", "mail": ""},
+      {"nom": "Ludivine CHENEL", "fonction": "Conseillère technique de service social", "tel": "03 25 76 22 40", "mail": ""},
+      {"nom": "Marie-Isabelle BLAIZE", "fonction": "Conseillère technique adjointe de service social", "tel": "03 25 76 22 42", "mail": ""},
+      {"nom": "Farida HACHICHI", "fonction": "Psychologue conseillère technique en santé mentale", "tel": "03 25 76 22 44", "mail": ""}
+    ]},
+    {"nom": "Santé sociale des personnels", "membres": [
+      {"nom": "Reine-Rose FOURNEL", "fonction": "Assistante sociale des personnels", "tel": "03 25 76 47 32", "mail": ""},
+      {"nom": "Hélène BONNET", "fonction": "Infirmière en santé au travail", "tel": "03 51 59 10 43", "mail": ""}
+    ]}
+  ]
+}
