@@ -95,12 +95,6 @@ fun EcranAccueilV5(
                 selectedTabIndex = ongletIndex.coerceIn(0, onglets.size - 1),
                 containerColor = Color.White,
                 contentColor = GrisTexte,
-                indicator = { positions ->
-                    TabRowDefaults.Indicator(
-                        Modifier.tabIndicatorOffset(positions[ongletIndex.coerceIn(0, onglets.size - 1)]),
-                        color = VertMenthe, height = 3.dp
-                    )
-                },
                 edgePadding = 8.dp
             ) {
                 onglets.forEachIndexed { i, n ->
