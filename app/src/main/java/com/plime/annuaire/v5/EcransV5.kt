@@ -1,7 +1,6 @@
 package com.plime.annuaire.v5
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,8 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,14 +59,13 @@ private fun ChipFiltre(texte: String, selected: Boolean, onClick: () -> Unit) {
 /* ==================== ÉCRAN D'ACCUEIL ==================== */
 
 /**
- * Accueil coupé en deux : haut = logo + filtre DSDEN/circos,
- * ligne de séparation, bas = onglets contextuels + contenu.
+ * Accueil v6 : plus de logo ni de grand titre dans la page (le logo est
+ * dans la barre du haut). Les chips de filtre sont collées tout en haut,
+ * la ligne verte, puis les onglets contextuels — le bloc du bas occupe
+ * TOUTE la place restante.
  */
 @Composable
 fun EcranAccueilV5(
-    logo: ImageBitmap?,
-    titre: String,
-    sousTitre: String,
     filtre: String,
     circos: List<CircoV5>,
     onFiltre: (String) -> Unit,
@@ -79,29 +75,9 @@ fun EcranAccueilV5(
     bas: @Composable () -> Unit
 ) {
     Column(Modifier.fillMaxSize().background(Color.White)) {
-        /* ---- MOITIÉ HAUTE : logo + filtre ---- */
-        Column(
-            Modifier.fillMaxWidth().weight(0.32f),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (logo != null) Image(
-                bitmap = logo,
-                contentDescription = "Logo",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth(0.55f)
-                    .heightIn(max = 110.dp)
-                    .padding(top = 10.dp)
-            )
-            Text(
-                titre, fontWeight = FontWeight.Bold, fontSize = 21.sp,
-                color = VertMenthe, modifier = Modifier.padding(top = 6.dp)
-            )
-            Text(sousTitre, fontSize = 13.sp, color = Color(0xFF666666))
-        }
-        /* ---- Filtres : DSDEN puis les 7 circonscriptions ---- */
+        /* ---- Filtres collés en haut : DSDEN puis les 7 circonscriptions ---- */
         LazyRow(
-            Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 12.dp)
         ) {
@@ -111,7 +87,7 @@ fun EcranAccueilV5(
             }
         }
         HorizontalDivider(color = VertMenthe, thickness = 2.dp)
-        /* ---- MOITIÉ BASSE : onglets + contenu ---- */
+        /* ---- Onglets contextuels ---- */
         if (onglets.isNotEmpty()) {
             ScrollableTabRow(
                 selectedTabIndex = ongletIndex.coerceIn(0, onglets.size - 1),
@@ -133,7 +109,7 @@ fun EcranAccueilV5(
                 }
             }
         }
-        Box(Modifier.weight(0.68f)) { bas() }
+        Box(Modifier.weight(1f)) { bas() }
     }
 }
 
