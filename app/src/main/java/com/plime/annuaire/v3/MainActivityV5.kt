@@ -2,6 +2,8 @@ package com.plime.annuaire.v3
 
 import com.plime.annuaire.v5.*
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -57,24 +59,24 @@ fun AnnuaireV5App() {
     var message by remember { mutableStateOf("") }
     var revision by remember { mutableStateOf(0) }
 
-    /* Édition d'une ligne : onglet + copie de la ligne (ou ligne neuve) */
+    /* Ãdition d'une ligne : onglet + copie de la ligne (ou ligne neuve) */
     var editTab by remember { mutableStateOf<TabV3?>(null) }
     var editRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
     var editIsNew by remember { mutableStateOf(false) }
-    /* Ligne d'origine pour l'édition (null si nouvelle) */
+    /* Ligne d'origine pour l'Ã©dition (null si nouvelle) */
     var editOriginal by remember { mutableStateOf<MutableMap<String, String>?>(null) }
 
-    /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. école) */
+    /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. Ã©cole) */
     var openGroup by remember { mutableStateOf<String?>(null) }
     var openRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
 
-    /* Logo .jpg affiché au-dessus du bandeau tricolore */
+    /* Logo .jpg affichÃ© au-dessus du bandeau tricolore */
     var logoVersion by remember { mutableStateOf(0) }
     var filtreV5 by remember { mutableStateOf("dsden") }
     var ongletV5 by remember { mutableStateOf(0) }
     var openTabV5 by remember { mutableStateOf<TabV3?>(null) }
 
-    /* V6 : données des circonscriptions (chips du filtre) */
+    /* V6 : donnÃ©es des circonscriptions (chips du filtre) */
     var circosV5 by remember { mutableStateOf(listOf<CircoV5>()) }
 
     fun saveAll() {
@@ -88,8 +90,8 @@ fun AnnuaireV5App() {
         circosV5 = loadCircosV5(ctx)
     }
 
-    /* V6 : les onglets v5 sont régénérés dès qu'ils manquent — y compris
-       après un import Excel, « Tout effacer » ou « Défauts ». */
+    /* V6 : les onglets v5 sont rÃ©gÃ©nÃ©rÃ©s dÃ¨s qu'ils manquent â y compris
+       aprÃ¨s un import Excel, Â« Tout effacer Â» ou Â« DÃ©fauts Â». */
     LaunchedEffect(annuaire) {
         if (annuaire.tabs.none { it.id.startsWith("v5_") }) {
             assureTabsV5(annuaire, ctx)
@@ -106,10 +108,10 @@ fun AnnuaireV5App() {
             StorageV3.save(ctx, annuaire)
             revision++
             val n = annuaire.tabs.sumOf { it.rows.size }
-            message = "Import réussi : ${annuaire.tabs.size} onglet(s), $n ligne(s). " +
-                "(Onglets et champs reconstruits d'après le fichier.)"
+            message = "Import rÃ©ussi : ${annuaire.tabs.size} onglet(s), $n ligne(s). " +
+                "(Onglets et champs reconstruits d'aprÃ¨s le fichier.)"
         } catch (e: Exception) {
-            message = "Échec de l'import : ${e.message ?: "fichier invalide"}"
+            message = "Ãchec de l'import : ${e.message ?: "fichier invalide"}"
         }
     }
 
@@ -118,9 +120,9 @@ fun AnnuaireV5App() {
     ) { uri ->
         if (uri != null) try {
             ExcelIOV3.export(ctx, uri, annuaire)
-            message = "Export réussi."
+            message = "Export rÃ©ussi."
         } catch (e: Exception) {
-            message = "Échec de l'export : ${e.message ?: "erreur"}"
+            message = "Ãchec de l'export : ${e.message ?: "erreur"}"
         }
     }
 
@@ -129,9 +131,9 @@ fun AnnuaireV5App() {
     ) { uri ->
         if (uri != null) try {
             ExcelIOV3.writeTemplate(ctx, uri, annuaire)
-            message = "Modèle créé (en-têtes actuels, sans données)."
+            message = "ModÃ¨le crÃ©Ã© (en-tÃªtes actuels, sans donnÃ©es)."
         } catch (e: Exception) {
-            message = "Échec : ${e.message ?: "erreur"}"
+            message = "Ãchec : ${e.message ?: "erreur"}"
         }
     }
 
@@ -144,16 +146,16 @@ fun AnnuaireV5App() {
                 dest.outputStream().use { input.copyTo(it) }
             }
             logoVersion++
-            message = "Logo ajouté."
+            message = "Logo ajoutÃ©."
         } catch (e: Exception) {
-            message = "Échec du logo : ${e.message ?: "erreur"}"
+            message = "Ãchec du logo : ${e.message ?: "erreur"}"
         }
     }
 
-    /* Thème : fond blanc partout, écriture noire, accents vert menthe.
+    /* ThÃ¨me : fond blanc partout, Ã©criture noire, accents vert menthe.
        TOUTES les cases de couleur sont remplies : plus aucune couleur
-       par défaut (rose ou violet) de Material 3 ne peut apparaître,
-       y compris dans les boîtes de dialogue (Réglages, PIN…). */
+       par dÃ©faut (rose ou violet) de Material 3 ne peut apparaÃ®tre,
+       y compris dans les boÃ®tes de dialogue (RÃ©glages, PINâ¦). */
     MaterialTheme(
         colorScheme = lightColorScheme(
             background = Color.White,
@@ -220,26 +222,26 @@ fun AnnuaireV5App() {
                     }
                     editTab = null; editRow = null
                     saveAll()
-                    message = "Modifications enregistrées."
+                    message = "Modifications enregistrÃ©es."
                 },
                 onCancel = { editTab = null; editRow = null },
                 onDelete = if (editIsNew) null else {{
                     editOriginal?.let { orig -> t.rows.removeIf { it === orig } }
                     editTab = null; editRow = null
                     saveAll()
-                    message = "Ligne supprimée."
+                    message = "Ligne supprimÃ©e."
                 }}
             )
 
             if (showSchema) {
                 SchemaEditorScreen(
                     annuaire = annuaire,
-                    onDone = { saveAll(); showSchema = false; message = "Structure enregistrée." },
+                    onDone = { saveAll(); showSchema = false; message = "Structure enregistrÃ©e." },
                     onRestore = {
                         annuaire = defaultSchemaV3()
                         saveAll()
                         tabIndex = 0
-                        message = "Structure par défaut restaurée (données effacées)."
+                        message = "Structure par dÃ©faut restaurÃ©e (donnÃ©es effacÃ©es)."
                     }
                 )
             } else {
@@ -257,7 +259,7 @@ fun AnnuaireV5App() {
                         Column {
                             TopAppBar(
                                 title = {
-                                    /* V6 : le logo remplace le titre éditable.
+                                    /* V6 : le logo remplace le titre Ã©ditable.
                                        Toucher le logo pour en choisir un autre. */
                                     Row(
                                         Modifier.fillMaxWidth().clickable {
@@ -267,7 +269,7 @@ fun AnnuaireV5App() {
                                     ) {
                                         if (logoV5 != null) {
                                             Image(
-                                                logoV5, "Logo — toucher pour changer",
+                                                logoV5, "Logo â toucher pour changer",
                                                 Modifier.fillMaxWidth().heightIn(max = 42.dp),
                                                 contentScale = ContentScale.Fit
                                             )
@@ -282,10 +284,10 @@ fun AnnuaireV5App() {
                                 },
                                 actions = {
 IconButton(onClick = { showSchema = true }) {
-                                        Icon(Icons.Filled.Science, "Éditer la structure")
+                                        Icon(Icons.Filled.Science, "Ãditer la structure")
                                     }
                                     IconButton(onClick = { showSettings = true }) {
-                                        Icon(Icons.Filled.Settings, "Réglages")
+                                        Icon(Icons.Filled.Settings, "RÃ©glages")
                                     }
                                 }
                             )
@@ -307,7 +309,7 @@ IconButton(onClick = { showSchema = true }) {
                         OutlinedTextField(
                             value = query, onValueChange = { query = it },
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            placeholder = { Text("Rechercher dans tout l'annuaire…") },
+                            placeholder = { Text("Rechercher dans tout l'annuaireâ¦") },
                             singleLine = true
                         )
                         key(revision, filtreV5, ongletV5, query) {
@@ -343,7 +345,7 @@ IconButton(onClick = { showSchema = true }) {
                                         tabFiche.rows.removeIf { it === fiche }
                                         openRow = null; openTabV5 = null
                                         saveAll()
-                                        message = "Fiche supprimée."
+                                        message = "Fiche supprimÃ©e."
                                     }
                                 )
                             } else if (grp != null && t5 != null) {
@@ -364,7 +366,7 @@ IconButton(onClick = { showSchema = true }) {
                                     onOnglet = { ongletV5 = it; openGroup = null; openRow = null; openTabV5 = null },
                                     bas = {
                                         if (query.isNotBlank()) {
-                                            /* Recherche globale : résultats dans TOUS les onglets */
+                                            /* Recherche globale : rÃ©sultats dans TOUS les onglets */
                                             RechercheGlobaleV5(annuaire, query) { tb, r ->
                                                 openTabV5 = tb
                                                 openRow = r
@@ -378,11 +380,11 @@ IconButton(onClick = { showSchema = true }) {
                                                 },
                                                 onOpenRow = { openTabV5 = t5; openRow = it }
                                             )
-                                            filtreV5 == "dsden" -> Text("Aucun onglet DSDEN généré. Videz les données de l'application puis relancez.", Modifier.padding(16.dp), color = Color(0xFFB3261E))
+                                            filtreV5 == "dsden" -> Text("Aucun onglet DSDEN gÃ©nÃ©rÃ©. Videz les donnÃ©es de l'application puis relancez.", Modifier.padding(16.dp), color = Color(0xFFB3261E))
                                             tabCommunes != null -> {
                                                 val lignes = tabCommunes.rows.filter { circoDeRow(it) == filtreV5 }
                                                 if (lignes.isEmpty()) {
-                                                    Text("Aucune école rattachée à cette circonscription.", Modifier.padding(16.dp))
+                                                    Text("Aucune Ã©cole rattachÃ©e Ã  cette circonscription.", Modifier.padding(16.dp))
                                                 } else {
                                                     val parCommune = lignes.groupBy { it[tabCommunes.groupBy] ?: "(sans commune)" }.toSortedMap()
                                                     ListeEcolesParCommuneV5(
@@ -392,7 +394,7 @@ IconButton(onClick = { showSchema = true }) {
                                                     )
                                                 }
                                             }
-                                            else -> Text("Aucune école rattachée à cette circonscription.", Modifier.padding(16.dp))
+                                            else -> Text("Aucune Ã©cole rattachÃ©e Ã  cette circonscription.", Modifier.padding(16.dp))
                                         }
                                     }
                                 )
@@ -423,12 +425,12 @@ IconButton(onClick = { showSchema = true }) {
                     annuaire = defaultSchemaV3()
                     saveAll()
                     tabIndex = 0
-                    message = "Données effacées (structure par défaut)."
+                    message = "DonnÃ©es effacÃ©es (structure par dÃ©faut)."
                 },
                 onChangePin = { old, new ->
                     if (StorageV3.checkPin(ctx, old)) {
                         StorageV3.setPin(ctx, new)
-                        message = "Code PIN modifié."
+                        message = "Code PIN modifiÃ©."
                     } else message = "Ancien code incorrect."
                 }
             )
@@ -436,11 +438,30 @@ IconButton(onClick = { showSchema = true }) {
     }
 }
 
-/* ==================== STYLE : encadré vert menthe sur fond blanc ==================== */
+/* ==================== APPEL TÃLÃPHONE (ACTION_DIAL, sans permission) ==================== */
+
+/** Champ tÃ©lÃ©phone ? (libellÃ© contenant tÃ©l, phone, portable, mobileâ¦) */
+private fun estTelV5(label: String): Boolean {
+    val l = normV3(label)
+    return l.contains("tel") || l.contains("phone") || l.contains("portable") || l.contains("mobile")
+}
+
+/** Ouvre le composeur avec le numÃ©ro prÃ©-rempli (aucune permission requise). */
+private fun appelTelephone(ctx: android.content.Context, numero: String) {
+    val nettoye = numero.filter { it.isDigit() || it == '+' }
+    if (nettoye.isBlank()) return
+    try {
+        ctx.startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + nettoye)))
+    } catch (_: Exception) {
+        /* pas de composeur disponible : on ignore silencieusement */
+    }
+}
+
+/* ==================== STYLE : encadrÃ© vert menthe sur fond blanc ==================== */
 
 private val VertMenthe = Color(0xFF3CB371)
 
-/** Encadré vert menthe, fond blanc, texte taille 16 — utilisé sur toutes les pages. */
+/** EncadrÃ© vert menthe, fond blanc, texte taille 16 â utilisÃ© sur toutes les pages. */
 @Composable
 private fun Encadre(
     onClick: (() -> Unit)? = null,
@@ -459,10 +480,10 @@ private fun Encadre(
 
 /* ==================== TITRES DE FICHES ==================== */
 
-/** Titre d'une fiche : « École » pour les communes, « Nom » pour les collèges,
-    « Contact » pour la circonscription — sinon 1ère valeur du groupe. */
+/** Titre d'une fiche : Â« Ãcole Â» pour les communes, Â« Nom Â» pour les collÃ¨ges,
+    Â« Contact Â» pour la circonscription â sinon 1Ã¨re valeur du groupe. */
 private fun titreDetail(tab: TabV3, row: Map<String, String>): String {
-    for (p in listOf("école", "ecole", "nom")) {
+    for (p in listOf("Ã©cole", "ecole", "nom")) {
         tab.fields.firstOrNull {
             it.key != tab.groupBy && normV3(it.label).contains(p) &&
                 !(row[it.key] ?: "").isBlank()
@@ -489,7 +510,7 @@ private fun champsConstants(tab: TabV3, rows: List<Map<String, String>>): List<P
         }
     }
 
-/** Valeurs qui changent d'une fiche à l'autre dans le groupe (ex. école). */
+/** Valeurs qui changent d'une fiche Ã  l'autre dans le groupe (ex. Ã©cole). */
 private fun valeursVariables(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): List<String> =
     tab.fields.mapNotNull { f ->
         if (f.key == tab.groupBy) null
@@ -500,21 +521,21 @@ private fun valeursVariables(tab: TabV3, rows: List<Map<String, String>>, row: M
         }
     }
 
-/** Titre d'une fiche du groupe : 1ère valeur variable (ex. nom de l'école). */
+/** Titre d'une fiche du groupe : 1Ã¨re valeur variable (ex. nom de l'Ã©cole). */
 private fun titreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): String =
     valeursVariables(tab, rows, row).firstOrNull()
         ?: tab.fields.firstNotNullOfOrNull { f ->
             if (f.key != tab.groupBy) (row[f.key] ?: "").takeIf { it.isNotBlank() } else null
         }
-        ?: "(détails)"
+        ?: "(dÃ©tails)"
 
 /** Sous-titre d'une fiche du groupe : les 2 valeurs variables suivantes. */
 private fun sousTitreDansGroupe(tab: TabV3, rows: List<Map<String, String>>, row: Map<String, String>): String {
     val vals = valeursVariables(tab, rows, row)
-    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" · ") else ""
+    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" Â· ") else ""
 }
 
-/** Liste : noms seulement (communes, collèges) ou personnes (circonscription). */
+/** Liste : noms seulement (communes, collÃ¨ges) ou personnes (circonscription). */
 @Composable
 private fun TabScreenV3(
     tab: TabV3,
@@ -526,14 +547,14 @@ private fun TabScreenV3(
     val filtered = if (q.isBlank()) tab.rows
     else tab.rows.filter { row -> row.values.any { normV3(it).contains(q) } }
 
-    /* Champ « Circonscription élargie » éventuel */
+    /* Champ Â« Circonscription Ã©largie Â» Ã©ventuel */
     val keyEl = tab.fields.firstOrNull { normV3(it.label).contains("elargie") }?.key
     val normales = if (keyEl != null) filtered.filter { normV3(it[keyEl] ?: "") != "oui" } else filtered
     val elargies = if (keyEl != null) filtered.filter { normV3(it[keyEl] ?: "") == "oui" } else emptyList()
     var elargieOuvert by remember(tab.id) { mutableStateOf(false) }
 
     LazyColumn(Modifier.fillMaxSize().padding(vertical = 4.dp)) {
-        /* Bascule « Circonscription élargie (PIAL-ER) » */
+        /* Bascule Â« Circonscription Ã©largie (PIAL-ER) Â» */
         if (keyEl != null && elargies.isNotEmpty()) {
             item(key = "elargie_titre") {
                 Encadre(onClick = { elargieOuvert = !elargieOuvert }) {
@@ -543,7 +564,7 @@ private fun TabScreenV3(
                             null, tint = VertMenthe
                         )
                         Text(
-                            "Circonscription élargie  (${elargies.size})",
+                            "Circonscription Ã©largie  (${elargies.size})",
                             fontSize = 16.sp, fontWeight = FontWeight.Bold, color = VertMenthe
                         )
                     }
@@ -560,7 +581,7 @@ private fun TabScreenV3(
         }
 
         if (tab.groupBy.isNotBlank() && normales.isNotEmpty()) {
-            /* Liste des noms de groupes : communes, collèges… */
+            /* Liste des noms de groupes : communes, collÃ¨gesâ¦ */
             val groups = normales.groupBy { it[tab.groupBy] ?: "" }
                 .map { (k, v) -> k.ifBlank { "(sans titre)" } to v.size }
                 .sortedBy { normV3(it.first) }
@@ -572,7 +593,7 @@ private fun TabScreenV3(
                 }
             }
         } else {
-            /* Liste à plat : les personnes de la circonscription… */
+            /* Liste Ã  plat : les personnes de la circonscriptionâ¦ */
             items(normales, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
                 Encadre(onClick = { onOpenRow(row) }) {
                     Text(titreDetail(tab, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -584,8 +605,8 @@ private fun TabScreenV3(
         }
         if (filtered.isEmpty()) item {
             Text(
-                if (query.isBlank()) "Aucune fiche. Touchez ➕ pour en ajouter."
-                else "Aucun résultat.",
+                if (query.isBlank()) "Aucune fiche. Touchez â pour en ajouter."
+                else "Aucun rÃ©sultat.",
                 Modifier.padding(16.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -593,7 +614,7 @@ private fun TabScreenV3(
     }
 }
 
-/* ==================== NIVEAU 2 : DÉTAIL D'UN GROUPE (ex. une commune) ==================== */
+/* ==================== NIVEAU 2 : DÃTAIL D'UN GROUPE (ex. une commune) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -623,7 +644,7 @@ private fun GroupDetailScreen(
         LazyColumn(
             Modifier.fillMaxSize().padding(padding).padding(vertical = 4.dp)
         ) {
-            /* Infos du groupe : maire, adresse mairie… */
+            /* Infos du groupe : maire, adresse mairieâ¦ */
             if (rows.isNotEmpty()) item(key = "infos") {
                 Encadre {
                     champsConstants(tab, rows).forEach { (label, value) ->
@@ -633,7 +654,7 @@ private fun GroupDetailScreen(
                     }
                 }
             }
-            /* Les fiches du groupe : les écoles de CETTE commune… */
+            /* Les fiches du groupe : les Ã©coles de CETTE communeâ¦ */
             items(rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
                 Encadre(onClick = { onOpenRow(row) }) {
                     Text(titreDansGroupe(tab, rows, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -646,7 +667,7 @@ private fun GroupDetailScreen(
     }
 }
 
-/* ==================== NIVEAU 3 : DÉTAIL D'UNE FICHE (école, collège, personne) ==================== */
+/* ==================== NIVEAU 3 : DÃTAIL D'UNE FICHE (Ã©cole, collÃ¨ge, personne) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -656,7 +677,7 @@ private fun RowDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    /* V6 : fil d'Ariane — les boutons verts qui ont mené à cette fiche */
+    /* V6 : fil d'Ariane â les boutons verts qui ont menÃ© Ã  cette fiche */
     filAriane: List<String> = emptyList()
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
@@ -709,7 +730,19 @@ private fun RowDetailScreen(
                     if (v.isNotBlank()) {
                         auMoinsUn = true
                         Text(f.label, fontSize = 11.sp, color = VertMenthe)
-                        Text(v, fontSize = 16.sp)
+                        if (estTelV5(f.label)) {
+                            /* Ligne tÃ©lÃ©phone : toucher = composeur prÃ©-rempli */
+                            val ctxF = LocalContext.current
+                            Row(
+                                Modifier.clickable { appelTelephone(ctxF, v) },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Filled.Call, "Appeler", tint = VertMenthe)
+                                Spacer(Modifier.width(6.dp))
+                                Text(v, fontSize = 16.sp, color = VertMenthe,
+                                    fontWeight = FontWeight.SemiBold)
+                            }
+                        } else Text(v, fontSize = 16.sp)
                         Spacer(Modifier.height(8.dp))
                     }
                 }
@@ -732,8 +765,8 @@ private fun RowDetailScreen(
 
 /* ==================== RECHERCHE GLOBALE (tout l'annuaire) ==================== */
 
-/** Dès qu'on tape dans le champ du haut : résultats tirés de TOUS les
-    onglets (DSDEN, circonscriptions, communes, écoles, collèges…). */
+/** DÃ¨s qu'on tape dans le champ du haut : rÃ©sultats tirÃ©s de TOUS les
+    onglets (DSDEN, circonscriptions, communes, Ã©coles, collÃ¨gesâ¦). */
 @Composable
 private fun RechercheGlobaleV5(
     annuaire: AnnuaireV3,
@@ -751,7 +784,7 @@ private fun RechercheGlobaleV5(
         if (resultats.isEmpty()) {
             item {
                 Text(
-                    "Aucun résultat pour « ${query} ».",
+                    "Aucun rÃ©sultat pour Â« ${query} Â».",
                     Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -759,7 +792,7 @@ private fun RechercheGlobaleV5(
         } else {
             item {
                 Text(
-                    "${resultats.size} résultat(s)",
+                    "${resultats.size} rÃ©sultat(s)",
                     Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     color = VertMenthe, fontWeight = FontWeight.Bold
                 )
@@ -774,7 +807,7 @@ private fun RechercheGlobaleV5(
     }
 }
 
-/* ==================== BOÎTE DE DIALOGUE : éditer une ligne ==================== */
+/* ==================== BOÃTE DE DIALOGUE : Ã©diter une ligne ==================== */
 
 @Composable
 private fun EntityDialogV3(
@@ -787,8 +820,8 @@ private fun EntityDialogV3(
 ) {
     val scroll = rememberScrollState()
 
-    /* V6 : la saisie passe par des états Compose — sans cela, l'écriture
-       directe dans la Map ne déclenche aucun rafraîchissement et le
+    /* V6 : la saisie passe par des Ã©tats Compose â sans cela, l'Ã©criture
+       directe dans la Map ne dÃ©clenche aucun rafraÃ®chissement et le
        clavier semble ne rien saisir. */
     val saisies = remember(tab, values) {
         tab.fields.associate { f -> f.key to mutableStateOf(values[f.key] ?: "") }
@@ -798,7 +831,7 @@ private fun EntityDialogV3(
         onDismissRequest = onCancel,
         title = {
             Text(
-                if (isNew) "Nouvelle ligne — ${tab.name}" else rowTitleV3(tab, values),
+                if (isNew) "Nouvelle ligne â ${tab.name}" else rowTitleV3(tab, values),
                 color = VertMenthe
             )
         },
@@ -835,7 +868,7 @@ private fun EntityDialogV3(
     )
 }
 
-/* ==================== ÉDITEUR DE STRUCTURE (onglets + champs) ==================== */
+/* ==================== ÃDITEUR DE STRUCTURE (onglets + champs) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -865,11 +898,11 @@ private fun SchemaEditorScreen(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onDone) { Icon(Icons.Filled.Check, "Terminé") }
+                IconButton(onClick = onDone) { Icon(Icons.Filled.Check, "TerminÃ©") }
             },
             actions = {
                 TextButton(onClick = { confirmRestore = true }) {
-                    Text("Défauts", color = MaterialTheme.colorScheme.error)
+                    Text("DÃ©fauts", color = MaterialTheme.colorScheme.error)
                 }
             }
         )
@@ -883,7 +916,7 @@ private fun SchemaEditorScreen(
                 ) {
                     TextButton(onClick = { selected = if (selected == t.id) null else t.id }) {
                         Text(
-                            (if (selected == t.id) "▾ " else "▸ ") + t.name +
+                            (if (selected == t.id) "â¾ " else "â¸ ") + t.name +
                                 "  (${t.rows.size} lignes, ${t.fields.size} champs)",
                             fontWeight = FontWeight.SemiBold
                         )
@@ -896,14 +929,14 @@ private fun SchemaEditorScreen(
                     }
                 }
                 if (selected == t.id) {
-                    /* --- Éditeur des champs de l'onglet --- */
+                    /* --- Ãditeur des champs de l'onglet --- */
                     Surface(
                         tonalElevation = 1.dp,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, bottom = 8.dp)
                     ) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Champs de « ${t.name} »", fontWeight = FontWeight.SemiBold)
+                            Text("Champs de Â« ${t.name} Â»", fontWeight = FontWeight.SemiBold)
                             /* groupBy */
                             Row(Modifier.fillMaxWidth().padding(top = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
@@ -923,7 +956,7 @@ private fun SchemaEditorScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        "${i + 1}. ${f.label}" + if (f.multiline) "  ¶" else "",
+                                        "${i + 1}. ${f.label}" + if (f.multiline) "  Â¶" else "",
                                         fontSize = 14.sp, modifier = Modifier.weight(1f)
                                     )
                                     IconButton(onClick = {
@@ -962,15 +995,15 @@ private fun SchemaEditorScreen(
                 Icon(Icons.Filled.Add, null); Spacer(Modifier.width(4.dp)); Text("Ajouter un onglet")
             }
             Text(
-                "¶ = champ multi-lignes. Les suppressions de champs/onglets " +
-                    "n'effacent que la structure : les valeurs concernées sont perdues.",
+                "Â¶ = champ multi-lignes. Les suppressions de champs/onglets " +
+                    "n'effacent que la structure : les valeurs concernÃ©es sont perdues.",
                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 12.dp)
             )
         }
     }
 
-    /* --- Petites boîtes de saisie --- */
+    /* --- Petites boÃ®tes de saisie --- */
     if (renameTab != null) TextPromptDialog(
         title = "Renommer l'onglet", initial = renameTab!!.name
     ) { s ->
@@ -986,7 +1019,7 @@ private fun SchemaEditorScreen(
         addTab = false
     }
     if (delTab != null) ConfirmDialog(
-        "Supprimer l'onglet « ${delTab!!.name} » et ses ${delTab!!.rows.size} ligne(s) ?",
+        "Supprimer l'onglet Â« ${delTab!!.name} Â» et ses ${delTab!!.rows.size} ligne(s) ?",
         onDismiss = { delTab = null }
     ) {
         annuaire.tabs.remove(delTab!!)
@@ -1009,7 +1042,7 @@ private fun SchemaEditorScreen(
         addField = null
     }
     if (delField != null) ConfirmDialog(
-        "Supprimer le champ « ${delField!!.second.label} » ?\n" +
+        "Supprimer le champ Â« ${delField!!.second.label} Â» ?\n" +
             "Les valeurs de ce colonne seront perdues.",
         onDismiss = { delField = null }
     ) {
@@ -1039,7 +1072,7 @@ private fun SchemaEditorScreen(
         )
     }
     if (confirmRestore) ConfirmDialog(
-        "Restaurer les 5 onglets par défaut ?\nTOUTES les données et la structure actuelles seront effacées.",
+        "Restaurer les 5 onglets par dÃ©faut ?\nTOUTES les donnÃ©es et la structure actuelles seront effacÃ©es.",
         onDismiss = { confirmRestore = false }
     ) {
         confirmRestore = false
@@ -1064,8 +1097,8 @@ private fun TextPromptDialog(title: String, initial: String, onOk: (String) -> U
     )
 }
 
-/** Boîte de confirmation : le 2e paramètre ferme la boîte (annuler),
- *  le 3e (trailing lambda) exécute l'action puis ferme. */
+/** BoÃ®te de confirmation : le 2e paramÃ¨tre ferme la boÃ®te (annuler),
+ *  le 3e (trailing lambda) exÃ©cute l'action puis ferme. */
 @Composable
 private fun ConfirmDialog(
     text: String,
@@ -1085,7 +1118,7 @@ private fun ConfirmDialog(
     )
 }
 
-/* ==================== ÉCRANS PIN ==================== */
+/* ==================== ÃCRANS PIN ==================== */
 
 @Composable
 private fun PinDefineScreen(onDone: (String) -> Unit) {
@@ -1097,7 +1130,7 @@ private fun PinDefineScreen(onDone: (String) -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            "Définissez votre code PIN",
+            "DÃ©finissez votre code PIN",
             fontSize = 18.sp, fontWeight = FontWeight.Bold, color = VertMenthe
         )
         Spacer(Modifier.height(16.dp))
@@ -1154,12 +1187,12 @@ private fun PinEnterScreen(onSuccess: (String) -> Unit) {
             Button(
                 onClick = { if (pin.isNotBlank()) onSuccess(pin) },
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("Déverrouiller") }
+            ) { Text("DÃ©verrouiller") }
         }
     }
 }
 
-/* ==================== PANNEAU RÉGLAGES ==================== */
+/* ==================== PANNEAU RÃGLAGES ==================== */
 
 @Composable
 private fun SettingsDialogV3(
@@ -1179,7 +1212,7 @@ private fun SettingsDialogV3(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Réglages", color = VertMenthe) },
+        title = { Text("RÃ©glages", color = VertMenthe) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -1189,13 +1222,13 @@ private fun SettingsDialogV3(
                     Icon(Icons.Filled.Download, null); Spacer(Modifier.width(8.dp)); Text("Exporter vers Excel")
                 }
                 Button(onClick = onTemplate, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("Créer le modèle d'import")
+                    Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("CrÃ©er le modÃ¨le d'import")
                 }
                 OutlinedButton(onClick = onLogo, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Image, null); Spacer(Modifier.width(8.dp)); Text("Choisir le logo (image)")
                 }
                 Text(
-                    "Astuce : l'import reconstruit onglets et champs d'après les en-têtes du fichier.",
+                    "Astuce : l'import reconstruit onglets et champs d'aprÃ¨s les en-tÃªtes du fichier.",
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
