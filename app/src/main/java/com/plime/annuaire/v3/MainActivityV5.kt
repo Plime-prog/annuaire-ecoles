@@ -1,6 +1,7 @@
 package com.plime.annuaire.v3
 
 import com.plime.annuaire.v5.*
+import com.plime.annuaire.v6.CarteScreenV6
 
 import android.content.Intent
 import android.net.Uri
@@ -56,6 +57,8 @@ fun AnnuaireV5App() {
     var query by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
     var showSchema by remember { mutableStateOf(false) }
+    /* V6 : carte de l'Aube (bouton carte en haut) */
+    var showCarte by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     var revision by remember { mutableStateOf(0) }
 
@@ -233,7 +236,20 @@ fun AnnuaireV5App() {
                 }}
             )
 
-            if (showSchema) {
+            if (showCarte) {
+                CarteScreenV6(
+                    filtreActif = filtreV5,
+                    onCirco = { code ->
+                        filtreV5 = code
+                        ongletV5 = 0
+                        openGroup = null
+                        openRow = null
+                        openTabV5 = null
+                        showCarte = false
+                    },
+                    onFermer = { showCarte = false }
+                )
+            } else if (showSchema) {
                 SchemaEditorScreen(
                     annuaire = annuaire,
                     onDone = { saveAll(); showSchema = false; message = "Structure enregistrÃ©e." },
@@ -283,7 +299,10 @@ fun AnnuaireV5App() {
                                     }
                                 },
                                 actions = {
-IconButton(onClick = { showSchema = true }) {
+IconButton(onClick = { showCarte = true }) {
+                                        Icon(Icons.Filled.Map, "Carte de l'Aube")
+                                    }
+                                    IconButton(onClick = { showSchema = true }) {
                                         Icon(Icons.Filled.Science, "Ãditer la structure")
                                     }
                                     IconButton(onClick = { showSettings = true }) {
@@ -1272,4 +1291,5 @@ private fun SettingsDialogV3(
         confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } }
     )
 }
+
 
