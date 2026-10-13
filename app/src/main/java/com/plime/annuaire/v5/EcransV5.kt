@@ -112,15 +112,16 @@ fun ListeEcolesParCommuneV5(
     titreEcole: (Map<String, String>) -> String,
     onOpenRow: (MutableMap<String, String>) -> Unit
 ) {
-    var ouvertes by remember { mutableStateOf(setOf<String>()) }
+    /* Une seule commune dépliée à la fois */
+    var communeOuverte by remember { mutableStateOf<String?>(null) }
     LazyColumn(Modifier.fillMaxSize()) {
         communes.forEach { (nomCommune, ecoles) ->
             item {
-                val open = nomCommune in ouvertes
+                val open = nomCommune == communeOuverte
                 /* Même système : verte si ouverte, grisée sinon */
                 Surface(
                     onClick = {
-                        ouvertes = if (open) ouvertes - nomCommune else ouvertes + nomCommune
+                        communeOuverte = if (open) null else nomCommune
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
                     shape = RoundedCornerShape(20.dp),
@@ -149,7 +150,7 @@ fun ListeEcolesParCommuneV5(
                     }
                 }
             }
-            if (nomCommune in ouvertes) {
+            if (nomCommune == communeOuverte) {
                 items(ecoles) { e ->
                     EncadreV5(onClick = { onOpenRow(e) }) {
                         Text(titreEcole(e), fontWeight = FontWeight.Bold, fontSize = 15.sp)
