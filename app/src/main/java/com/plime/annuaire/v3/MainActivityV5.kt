@@ -305,8 +305,7 @@ IconButton(onClick = { showSchema = true }) {
                         OutlinedTextField(
                             value = query, onValueChange = { query = it },
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            placeholder = { Text("Rechercher…") },
-                            leadingIcon = { Icon(Icons.Filled.Search, null) },
+                            placeholder = { Text("Rechercher dans tout l'annuaire…") },
                             singleLine = true
                         )
                         key(revision, filtreV5, ongletV5, query) {
@@ -352,7 +351,13 @@ IconButton(onClick = { showSchema = true }) {
                                     ongletIndex = ongletV5.coerceIn(0, (og5.size - 1).coerceAtLeast(0)),
                                     onOnglet = { ongletV5 = it; openGroup = null; openRow = null; openTabV5 = null },
                                     bas = {
-                                        when {
+                                        if (query.isNotBlank()) {
+                                            /* Recherche globale : résultats dans TOUS les onglets */
+                                            RechercheGlobaleV5(annuaire, query) { tb, r ->
+                                                openTabV5 = tb
+                                                openRow = r
+                                            }
+                                        } else when {
                                             t5 != null -> TabScreenV3(
                                                 tab = t5, query = query,
                                                 onOpenGroup = { name ->
@@ -689,6 +694,50 @@ private fun RowDetailScreen(
     ) {
         confirmDelete = false
         onDelete()
+    }
+}
+
+/* ==================== RECHERCHE GLOBALE (tout l'annuaire) ==================== */
+
+/** Dès qu'on tape dans le champ du haut : résultats tirés de TOUS les
+    onglets (DSDEN, circonscriptions, communes, écoles, collèges…). */
+@Composable
+private fun RechercheGlobaleV5(
+    annuaire: AnnuaireV3,
+    query: String,
+    onOpen: (TabV3, MutableMap<String, String>) -> Unit
+) {
+    val q = normV3(query)
+    val resultats = remember(annuaire, q) {
+        annuaire.tabs.flatMap { tb ->
+            tb.rows.filter { r -> r.values.any { normV3(it).contains(q) } }
+                .map { tb to it }
+        }
+    }
+    LazyColumn(Modifier.fillMaxSize().padding(vertical = 4.dp)) {
+        if (resultats.isEmpty()) {
+            item {
+                Text(
+                    "Aucun résultat pour « ${query} ».",
+                    Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            item {
+                Text(
+                    "${resultats.size} résultat(s)",
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = VertMenthe, fontWeight = FontWeight.Bold
+                )
+            }
+            items(resultats, key = { it.second["_id"] ?: it.second.hashCode().toString() }) { (tb, r) ->
+                Encadre(onClick = { onOpen(tb, r) }) {
+                    Text(titreDetail(tb, r), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(tb.name, fontSize = 12.sp, color = Color(0xFF666666))
+                }
+            }
+        }
     }
 }
 
