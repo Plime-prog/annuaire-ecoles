@@ -26,27 +26,32 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
-import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 
 /* ==================== CARTE DE L'AUBE (hors ligne) ==================== */
 
-/* Dessinée entièrement à partir de l'asset aube-geo.json :
-   contour du département + une épingle par circonscription.
-   Toucher une épingle (ou un nom dans la liste) revient à
-   choisir la circonscription dans le filtre du haut. */
+/* Dessinee a partir de l'asset aube-geo.json : contour du departement
+   + une etiquette par circonscription. Chaque etiquette a sa position
+   (dx, dy) fixee dans l'asset : autour de Troyes elles sont placees
+   en eventail pour ne jamais se chevaucher. Toucher une etiquette
+   (ou un nom dans la liste) choisit la circonscription du filtre. */
 
 private val VertCarte = Color(0xFF3CB371)
 private val VertCarteFonce = Color(0xFF2E8B57)
 private val FondCarte = Color(0xFFEAF7F0)
 
-data class PinCircoV6(val code: String, val nom: String, val lon: Double, val lat: Double)
+data class PinCircoV6(
+    val code: String, val nom: String,
+    val lon: Double, val lat: Double,
+    val dx: Int, val dy: Int
+)
 
 object GeoAubeV6 {
 
     private fun lire(ctx: Context): JSONObject =
-        ctx.assets.open("aube-geo.json").bufferedReader().use { it.readText() }.let { JSONObject(it) }
+        ctx.assets.open("aube-geo.json").bufferedReader().use { it.readText() }
+            .let { JSONObject(it) }
 
     fun dept(ctx: Context): List<Pair<Double, Double>> {
         val arr = lire(ctx).getJSONArray("dept")
@@ -63,15 +68,18 @@ object GeoAubeV6 {
         val out = mutableListOf<PinCircoV6>()
         for (i in 0 until arr.length()) {
             val o = arr.getJSONObject(i)
-            out.add(PinCircoV6(o.getString("code"), o.getString("nom"),
-                o.getDouble("lon"), o.getDouble("lat")))
+            out.add(PinCircoV6(
+                o.getString("code"), o.getString("nom"),
+                o.getDouble("lon"), o.getDouble("lat"),
+                o.optInt("dx", -55), o.optInt("dy", -46)
+            ))
         }
         return out
     }
 }
 
-/* Projection plate carrée : la longitude est étirée selon la
-   latitude moyenne de l'Aube (~48,3°) pour rester fidèle. */
+/* Projection plate carree : la longitude est etiree selon la latitude
+   moyenne de l'Aube (~48,3 degres) pour rester fidele. */
 private class ProjectionV6(pts: List<Pair<Double, Double>>) {
     private val minLon = pts.minOf { it.first }
     private val maxLon = pts.maxOf { it.first }
@@ -100,8 +108,7 @@ fun CarteScreenV6(
     val proj = remember { ProjectionV6(dept) }
     var taille by remember { mutableStateOf(IntSize(1, 1)) }
 
-    /* Position (px) de chaque étiquette dans la carte ; les épingles
-       trop proches (Troyes, ASH, St-Julien…) sont décalées. */
+    /* Etiquette : position du coin haut-gauche (px) + point reel relie par un trait */
     data class Place(val x: Float, val y: Float, val reelle: Offset)
     val places = remember(taille) {
         if (taille.width < 2 || taille.height < 2) emptyList()
@@ -109,25 +116,11 @@ fun CarteScreenV6(
             val k = proj.echelle(taille.width.toFloat(), taille.height.toFloat())
             val ox = (taille.width - proj.spanX * k).toFloat() / 2f
             val oy = (taille.height - proj.spanY * k).toFloat() / 2f
-            val brutes = pins.map { p ->
+            pins.map { p ->
                 val px = ox + (proj.x(p.lon) * k).toFloat()
                 val py = oy + (proj.y(p.lat) * k).toFloat()
-                Place(px, py, Offset(px, py))
-            }.toMutableList()
-            for (i in brutes.indices) {
-                var collision = true
-                while (collision) {
-                    collision = false
-                    for (j in 0 until i) {
-                        if (abs(brutes[i].x - brutes[j].x) < 92f && abs(brutes[i].y - brutes[j].y) < 34f) {
-                            brutes[i] = Place(brutes[i].x, brutes[i].y + 38f, brutes[i].reelle)
-                            collision = true
-                            break
-                        }
-                    }
-                }
+                Place(px + p.dx, py + p.dy, Offset(px, py))
             }
-            brutes
         }
     }
 
@@ -157,9 +150,15 @@ fun CarteScreenV6(
                     path.close()
                     drawPath(path, FondCarte)
                     drawPath(path, VertCarte, style = Stroke(width = 4f))
+                    /* Point reel + trait vers l'etiquette */
                     places.forEach { pl ->
                         drawCircle(VertCarte, radius = 7f, center = pl.reelle)
-                        drawLine(VertCarte, pl.reelle, Offset(pl.x, pl.y + 14f), strokeWidth = 3f)
+                        drawLine(
+                            VertCarte,
+                            pl.reelle,
+                            Offset(pl.x + 55f, pl.y + 30f),
+                            strokeWidth = 3f
+                        )
                     }
                 }
                 places.zip(pins).forEach { (pl, pin) ->
