@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val VertMenthe = Color(0xFF3CB371)
+private val GrisClair = Color(0xFFE0E0E0)   /* fond non sélectionné */
+private val GrisTexte = Color(0xFF888888)   /* texte non sélectionné */
 
 /** Nom affiché dans le filtre : « Troyes », « Bar-sur-Aube »… */
 fun nomCourt(nomCirco: String): String = nomCirco.removePrefix("Circonscription de ")
@@ -43,13 +45,13 @@ private fun ChipFiltre(texte: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
-        color = if (selected) VertMenthe else Color.White,
-        border = BorderStroke(2.dp, VertMenthe)
+        color = if (selected) VertMenthe else GrisClair,
+        border = BorderStroke(2.dp, if (selected) VertMenthe else GrisClair)
     ) {
         Text(
             texte,
             Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-            color = if (selected) Color.White else Color.Black,
+            color = if (selected) Color.White else GrisTexte,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             fontSize = 14.sp
         )
@@ -92,7 +94,13 @@ fun EcranAccueilV5(
             ScrollableTabRow(
                 selectedTabIndex = ongletIndex.coerceIn(0, onglets.size - 1),
                 containerColor = Color.White,
-                contentColor = Color.Black,
+                contentColor = GrisTexte,
+                indicator = { positions ->
+                    TabRowDefaults.Indicator(
+                        Modifier.tabIndicatorOffset(positions[ongletIndex.coerceIn(0, onglets.size - 1)]),
+                        color = VertMenthe, height = 3.dp
+                    )
+                },
                 edgePadding = 8.dp
             ) {
                 onglets.forEachIndexed { i, n ->
@@ -102,7 +110,8 @@ fun EcranAccueilV5(
                         text = {
                             Text(
                                 n, maxLines = 1,
-                                color = if (i == ongletIndex) VertMenthe else Color.Black
+                                color = if (i == ongletIndex) VertMenthe else GrisTexte,
+                                fontWeight = if (i == ongletIndex) FontWeight.Bold else FontWeight.Normal
                             )
                         }
                     )
