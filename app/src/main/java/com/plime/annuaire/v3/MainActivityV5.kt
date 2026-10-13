@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import java.io.File
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 
 class MainActivityV5 : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -317,10 +319,20 @@ IconButton(onClick = { showSchema = true }) {
                             val tabFiche = openTabV5 ?: tabCommunes
                             val grp = openGroup
                             if (fiche != null && tabFiche != null) {
+                                val nomFiltreV5 = if (filtreV5 == "dsden") "DSDEN"
+                                    else circosV5.firstOrNull { it.code == filtreV5 }
+                                        ?.let { nomCourt(it.nom) } ?: filtreV5
+                                val groupeFiche = tabFiche.groupBy.takeIf { it.isNotBlank() }
+                                    ?.let { fiche[it] ?: "" }
                                 RowDetailScreen(
                                     tab = tabFiche,
                                     row = fiche,
                                     onBack = { openRow = null; openTabV5 = null },
+                                    filAriane = listOfNotNull(
+                                        nomFiltreV5,
+                                        tabFiche.name,
+                                        groupeFiche?.takeIf { it.isNotBlank() }
+                                    ),
                                     onEdit = {
                                         editTab = tabFiche
                                         editOriginal = fiche
@@ -643,7 +655,9 @@ private fun RowDetailScreen(
     row: MutableMap<String, String>,
     onBack: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    /* V6 : fil d'Ariane — les boutons verts qui ont mené à cette fiche */
+    filAriane: List<String> = emptyList()
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     Scaffold(
@@ -669,6 +683,25 @@ private fun RowDetailScreen(
             Modifier.fillMaxSize().padding(padding)
                 .verticalScroll(rememberScrollState()).padding(12.dp)
         ) {
+            /* Fil d'Ariane : rappel du chemin en boutons verts */
+            if (filAriane.isNotEmpty()) {
+                Row(
+                    Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    filAriane.forEach { n ->
+                        Text(
+                            n,
+                            Modifier
+                                .background(VertMenthe, RoundedCornerShape(20.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = Color.White, fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
             Encadre {
                 var auMoinsUn = false
                 tab.fields.forEach { f ->
