@@ -48,7 +48,6 @@ fun AnnuaireV5App() {
     var annuaire by remember { mutableStateOf(AnnuaireV3()) }
     var unlocked by remember { mutableStateOf(false) }
     var hasPin by remember { mutableStateOf(false) }
-    var titre by remember { mutableStateOf("Annuaire des écoles") }
     var tabIndex by remember { mutableStateOf(0) }
     var query by remember { mutableStateOf("") }
     var showSettings by remember { mutableStateOf(false) }
@@ -84,7 +83,6 @@ fun AnnuaireV5App() {
     LaunchedEffect(Unit) {
         annuaire = StorageV3.load(ctx)
         hasPin = StorageV3.hasPin(ctx)
-        titre = StorageV3.getTitre(ctx)
         circosV5 = loadCircosV5(ctx)
     }
 
@@ -257,11 +255,28 @@ fun AnnuaireV5App() {
                         Column {
                             TopAppBar(
                                 title = {
-                                    Text(
-                                        titre,
-                                        fontWeight = FontWeight.Bold,
-                                        color = VertMenthe
-                                    )
+                                    /* V6 : le logo remplace le titre éditable.
+                                       Toucher le logo pour en choisir un autre. */
+                                    Row(
+                                        Modifier.fillMaxWidth().clickable {
+                                            logoPicker.launch(arrayOf("image/*"))
+                                        },
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (logoV5 != null) {
+                                            Image(
+                                                logoV5, "Logo — toucher pour changer",
+                                                Modifier.fillMaxWidth().heightIn(max = 42.dp),
+                                                contentScale = ContentScale.Fit
+                                            )
+                                        } else {
+                                            Text(
+                                                "Choisir le logo",
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = VertMenthe
+                                            )
+                                        }
+                                    }
                                 },
                                 actions = {
 IconButton(onClick = { showSchema = true }) {
@@ -289,7 +304,7 @@ IconButton(onClick = { showSchema = true }) {
                     Column(Modifier.fillMaxSize().padding(padding)) {
                         OutlinedTextField(
                             value = query, onValueChange = { query = it },
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                             placeholder = { Text("Rechercher…") },
                             leadingIcon = { Icon(Icons.Filled.Search, null) },
                             singleLine = true
@@ -330,9 +345,6 @@ IconButton(onClick = { showSchema = true }) {
                                 )
                             } else {
                                 EcranAccueilV5(
-                                    logo = logoV5,
-                                    titre = if (filtreV5 == "dsden") "DSDEN de l'Aube" else (circoOuverte?.nom ?: filtreV5),
-                                    sousTitre = if (filtreV5 == "dsden") "Direction des services départementaux de l'Éducation nationale" else "Circonscription d'inspection du 1er degré",
                                     filtre = filtreV5,
                                     circos = circosV5,
                                     onFiltre = { filtreV5 = it; ongletV5 = 0; openGroup = null; openRow = null; openTabV5 = null },
@@ -375,7 +387,6 @@ IconButton(onClick = { showSchema = true }) {
 
             if (showSettings) SettingsDialogV3(
                 message = message,
-                titre = titre,
                 onDismiss = { showSettings = false; message = "" },
                 onImport = {
                     showSettings = false
@@ -402,11 +413,6 @@ IconButton(onClick = { showSchema = true }) {
                         StorageV3.setPin(ctx, new)
                         message = "Code PIN modifié."
                     } else message = "Ancien code incorrect."
-                },
-                onChangeTitre = { nouveau ->
-                    titre = nouveau
-                    StorageV3.setTitre(ctx, nouveau)
-                    message = "Titre modifié."
                 }
             )
         }
@@ -1062,7 +1068,6 @@ private fun PinEnterScreen(onSuccess: (String) -> Unit) {
 @Composable
 private fun SettingsDialogV3(
     message: String,
-    titre: String,
     onDismiss: () -> Unit,
     onImport: () -> Unit,
     onExport: () -> Unit,
@@ -1070,34 +1075,17 @@ private fun SettingsDialogV3(
     onLogo: () -> Unit,
     onLock: () -> Unit,
     onClear: () -> Unit,
-    onChangePin: (String, String) -> Unit,
-    onChangeTitre: (String) -> Unit
+    onChangePin: (String, String) -> Unit
 ) {
     var showPinForm by remember { mutableStateOf(false) }
     var oldPin by remember { mutableStateOf("") }
     var newPin by remember { mutableStateOf("") }
-    var titreSaisi by remember { mutableStateOf(titre) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Réglages", color = VertMenthe) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                OutlinedTextField(
-                    value = titreSaisi,
-                    onValueChange = { titreSaisi = it },
-                    label = { Text("Titre de l'application") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-                Button(
-                    onClick = { onChangeTitre(titreSaisi) },
-                    enabled = titreSaisi.isNotBlank() && titreSaisi != titre,
-                    modifier = Modifier.fillMaxWidth()
-                ) { Text("Enregistrer le titre") }
-
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
                 Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.UploadFile, null); Spacer(Modifier.width(8.dp)); Text("Importer un fichier Excel")
                 }
