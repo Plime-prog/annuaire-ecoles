@@ -704,6 +704,14 @@ private fun EntityDialogV3(
     onDelete: (() -> Unit)? = null
 ) {
     val scroll = rememberScrollState()
+
+    /* V6 : la saisie passe par des états Compose — sans cela, l'écriture
+       directe dans la Map ne déclenche aucun rafraîchissement et le
+       clavier semble ne rien saisir. */
+    val saisies = remember(tab, values) {
+        tab.fields.associate { f -> f.key to mutableStateOf(values[f.key] ?: "") }
+    }
+
     AlertDialog(
         onDismissRequest = onCancel,
         title = {
@@ -715,10 +723,10 @@ private fun EntityDialogV3(
         text = {
             Column(Modifier.verticalScroll(scroll)) {
                 tab.fields.forEach { f ->
-                    val v = values[f.key] ?: ""
+                    val saisie = saisies[f.key] ?: return@forEach
                     OutlinedTextField(
-                        value = v,
-                        onValueChange = { values[f.key] = it },
+                        value = saisie.value,
+                        onValueChange = { saisie.value = it },
                         label = { Text(f.label) },
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         minLines = if (f.multiline) 2 else 1,
@@ -727,7 +735,13 @@ private fun EntityDialogV3(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onSave) { Text("Enregistrer") } },
+        confirmButton = {
+            TextButton(onClick = {
+                /* Recopier la saisie dans la fiche, puis enregistrer */
+                tab.fields.forEach { f -> values[f.key] = saisies[f.key]?.value ?: "" }
+                onSave()
+            }) { Text("Enregistrer") }
+        },
         dismissButton = {
             Row {
                 if (onDelete != null) TextButton(onClick = onDelete) {
