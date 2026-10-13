@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -89,27 +90,14 @@ fun EcranAccueilV5(
             }
         }
         HorizontalDivider(color = VertMenthe, thickness = 2.dp)
-        /* ---- Onglets contextuels ---- */
-        if (onglets.isNotEmpty()) {
-            ScrollableTabRow(
-                selectedTabIndex = ongletIndex.coerceIn(0, onglets.size - 1),
-                containerColor = Color.White,
-                contentColor = GrisTexte,
-                edgePadding = 8.dp
-            ) {
-                onglets.forEachIndexed { i, n ->
-                    Tab(
-                        selected = i == ongletIndex,
-                        onClick = { onOnglet(i) },
-                        text = {
-                            Text(
-                                n, maxLines = 1,
-                                color = if (i == ongletIndex) VertMenthe else GrisTexte,
-                                fontWeight = if (i == ongletIndex) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
-                    )
-                }
+        /* ---- Onglets contextuels : mêmes chips vert/gris que le haut ---- */
+        LazyRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp)
+        ) {
+            itemsIndexed(onglets) { i, n ->
+                ChipFiltre(n, i == ongletIndex) { onOnglet(i) }
             }
         }
         Box(Modifier.weight(1f)) { bas() }
@@ -129,18 +117,34 @@ fun ListeEcolesParCommuneV5(
         communes.forEach { (nomCommune, ecoles) ->
             item {
                 val open = nomCommune in ouvertes
-                EncadreV5(onClick = {
-                    ouvertes = if (open) ouvertes - nomCommune else ouvertes + nomCommune
-                }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                /* Même système : verte si ouverte, grisée sinon */
+                Surface(
+                    onClick = {
+                        ouvertes = if (open) ouvertes - nomCommune else ouvertes + nomCommune
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (open) VertMenthe else GrisClair,
+                    border = BorderStroke(2.dp, if (open) VertMenthe else GrisClair)
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            nomCommune, fontWeight = FontWeight.Bold, fontSize = 16.sp,
+                            nomCommune, fontSize = 15.sp,
+                            fontWeight = if (open) FontWeight.Bold else FontWeight.Normal,
+                            color = if (open) Color.White else GrisTexte,
                             modifier = Modifier.weight(1f)
                         )
-                        Text("${ecoles.size} école(s)", fontSize = 12.sp, color = Color(0xFF666666))
+                        Text(
+                            "${ecoles.size} école(s)", fontSize = 12.sp,
+                            color = if (open) Color.White else GrisTexte
+                        )
                         Icon(
                             if (open) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                            null, tint = VertMenthe
+                            null,
+                            tint = if (open) Color.White else GrisTexte
                         )
                     }
                 }
