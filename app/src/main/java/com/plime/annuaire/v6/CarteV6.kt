@@ -22,25 +22,24 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
 import kotlin.math.cos
-import kotlin.math.roundToInt
 
 /* ==================== CARTE DE L'AUBE (hors ligne) ==================== */
 
 /* Dessinee a partir de deux assets :
-   - aube-geo.json  : contour du departement + une etiquette par circonscription ;
+   - aube-geo.json  : contour du departement ;
    - aube-zones.json : contour des communes ayant au moins une ecole,
      groupees par circonscription (open data IGN + annuaire MENJ).
+   La carte est laissee entierement lisible : aucune etiquette par-dessus.
    Chaque circonscription a sa couleur ; celle choisie est en teinte foncee.
    Toucher une commune coloree selectionne sa circonscription.
-   Les etiquettes de carte ne concernent que les 6 circonscriptions
-   territoriales : Troyes ASH (0100042S) est adaptee, sans territoire
-   propre, elle se choisit dans la zone basse qui liste les 7. */
+   La zone basse, de hauteur fixe, liste toujours les 7 circonscriptions
+   avec leur pastille de couleur ; Troyes ASH (0100042S) est adaptee,
+   sans territoire propre : elle se choisit uniquement dans cette liste. */
 
 private val VertCarte = Color(0xFF3CB371)
 private val VertCarteFonce = Color(0xFF2E8B57)
@@ -65,8 +64,7 @@ private fun couleurZone(code: String): CouleurZone =
 
 data class PinCircoV6(
     val code: String, val nom: String,
-    val lon: Double, val lat: Double,
-    val dx: Int, val dy: Int
+    val lon: Double, val lat: Double
 )
 
 data class ZoneCircoV6(
@@ -97,8 +95,7 @@ object GeoAubeV6 {
             val o = arr.getJSONObject(i)
             out.add(PinCircoV6(
                 o.getString("code"), o.getString("nom"),
-                o.getDouble("lon"), o.getDouble("lat"),
-                o.optInt("dx", -55), o.optInt("dy", -46)
+                o.getDouble("lon"), o.getDouble("lat")
             ))
         }
         return out
@@ -140,7 +137,7 @@ private class ProjectionV6(pts: List<Pair<Double, Double>>) {
     fun x(lon: Double): Double = (lon - minLon) * kx
     fun y(lat: Double): Double = maxLat - lat
     fun echelle(w: Float, h: Float): Float =
-        minOf(w / spanX.toFloat(), h / spanY.toFloat()) * 0.86f
+        minOf(w / spanX.toFloat(), h / spanY.toFloat()) * 0.92f
 }
 
 /* Parametres d'affichage pour une taille donnee */
@@ -170,93 +167,6 @@ private fun dansPolygone(lon: Double, lat: Double, anneau: List<Pair<Double, Dou
     return dedans
 }
 
-/* ==================== ETIQUETTES SANS CHEVAUCHEMENT ==================== */
-
-/* Etiquette : rectangle (x, y, w, h) + point reel relie par un trait.
-   Position initiale : point reel + decalage (dx, dy) de l'asset.
-   Puis relaxations successives :
-   - deux etiquettes qui se touchent sont poussees l'une loin de l'autre ;
-   - chaque etiquette est eloignee de son propre point d'au moins 4 px ;
-   - tout reste dans le cadre de la carte. */
-
-private data class Etiquette(
-    val pin: PinCircoV6,
-    val reelle: Offset,
-    var x: Float, var y: Float,
-    val w: Float, val h: Float
-)
-
-private fun largeurEtiquette(nom: String): Float =
-    24f + nom.length * 7.5f   /* approximation pour 13 sp */
-
-private fun placerEtiquettes(
-    pins: List<PinCircoV6>,
-    params: ParamsV6,
-    proj: ProjectionV6,
-    largeur: Float,
-    hauteur: Float
-): List<Etiquette> {
-    val marge = 6f
-    val ecartMin = 14f   /* espace minimal entre deux etiquettes */
-    val etqs = pins.filter { it.code != CodeAsh }.map { p ->
-        val px = params.ox + (proj.x(p.lon) * params.k).toFloat()
-        val py = params.oy + (proj.y(p.lat) * params.k).toFloat()
-        val w = largeurEtiquette(p.nom)
-        val h = 30f
-        Etiquette(p, Offset(px, py), px + p.dx, py + p.dy, w, h)
-    }
-    repeat(160) {
-        var deplacement = false
-        /* 1. poussees mutuelles si rectangles gonfles se chevauchent */
-        for (a in etqs.indices) {
-            for (b in a + 1 until etqs.size) {
-                val e1 = etqs[a]; val e2 = etqs[b]
-                val g1 = e1.x - ecartMin; val d1 = e1.x + e1.w + ecartMin
-                val h1 = e1.y - ecartMin; val b1 = e1.y + e1.h + ecartMin
-                val g2 = e2.x; val d2 = e2.x + e2.w
-                val h2 = e2.y; val b2 = e2.y + e2.h
-                if (d1 > g2 && d2 > g1 && b1 > h2 && b2 > h1) {
-                    /* cote le plus court pour se separer */
-                    val pousseX = minOf(d1 - g2, d2 - g1)
-                    val pousseY = minOf(b1 - h2, b2 - h1)
-                    if (pousseX <= pousseY) {
-                        val s = if (e1.x + e1.w / 2f <= e2.x + e2.w / 2f) -1f else 1f
-                        val pas = (pousseX / 2f).coerceAtLeast(2f)
-                        e1.x += s * pas; e2.x -= s * pas
-                    } else {
-                        val s = if (e1.y + e1.h / 2f <= e2.y + e2.h / 2f) -1f else 1f
-                        val pas = (pousseY / 2f).coerceAtLeast(2f)
-                        e1.y += s * pas; e2.y -= s * pas
-                    }
-                    deplacement = true
-                }
-            }
-        }
-        /* 2. chaque etiquette reste a distance de son point reel */
-        for (e in etqs) {
-            val cx = e.x + e.w / 2f
-            val cy = e.y + e.h / 2f
-            val dx = cx - e.reelle.x
-            val dy = cy - e.reelle.y
-            val d = kotlin.math.hypot(dx, dy)
-            val dMin = 26f
-            if (d in 0.01f..dMin) {
-                val f = (dMin - d) / d.coerceAtLeast(0.01f)
-                e.x += dx * f; e.y += dy * f
-                deplacement = true
-            }
-        }
-        /* 3. maintien dans le cadre */
-        for (e in etqs) {
-            val nx = e.x.coerceIn(marge, largeur - e.w - marge)
-            val ny = e.y.coerceIn(marge, hauteur - e.h - marge)
-            if (nx != e.x || ny != e.y) { e.x = nx; e.y = ny; deplacement = true }
-        }
-        if (!deplacement) return etqs
-    }
-    return etqs
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarteScreenV6(
@@ -275,15 +185,6 @@ fun CarteScreenV6(
         paramsV6(proj, taille.width.toFloat(), taille.height.toFloat())
     }
 
-    /* Etiquettes separees, recalculees a chaque taille d'ecran */
-    val etqs = remember(taille) {
-        if (taille.width < 2 || taille.height < 2) emptyList()
-        else placerEtiquettes(
-            pins, params, proj,
-            taille.width.toFloat(), taille.height.toFloat()
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -295,7 +196,7 @@ fun CarteScreenV6(
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            /* --- La carte --- */
+            /* --- La carte, sans aucune etiquette par-dessus --- */
             Box(
                 Modifier.fillMaxWidth().weight(1f).onSizeChanged { taille = it }
                     .pointerInput(taille, filtreActif) {
@@ -344,49 +245,18 @@ fun CarteScreenV6(
 
                     /* Contour du departement par-dessus */
                     drawPath(path, VertCarte, style = Stroke(width = 4f))
-
-                    /* Point reel + trait vers l'etiquette */
-                    etqs.forEach { e ->
-                        drawCircle(VertCarteFonce, radius = 6f, center = e.reelle)
-                        drawLine(
-                            VertCarte,
-                            e.reelle,
-                            Offset(e.x + e.w / 2f, e.y + e.h / 2f),
-                            strokeWidth = 2.5f
-                        )
-                    }
-                }
-                etqs.forEach { e ->
-                    val pin = e.pin
-                    val c = couleurZone(pin.code)
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (pin.code == filtreActif) c.foncee
-                                else if (CouleursZones.containsKey(pin.code)) c.pastel
-                                else VertCarte,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset { IntOffset(e.x.roundToInt(), e.y.roundToInt()) }
-                            .clickable { onCirco(pin.code) }
-                    ) {
-                        Text(
-                            pin.nom,
-                            Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            color = if (pin.code == filtreActif) Color.White else Color.Black,
-                            fontSize = 13.sp, fontWeight = FontWeight.SemiBold
-                        )
-                    }
                 }
             }
             HorizontalDivider()
-            /* --- Zone basse : les 7 circonscriptions, toutes visibles --- */
+            /* --- Zone basse : hauteur fixe, les 7 toujours visibles --- */
             Text(
                 "Choisir une circonscription :",
                 Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                 color = VertCarte, fontWeight = FontWeight.Bold, fontSize = 14.sp
             )
             Column(
-                Modifier.fillMaxWidth().weight(0.52f)
+                Modifier.fillMaxWidth()
+                    .heightIn(min = 300.dp)
                     .padding(horizontal = 12.dp, vertical = 2.dp)
             ) {
                 pins.forEach { pin ->
