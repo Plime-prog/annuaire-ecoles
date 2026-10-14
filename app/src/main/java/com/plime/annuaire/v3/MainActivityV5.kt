@@ -1144,10 +1144,10 @@ private fun PinDefineScreen(onDone: (String) -> Unit) {
     var pin by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        horizontalAlignment = Alignment.CenterVertically,
-        verticalArrangement = Arrangement.Center
-    ) {
+    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.Center
+) {
         Text(
             "D\u00E9finissez votre code PIN",
             fontSize = 18.sp, fontWeight = FontWeight.Bold, color = VertMenthe
@@ -1186,10 +1186,10 @@ private fun PinDefineScreen(onDone: (String) -> Unit) {
 private fun PinEnterScreen(onSuccess: (String) -> Unit) {
     var pin by remember { mutableStateOf("") }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        horizontalAlignment = Alignment.CenterVertically,
-        verticalArrangement = Arrangement.Center
-    ) {
+    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.Center
+) {
         Icon(Icons.Filled.Lock, null, Modifier.size(48.dp), tint = VertMenthe)
         Spacer(Modifier.height(8.dp))
         Text("Entrez votre code PIN", fontSize = 16.sp, color = VertMenthe)
