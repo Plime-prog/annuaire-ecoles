@@ -34,22 +34,21 @@ import kotlin.math.roundToInt
 
 /* ==================== CARTE DE L'AUBE (hors ligne) ==================== */
 
-/* DessinÃ©e Ã  partir de deux assets :
-   - aube-geo.json  : contour du dÃ©partement + une Ã©tiquette par circonscription ;
-   - aube-zones.json : contour des communes ayant au moins une Ã©cole,
-     groupÃ©es par circonscription (open data IGN + annuaire MENJ).
-   Chaque circonscription a sa couleur ; celle choisie est en teinte foncÃ©e.
-   Toucher une commune colorÃ©e sÃ©lectionne sa circonscription.
-   La circonscription de Troyes ASH (0100042S) est adaptÃ©e : elle n'a pas
+/* Dessinee a partir de deux assets :
+   - aube-geo.json  : contour du departement + une etiquette par circonscription ;
+   - aube-zones.json : contour des communes ayant au moins une ecole,
+     groupees par circonscription (open data IGN + annuaire MENJ).
+   Chaque circonscription a sa couleur ; celle choisie est en teinte foncee.
+   Toucher une commune coloree selectionne sa circonscription.
+   La circonscription de Troyes ASH (0100042S) est adaptee : elle n'a pas
    de territoire propre, on la choisit seulement dans la liste. */
 
-private val Ve
-rtCarte = Color(0xFF3CB371)
+private val VertCarte = Color(0xFF3CB371)
 private val VertCarteFonce = Color(0xFF2E8B57)
 private val FondCarte = Color(0xFFEAF7F0)
 private val BordCommune = Color(0x33000000)
 
-/* Couleur de chaque circonscription : pastel au repos, foncÃ©e si choisie */
+/* Couleur de chaque circonscription : pastel au repos, foncee si choisie */
 private data class CouleurZone(val pastel: Color, val foncee: Color)
 
 private val CouleursZones = mapOf(
@@ -95,8 +94,7 @@ object GeoAubeV6 {
         val arr = lire(ctx, "aube-geo.json").getJSONArray("circos")
         val out = mutableListOf<PinCircoV6>()
         for (i in 0 until arr.length()) {
-            val o = arr.getJSON
-Object(i)
+            val o = arr.getJSONObject(i)
             out.add(PinCircoV6(
                 o.getString("code"), o.getString("nom"),
                 o.getDouble("lon"), o.getDouble("lat"),
@@ -128,8 +126,8 @@ Object(i)
     }
 }
 
-/* Projection plate carrÃ©e : la longitude est Ã©tirÃ©e selon la latitude
-   moyenne de l'Aube (~48,3 degrÃ©s) pour rester fidÃ¨le. */
+/* Projection plate carree : la longitude est etiree selon la latitude
+   moyenne de l'Aube (~48,3 degres) pour rester fidele. */
 private class ProjectionV6(pts: List<Pair<Double, Double>>) {
     val minLon = pts.minOf { it.first }
     val maxLat = pts.maxOf { it.second }
@@ -145,11 +143,10 @@ private class ProjectionV6(pts: List<Pair<Double, Double>>) {
         minOf(w / spanX.toFloat(), h / spanY.toFloat()) * 0.86f
 }
 
-/* ParamÃ¨tres d'''affichage pour une taille donnÃ©e */
+/* Parametres d'affichage pour une taille donnee */
 private data class ParamsV6(val k: Float, val ox: Float, val oy: Float)
 
-privat
-e fun paramsV6(proj: ProjectionV6, w: Float, h: Float): ParamsV6 {
+private fun paramsV6(proj: ProjectionV6, w: Float, h: Float): ParamsV6 {
     val k = proj.echelle(w, h)
     return ParamsV6(
         k,
@@ -191,7 +188,7 @@ fun CarteScreenV6(
         paramsV6(proj, taille.width.toFloat(), taille.height.toFloat())
     }
 
-    /* Ãtiquette : position du coin haut-gauche (px) + point rÃ©el reliÃ© par un trait */
+    /* Etiquette : position du coin haut-gauche (px) + point reel relie par un trait */
     data class Place(val x: Float, val y: Float, val reelle: Offset)
     val places = remember(taille) {
         if (taille.width < 2 || taille.height < 2) emptyList()
@@ -207,8 +204,7 @@ fun CarteScreenV6(
             TopAppBar(
                 title = { Text("Carte de l'Aube", fontWeight = FontWeight.Bold, color = VertCarte) },
                 navigationIcon = {
-                    IconButton(onClick = onFer
-mer) { Icon(Icons.Filled.ArrowBack, "Retour") }
+                    IconButton(onClick = onFermer) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 }
             )
         }
@@ -231,7 +227,7 @@ mer) { Icon(Icons.Filled.ArrowBack, "Retour") }
                     }
             ) {
                 Canvas(Modifier.fillMaxSize()) {
-                    /* Fond du dÃ©partement */
+                    /* Fond du departement */
                     val path = Path()
                     dept.forEachIndexed { i, (lon, lat) ->
                         val px = params.ox + (proj.x(lon) * params.k).toFloat()
@@ -241,7 +237,7 @@ mer) { Icon(Icons.Filled.ArrowBack, "Retour") }
                     path.close()
                     drawPath(path, FondCarte)
 
-                    /* Communes colorÃ©es par circonscription */
+                    /* Communes colorees par circonscription */
                     zones.forEach { z ->
                         val c = couleurZone(z.code)
                         val choisie = z.code == filtreActif
@@ -249,8 +245,7 @@ mer) { Icon(Icons.Filled.ArrowBack, "Retour") }
                             val p = Path()
                             anneau.forEachIndexed { i, (lon, lat) ->
                                 val px = params.ox + (proj.x(lon) * params.k).toFloat()
-                                va
-l py = params.oy + (proj.y(lat) * params.k).toFloat()
+                                val py = params.oy + (proj.y(lat) * params.k).toFloat()
                                 if (i == 0) p.moveTo(px, py) else p.lineTo(px, py)
                             }
                             p.close()
@@ -262,10 +257,10 @@ l py = params.oy + (proj.y(lat) * params.k).toFloat()
                         }
                     }
 
-                    /* Contour du dÃ©partement par-dessus */
+                    /* Contour du departement par-dessus */
                     drawPath(path, VertCarte, style = Stroke(width = 4f))
 
-                    /* Point rÃ©el + trait vers l'''Ã©tiquette */
+                    /* Point reel + trait vers l'etiquette */
                     places.forEach { pl ->
                         drawCircle(VertCarteFonce, radius = 6f, center = pl.reelle)
                         drawLine(
@@ -289,8 +284,7 @@ l py = params.oy + (proj.y(lat) * params.k).toFloat()
                         Text(
                             pin.nom,
                             Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            color = if (pin.code == filtreActif) Color.Whi
-te else Color.Black,
+                            color = if (pin.code == filtreActif) Color.White else Color.Black,
                             fontSize = 13.sp, fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -329,16 +323,15 @@ te else Color.Black,
                             ) {}
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                pin.nom + if (pin.code == "0100042S") " (adaptÃ©e, sans territoire)" else "",
-    
-                            color = if (actif) Color.White else Color.Black,
+                                pin.nom + if (pin.code == "0100042S") " (adapt\u00E9e, sans territoire)" else "",
+                                color = if (actif) Color.White else Color.Black,
                                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
                 Text(
-                    "Seules les communes abritant au moins une Ã©cole sont colorÃ©es.",
+                    "Seules les communes abritant au moins une \u00E9cole sont color\u00E9es.",
                     Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
                     fontSize = 12.sp, color = Color.Gray
                 )
