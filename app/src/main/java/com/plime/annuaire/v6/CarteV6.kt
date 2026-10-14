@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -151,8 +150,8 @@ private fun paramsV6(proj: ProjectionV6, w: Float, h: Float): ParamsV6 {
     val k = proj.echelle(w, h)
     return ParamsV6(
         k,
-        (w - proj.spanX * k) / 2f,
-        (h - proj.spanY * k) / 2f
+        (w - (proj.spanX * k).toFloat()) / 2f,
+        (h - (proj.spanY * k).toFloat()) / 2f
     )
 }
 
@@ -172,7 +171,6 @@ private fun dansPolygone(lon: Double, lat: Double, anneau: List<Pair<Double, Dou
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@ComComposable
 @Composable
 fun CarteScreenV6(
     filtreActif: String,
@@ -239,7 +237,7 @@ fun CarteScreenV6(
                     path.close()
                     drawPath(path, FondCarte)
 
-                    /* Communes colorrees par circonscription */
+                    /* Communes colorees par circonscription */
                     zones.forEach { z ->
                         val c = couleurZone(z.code)
                         val choisie = z.code == filtreActif
