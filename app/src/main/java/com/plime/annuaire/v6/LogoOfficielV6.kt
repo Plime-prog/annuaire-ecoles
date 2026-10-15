@@ -32,7 +32,13 @@ import com.plime.annuaire.R
    Ne pas utiliser Modifier.scale() : il agrandit le dessin sans agrandir
    l'espace réservé, ce qui rogne le logo et le décale. */
 @Composable
-fun LogoOfficielV6(modifier: Modifier = Modifier, echelle: Float = 1f) {
+fun LogoOfficielV6(
+    modifier: Modifier = Modifier,
+    echelle: Float = 1f,
+    /* V6 : nom de la circonscription ajouté en vert sous « de l'Aube ».
+       Chaîne vide (ou DSDEN) = rien d'affiché. */
+    circonscription: String = ""
+) {
     val k = echelle
     Row(modifier.height((42 * k).dp), verticalAlignment = Alignment.CenterVertically) {
         Column {
@@ -54,6 +60,17 @@ fun LogoOfficielV6(modifier: Modifier = Modifier, echelle: Float = 1f) {
             Text("Direction des services départementaux", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
             Text("de l'éducation nationale", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
             Text("de l'Aube", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
+            if (circonscription.isNotBlank()) {
+                Spacer(Modifier.height((1.2 * k).dp))
+                Text(
+                    "Circonscription de " + circonscription,
+                    fontSize = (3.4 * k).sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF3CB371),
+                    lineHeight = (4 * k).sp,
+                    maxLines = 1
+                )
+            }
         }
     }
 }
