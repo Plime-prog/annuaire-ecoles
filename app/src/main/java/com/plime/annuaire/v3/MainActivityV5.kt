@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.scale
 import java.io.File
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -273,41 +274,49 @@ fun AnnuaireV5App() {
                 }
                 Scaffold(
                     topBar = {
-                        Column {
-                            TopAppBar(
-                                title = {
-                                    /* V6 : le logo remplace le titre éditable.
-                                       Toucher le logo pour en choisir un autre. */
-                                    Row(
-                                        Modifier.fillMaxWidth().clickable {
-                                            logoPicker.launch(arrayOf("image/*"))
-                                        },
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        if (logoV5 != null) {
-                                            Image(
-                                                logoV5, "Logo - toucher pour changer",
-                                                Modifier.fillMaxWidth().heightIn(max = 42.dp),
-                                                contentScale = ContentScale.Fit
-                                            )
-                                        } else {
-                                            LogoOfficielV6()
-                                        }
-                                    }
-                                },
-                                actions = {
-                                    IconButton(onClick = { showCarte = true }) {
-                                        Icon(Icons.Filled.Map, "Carte de l'Aube")
-                                    }
-                                    IconButton(onClick = { showSchema = true }) {
-                                        Icon(Icons.Filled.Science, "Éditer la structure")
-                                    }
-                                    IconButton(onClick = { showSettings = true }) {
-                                        Icon(Icons.Filled.Settings, "Réglages")
+                        /* V6 : en-tête sur mesure, plus haut qu'une TopAppBar,
+                           pour afficher le logo en grand.
+                           Le bandeau tricolore n'est plus affiché ici ; le
+                           composant BandeauFrance() est conservé dans
+                           BandeauFrance.kt pour une réutilisation future. */
+                        Surface(color = Color.White) {
+                            Row(
+                                Modifier.fillMaxWidth().height(112.dp)
+                                    .padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                /* Le logo remplace le titre : toucher le logo
+                                   pour en choisir un autre. */
+                                Row(
+                                    Modifier.weight(1f).clickable {
+                                        logoPicker.launch(arrayOf("image/*"))
+                                    },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (logoV5 != null) {
+                                        Image(
+                                            logoV5, "Logo - toucher pour changer",
+                                            Modifier.fillMaxWidth().heightIn(max = 100.dp),
+                                            contentScale = ContentScale.Fit
+                                        )
+                                    } else {
+                                        /* Logo officiel agrandi : échelle 2,4 */
+                                        Box(
+                                            Modifier.fillMaxWidth().height(100.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) { LogoOfficielV6(Modifier.scale(2.4f)) }
                                     }
                                 }
-                            )
-                            BandeauFrance()
+                                IconButton(onClick = { showCarte = true }) {
+                                    Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe)
+                                }
+                                IconButton(onClick = { showSchema = true }) {
+                                    Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe)
+                                }
+                                IconButton(onClick = { showSettings = true }) {
+                                    Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe)
+                                }
+                            }
                         }
                     },
                     floatingActionButton = {
@@ -322,12 +331,23 @@ fun AnnuaireV5App() {
                     }
                 ) { padding ->
                     Column(Modifier.fillMaxSize().padding(padding)) {
-                        OutlinedTextField(
-                            value = query, onValueChange = { query = it },
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            placeholder = { Text("Rechercher dans tout l'annuaire...") },
-                            singleLine = true
-                        )
+                        /* Champ de recherche compact (réduit) */
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            OutlinedTextField(
+                                value = query, onValueChange = { query = it },
+                                modifier = Modifier.fillMaxWidth(0.86f)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                                placeholder = { Text("Rechercher...", fontSize = 13.sp) },
+                                singleLine = true,
+                                leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
+                                textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
+                                    fontSize = 13.sp
+                                )
+                            )
+                        }
                         key(revision, filtreV5, ongletV5, query) {
                             val og5 = ongletsDuFiltre(annuaire, filtreV5)
                             val t5 = if (og5.isEmpty()) null else og5[ongletV5.coerceIn(0, og5.size - 1)].second
