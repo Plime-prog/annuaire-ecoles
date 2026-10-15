@@ -325,9 +325,19 @@ fun AnnuaireV5App() {
                                         ) { LogoOfficielV6(echelle = 2.4f) }
                                     }
                                 }
-                                /* Le logo occupe tout l'en-tête ; les icônes
-                                   (carte, structure, réglages) sont sur la
-                                   ligne du champ de recherche, plus bas. */
+                                /* Icônes alignées vers le bas : elles ne surplombent
+                                   plus le texte du logo mais restent accessibles */
+                                Row(Modifier.align(Alignment.Bottom)) {
+                                    IconButton(onClick = { showCarte = true }) {
+                                        Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe)
+                                    }
+                                    IconButton(onClick = { showSchema = true }) {
+                                        Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe)
+                                    }
+                                    IconButton(onClick = { showSettings = true }) {
+                                        Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe)
+                                    }
+                                }
                             }
                         }
                     },
@@ -343,15 +353,15 @@ fun AnnuaireV5App() {
                     }
                 ) { padding ->
                     Column(Modifier.fillMaxSize().padding(padding)) {
-                        /* Ligne de recherche compacte + icônes de l'app */
+                        /* Champ de recherche compact (réduit) */
                         Row(
                             Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            horizontalArrangement = Arrangement.Center
                         ) {
                             OutlinedTextField(
                                 value = query, onValueChange = { query = it },
-                                modifier = Modifier.weight(1f)
-                                    .padding(start = 8.dp, top = 2.dp, bottom = 2.dp),
+                                modifier = Modifier.fillMaxWidth(0.86f)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
                                 placeholder = { Text("Rechercher...", fontSize = 13.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
@@ -359,18 +369,6 @@ fun AnnuaireV5App() {
                                     fontSize = 13.sp
                                 )
                             )
-                            IconButton(
-                                onClick = { showCarte = true },
-                                modifier = Modifier.size(32.dp)
-                            ) { Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe) }
-                            IconButton(
-                                onClick = { showSchema = true },
-                                modifier = Modifier.size(32.dp)
-                            ) { Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe) }
-                            IconButton(
-                                onClick = { showSettings = true },
-                                modifier = Modifier.size(32.dp)
-                            ) { Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe) }
                         }
                         key(revision, filtreV5, ongletV5, query, favoriVersion) {
                             val og5 = ongletsDuFiltre(annuaire, filtreV5)
@@ -772,9 +770,14 @@ private fun RowDetailScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
                 actions = {
-                    IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Filled.Edit, "Modifier")
+                    if (onToggleFavori != null) IconButton(onClick = onToggleFavori) {
+                        Icon(
+                            if (favori) Icons.Filled.Star else Icons.Filled.StarBorder,
+                            if (favori) "Retirer des favoris" else "Ajouter aux favoris",
+                            tint = if (favori) Color(0xFFFFB300) else VertMenthe
+                        )
                     }
+                    IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, "Modifier") }
                 }
             )
         }
@@ -833,18 +836,6 @@ private fun RowDetailScreen(
                 if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(Modifier.height(12.dp))
-            /* Bouton favori, visible dans le corps de la fiche :
-               cette fiche s'ouvrira par défaut au démarrage de l'app. */
-            if (onToggleFavori != null) Button(
-                onClick = onToggleFavori,
-                modifier = Modifier.fillMaxWidth(),
-                colors = if (favori) ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFB300), contentColor = Color.Black
-                ) else ButtonDefaults.buttonColors()
-            ) {
-                Text(if (favori) "\u2605 Fiche favorite" else "\u2606 Définir comme favorite")
-            }
-            Spacer(Modifier.height(4.dp))
             TextButton(onClick = { confirmDelete = true }) {
                 Text("Supprimer cette fiche", color = MaterialTheme.colorScheme.error)
             }
