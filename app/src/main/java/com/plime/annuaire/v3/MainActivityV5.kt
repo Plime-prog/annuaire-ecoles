@@ -458,10 +458,21 @@ fun AnnuaireV5App() {
                                     onOnglet = { ongletV5 = it; openGroup = null; openRow = null; openTabV5 = null },
                                     bas = {
                                         if (query.isNotBlank()) {
-                                            /* Recherche globale : résultats dans TOUS les onglets */
+                                            /* Recherche globale : résultats dans TOUS les onglets.
+                                               V6 : ouvrir un résultat bascule le filtre sur la
+                                               circonscription (ou la DSDEN) d'où vient la fiche -
+                                               le fil d'Ariane vert et la barre de boutons
+                                               retrouvent ainsi le chemin qui y a mené. */
                                             RechercheGlobaleV5(annuaire, query) { tb, r ->
                                                 openTabV5 = tb
                                                 openRow = r
+                                                filtreV5 = when {
+                                                    tb.id.startsWith("v5_dsden_") -> "dsden"
+                                                    tb.id.startsWith("v5_circo_") ->
+                                                        tb.id.split("_").getOrNull(2) ?: filtreV5
+                                                    else -> circoDeRow(r).ifBlank { filtreV5 }
+                                                }
+                                                ongletV5 = 0
                                             }
                                         } else when {
                                             t5 != null -> TabScreenV3(
