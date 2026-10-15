@@ -1,4 +1,4 @@
-package com.plime.annuaire.v3
+1package com.plime.annuaire.v3
 
 import com.plime.annuaire.v5.*
 import com.plime.annuaire.v6.CarteScreenV6
@@ -293,14 +293,8 @@ fun AnnuaireV5App() {
                                         } else {
                                             Text(
                                                 // AVANT
-} else {
-    Text(
-        "Choisir le logo",
-        fontWeight = FontWeight.SemiBold,
-        color = VertMenthe
-    )
-}
-// APRÈS
+} if (logoV5 != null) {
+    Image(...)
 } else {
     LogoOfficielV6()
 }
