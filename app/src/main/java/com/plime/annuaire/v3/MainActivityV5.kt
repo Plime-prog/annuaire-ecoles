@@ -325,21 +325,9 @@ fun AnnuaireV5App() {
                                         ) { LogoOfficielV6(echelle = 2.4f) }
                                     }
                                 }
-                                /* Icônes alignées vers le bas, resserrées à droite */
-                                Row(Modifier.align(Alignment.Bottom)) {
-                                    IconButton(
-                                        onClick = { showCarte = true },
-                                        modifier = Modifier.size(32.dp)
-                                    ) { Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe) }
-                                    IconButton(
-                                        onClick = { showSchema = true },
-                                        modifier = Modifier.size(32.dp)
-                                    ) { Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe) }
-                                    IconButton(
-                                        onClick = { showSettings = true },
-                                        modifier = Modifier.size(32.dp)
-                                    ) { Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe) }
-                                }
+                                /* Le logo occupe tout l'en-tête ; les icônes
+                                   (carte, structure, réglages) sont sur la
+                                   ligne du champ de recherche, plus bas. */
                             }
                         }
                     },
@@ -355,15 +343,15 @@ fun AnnuaireV5App() {
                     }
                 ) { padding ->
                     Column(Modifier.fillMaxSize().padding(padding)) {
-                        /* Champ de recherche compact (réduit) */
+                        /* Ligne de recherche compacte + icônes de l'app */
                         Row(
                             Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             OutlinedTextField(
                                 value = query, onValueChange = { query = it },
-                                modifier = Modifier.fillMaxWidth(0.86f)
-                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = Modifier.weight(1f)
+                                    .padding(start = 8.dp, top = 2.dp, bottom = 2.dp),
                                 placeholder = { Text("Rechercher...", fontSize = 13.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
@@ -371,6 +359,18 @@ fun AnnuaireV5App() {
                                     fontSize = 13.sp
                                 )
                             )
+                            IconButton(
+                                onClick = { showCarte = true },
+                                modifier = Modifier.size(32.dp)
+                            ) { Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe) }
+                            IconButton(
+                                onClick = { showSchema = true },
+                                modifier = Modifier.size(32.dp)
+                            ) { Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe) }
+                            IconButton(
+                                onClick = { showSettings = true },
+                                modifier = Modifier.size(32.dp)
+                            ) { Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe) }
                         }
                         key(revision, filtreV5, ongletV5, query, favoriVersion) {
                             val og5 = ongletsDuFiltre(annuaire, filtreV5)
