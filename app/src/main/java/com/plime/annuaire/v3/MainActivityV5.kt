@@ -305,7 +305,7 @@ fun AnnuaireV5App() {
                                 /* Le logo remplace le titre : toucher le logo
                                    pour en choisir un autre. */
                                 Row(
-                                    Modifier.weight(0.66f).clickable {
+                                    Modifier.weight(1f).clickable {
                                         logoPicker.launch(arrayOf("image/*"))
                                     },
                                     verticalAlignment = Alignment.CenterVertically
@@ -318,26 +318,24 @@ fun AnnuaireV5App() {
                                         )
                                     } else {
                                         /* Logo officiel agrandi nativement (échelle 2,4),
-                                           sans Modifier.scale qui rogne et décale le logo */
+                                           sans Modifier.scale qui rogne et décale le logo.
+                                           V6 : le nom de la circonscription choisie est
+                                           inscrit EN VERT dans le logo, 4e ligne du bloc ;
+                                           rien n'est ajouté pour la DSDEN. */
                                         Box(
                                             Modifier.fillMaxWidth().height(100.dp),
                                             contentAlignment = Alignment.Center
-                                        ) { LogoOfficielV6(echelle = 2.4f) }
+                                        ) {
+                                            LogoOfficielV6(
+                                                echelle = 2.4f,
+                                                circonscription =
+                                                    if (filtreV5 == "dsden") ""
+                                                    else circosV5.firstOrNull { it.code == filtreV5 }
+                                                        ?.let { nomCourt(it.nom) } ?: ""
+                                            )
+                                        }
                                     }
                                 }
-                                /* V6 : nom du bouton choisi (DSDEN ou circonscription)
-                                   inscrit sur la ligne du logo, à droite.
-                                   Police petite pour que tout tienne sur une ligne. */
-                                Text(
-                                    if (filtreV5 == "dsden") "DSDEN"
-                                    else circosV5.firstOrNull { it.code == filtreV5 }
-                                        ?.let { nomCourt(it.nom) } ?: "",
-                                    Modifier.weight(1f).padding(horizontal = 4.dp),
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = VertMenthe,
-                                    maxLines = 1
-                                )
                                 /* Icônes alignées vers le bas : elles ne surplombent
                                    plus le texte du logo mais restent accessibles */
                                 Row(Modifier.align(Alignment.Bottom)) {
