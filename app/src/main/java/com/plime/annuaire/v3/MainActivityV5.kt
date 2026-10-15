@@ -36,7 +36,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.draw.scale
 import java.io.File
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -300,21 +299,26 @@ fun AnnuaireV5App() {
                                             contentScale = ContentScale.Fit
                                         )
                                     } else {
-                                        /* Logo officiel agrandi : échelle 2,4 */
+                                        /* Logo officiel agrandi nativement (échelle 2,4),
+                                           sans Modifier.scale qui rogne et décale le logo */
                                         Box(
                                             Modifier.fillMaxWidth().height(100.dp),
                                             contentAlignment = Alignment.Center
-                                        ) { LogoOfficielV6(Modifier.scale(2.4f)) }
+                                        ) { LogoOfficielV6(echelle = 2.4f) }
                                     }
                                 }
-                                IconButton(onClick = { showCarte = true }) {
-                                    Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe)
-                                }
-                                IconButton(onClick = { showSchema = true }) {
-                                    Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe)
-                                }
-                                IconButton(onClick = { showSettings = true }) {
-                                    Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe)
+                                /* Icônes alignées vers le bas : elles ne surplombent
+                                   plus le texte du logo mais restent accessibles */
+                                Row(Modifier.align(Alignment.Bottom)) {
+                                    IconButton(onClick = { showCarte = true }) {
+                                        Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe)
+                                    }
+                                    IconButton(onClick = { showSchema = true }) {
+                                        Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe)
+                                    }
+                                    IconButton(onClick = { showSettings = true }) {
+                                        Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe)
+                                    }
                                 }
                             }
                         }
