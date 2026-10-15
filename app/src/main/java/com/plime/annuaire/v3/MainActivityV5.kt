@@ -336,19 +336,6 @@ fun AnnuaireV5App() {
                                         }
                                     }
                                 }
-                                /* Icônes alignées vers le bas : elles ne surplombent
-                                   plus le texte du logo mais restent accessibles */
-                                Row(Modifier.align(Alignment.Bottom)) {
-                                    IconButton(onClick = { showCarte = true }) {
-                                        Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe)
-                                    }
-                                    IconButton(onClick = { showSchema = true }) {
-                                        Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe)
-                                    }
-                                    IconButton(onClick = { showSettings = true }) {
-                                        Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe)
-                                    }
-                                }
                             }
                         }
                     },
@@ -364,15 +351,16 @@ fun AnnuaireV5App() {
                     }
                 ) { padding ->
                     Column(Modifier.fillMaxSize().padding(padding)) {
-                        /* Champ de recherche compact (réduit) */
+                        /* V6 : barre de recherche raccourcie, avec les icônes
+                           (carte / structure / réglages) resserrées et collées
+                           à sa droite - le logo occupe ainsi sa ligne entière. */
                         Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
+                            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             OutlinedTextField(
                                 value = query, onValueChange = { query = it },
-                                modifier = Modifier.fillMaxWidth(0.86f)
-                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                                modifier = Modifier.weight(1f),
                                 placeholder = { Text("Rechercher...", fontSize = 13.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
@@ -380,6 +368,30 @@ fun AnnuaireV5App() {
                                     fontSize = 13.sp
                                 )
                             )
+                            Spacer(Modifier.width(4.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(
+                                    onClick = { showCarte = true },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Filled.Map, "Carte de l'Aube",
+                                        tint = VertMenthe, modifier = Modifier.size(20.dp))
+                                }
+                                IconButton(
+                                    onClick = { showSchema = true },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Filled.Science, "Éditer la structure",
+                                        tint = VertMenthe, modifier = Modifier.size(20.dp))
+                                }
+                                IconButton(
+                                    onClick = { showSettings = true },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Filled.Settings, "Réglages",
+                                        tint = VertMenthe, modifier = Modifier.size(20.dp))
+                                }
+                            }
                         }
                         key(revision, filtreV5, ongletV5, query, favoriVersion) {
                             val og5 = ongletsDuFiltre(annuaire, filtreV5)
