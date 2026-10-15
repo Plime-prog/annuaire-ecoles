@@ -97,20 +97,25 @@ fun rowSubtitleV3(tab: TabV3, row: Map<String, String>): String {
     return if (vals.size > 1) vals.drop(1).take(2).joinToString(" · ") else ""
 }
 
-/* ==================== SCHÉMA PAR DÉFAUT (identique V2) ==================== */
+/* ==================== SCHÉMA PAR DÉFAUT ==================== */
 
 private fun fld(label: String): FieldV3 =
     FieldV3(newKeyV3(), label, multiline = label.contains("Observation") || label.contains("Adresse") || label.contains("Horaires"))
 
 fun defaultSchemaV3(): AnnuaireV3 {
     val communes = TabV3(newKeyV3(), "Communes").apply {
+        /* Structure en dur de l'onglet Communes (23 champs) :
+           mairie et élu de la commune, puis l'école et sa fiche complète,
+           puis la décharge et les horaires. */
         listOf(
-            "Commune", "Maire", "Tél. maire", "Adresse mairie", "Mail",
-            "Contact élu", "Tél. contact élu", "Contact service", "Tél. contact service",
-            "Observations", "École", "Code UAI", "Adresse école", "Tél. école", "Mail école",
-            "Directeur", "Tél. directeur", "Nb élèves", "Horaires matin",
-            "Horaires après-midi", "Observations école", "Professeur", "Classe",
-            "Nb élèves (classe)", "Tél. professeur", "Observations prof."
+            "Commune", "Adresse Mairie", "Tél. Mairie",
+            "Maire", "Tél. Maire", "Mail Maire",
+            "Contact Élu", "Fonction Contact Élu", "Tél. Élu", "Mail Élu",
+            "Observations",
+            "École", "Code UAI", "Statut", "Adresse école", "Tél. école", "Mail école",
+            "Directeur", "Tél. Directeur", "Mail Directeur",
+            "Décharge", "Matin", "Après-midi",
+            "Observations"
         ).forEach { fields.add(fld(it)) }
         groupBy = fields[0].key
     }
