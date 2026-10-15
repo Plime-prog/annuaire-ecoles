@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -66,6 +67,10 @@ private fun ChipFiltre(texte: String, selected: Boolean, onClick: () -> Unit) {
  * dans la barre du haut). Les chips de filtre sont collées tout en haut,
  * la ligne verte, puis les onglets contextuels — le bloc du bas occupe
  * TOUTE la place restante.
+ *
+ * V6 : dès qu'une circonscription (ou la DSDEN) est sélectionnée, la
+ * rangée de boutons défile automatiquement pour montrer le bouton actif.
+ * Idem pour la rangée des onglets (Communes, Circonscription, Collèges...).
  */
 @Composable
 fun EcranAccueilV5(
@@ -79,8 +84,19 @@ fun EcranAccueilV5(
 ) {
     Column(Modifier.fillMaxSize().background(Color.White)) {
         /* ---- Filtres collés en haut : DSDEN puis les 7 circonscriptions ---- */
+        /* Position du bouton sélectionné : 0 = DSDEN, sinon 1 + rang de la
+           circonscription dans la liste. */
+        val indexFiltre = if (filtre == "dsden") 0
+            else 1 + (circos.indexOfFirst { it.code == filtre }).coerceAtLeast(-1)
+        val etatFiltres = rememberLazyListState()
+        LaunchedEffect(filtre, circos) {
+            if (indexFiltre < 1 + circos.size) {
+                etatFiltres.animateScrollToItem(indexFiltre)
+            }
+        }
         LazyRow(
-            Modifier.fillMaxWidth(),
+            state = etatFiltres,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 12.dp)
         ) {
@@ -91,8 +107,15 @@ fun EcranAccueilV5(
         }
         HorizontalDivider(color = VertMenthe, thickness = 2.dp)
         /* ---- Onglets contextuels : mêmes chips vert/gris que le haut ---- */
+        val etatOnglets = rememberLazyListState()
+        LaunchedEffect(ongletIndex, onglets) {
+            if (ongletIndex < onglets.size) {
+                etatOnglets.animateScrollToItem(ongletIndex)
+            }
+        }
         LazyRow(
-            Modifier.fillMaxWidth(),
+            state = etatOnglets,
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 12.dp)
         ) {
