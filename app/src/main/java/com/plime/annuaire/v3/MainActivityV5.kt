@@ -78,7 +78,10 @@ fun AnnuaireV5App() {
 
     /* Logo .jpg affiché au-dessus du bandeau tricolore */
     var logoVersion by remember { mutableStateOf(0) }
-    var filtreV5 by remember { mutableStateOf("dsden") }
+    /* V6 : par défaut, la circonscription de Saint-Julien-Arcis est
+       sélectionnée ; la fiche favorite (étoile) s'ouvre automatiquement. */
+    var filtreV5 by remember { mutableStateOf("0100043T") }
+    var favoriVersion by remember { mutableStateOf(0) }
     var ongletV5 by remember { mutableStateOf(0) }
     var openTabV5 by remember { mutableStateOf<TabV3?>(null) }
 
@@ -94,6 +97,19 @@ fun AnnuaireV5App() {
         annuaire = StorageV3.load(ctx)
         hasPin = StorageV3.hasPin(ctx)
         circosV5 = loadCircosV5(ctx)
+        /* Ouvrir la fiche favorite (étoile) au démarrage si elle existe */
+        val fav = StorageV3.getFavori(ctx)
+        if (fav.isNotBlank()) {
+            val parties = fav.split("|")
+            if (parties.size == 2) {
+                val tb = annuaire.tabs.firstOrNull { it.id == parties[0] }
+                val rw = tb?.rows?.firstOrNull { it["_id"] == parties[1] }
+                if (tb != null && rw != null) {
+                    openTabV5 = tb
+                    openRow = rw
+                }
+            }
+        }
     }
 
     /* V6 : les onglets v5 sont régénérés dès qu'ils manquent - y compris
@@ -354,7 +370,7 @@ fun AnnuaireV5App() {
                                 )
                             )
                         }
-                        key(revision, filtreV5, ongletV5, query) {
+                        key(revision, filtreV5, ongletV5, query, favoriVersion) {
                             val og5 = ongletsDuFiltre(annuaire, filtreV5)
                             val t5 = if (og5.isEmpty()) null else og5[ongletV5.coerceIn(0, og5.size - 1)].second
                             val circoOuverte = circosV5.firstOrNull { it.code == filtreV5 }
@@ -377,6 +393,17 @@ fun AnnuaireV5App() {
                                         tabFiche.name,
                                         groupeFiche?.takeIf { it.isNotBlank() }
                                     ),
+                                    favori = StorageV3.getFavori(ctx) ==
+                                        tabFiche.id + "|" + (fiche["_id"] ?: ""),
+                                    onToggleFavori = {
+                                        if (StorageV3.getFavori(ctx) ==
+                                            tabFiche.id + "|" + (fiche["_id"] ?: "")
+                                        ) StorageV3.clearFavori(ctx)
+                                        else StorageV3.setFavori(
+                                            ctx, tabFiche.id, fiche["_id"] ?: ""
+                                        )
+                                        favoriVersion++
+                                    },
                                     onEdit = {
                                         editTab = tabFiche
                                         editOriginal = fiche
@@ -723,7 +750,10 @@ private fun RowDetailScreen(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     /* V6 : fil d'Ariane - les boutons verts qui ont mené à cette fiche */
-    filAriane: List<String> = emptyList()
+    filAriane: List<String> = emptyList(),
+    /* V6 : favori - l'étoile affiche cette fiche par défaut au démarrage */
+    favori: Boolean = false,
+    onToggleFavori: (() -> Unit)? = null
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     Scaffold(
@@ -740,6 +770,13 @@ private fun RowDetailScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
                 actions = {
+                    if (onToggleFavori != null) IconButton(onClick = onToggleFavori) {
+                        Icon(
+                            if (favori) Icons.Filled.Star else Icons.Filled.StarBorder,
+                            if (favori) "Retirer des favoris" else "Ajouter aux favoris",
+                            tint = if (favori) Color(0xFFFFB300) else VertMenthe
+                        )
+                    }
                     IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, "Modifier") }
                 }
             )
