@@ -171,4 +171,17 @@ object StorageV3 {
     fun setTitre(ctx: Context, t: String) {
         prefs(ctx).edit().putString("titre", t.ifBlank { "Circonscription" }).apply()
     }
+
+    /* ==================== FAVORI ==================== */
+
+    /** Fiche favorite : « idOnglet|idLigne », vide si aucun. */
+    fun getFavori(ctx: Context): String = prefs(ctx).getString("favori", "") ?: ""
+
+    fun setFavori(ctx: Context, tabId: String, rowId: String) {
+        prefs(ctx).edit().putString("favori", "$tabId|$rowId").apply()
+    }
+
+    fun clearFavori(ctx: Context) {
+        prefs(ctx).edit().remove("favori").apply()
+    }
 }
