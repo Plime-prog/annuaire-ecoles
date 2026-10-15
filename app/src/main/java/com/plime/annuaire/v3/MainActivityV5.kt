@@ -2,6 +2,7 @@ package com.plime.annuaire.v3
 
 import com.plime.annuaire.v5.*
 import com.plime.annuaire.v6.CarteScreenV6
+import com.plime.annuaire.v6.LogoOfficielV6
 
 import android.content.Intent
 import android.net.Uri
@@ -291,7 +292,18 @@ fun AnnuaireV5App() {
                                             )
                                         } else {
                                             Text(
-                                                "Choisir le logo",
+                                                // AVANT
+} else {
+    Text(
+        "Choisir le logo",
+        fontWeight = FontWeight.SemiBold,
+        color = VertMenthe
+    )
+}
+// APRÈS
+} else {
+    LogoOfficielV6()
+}
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = VertMenthe
                                             )
