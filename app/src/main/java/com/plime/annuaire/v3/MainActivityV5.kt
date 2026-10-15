@@ -3,6 +3,8 @@ package com.plime.annuaire.v3
 import com.plime.annuaire.v5.*
 import com.plime.annuaire.v6.CarteScreenV6
 import com.plime.annuaire.v6.LogoOfficielV6
+import com.plime.annuaire.v6.LigneAdresseV6
+import com.plime.annuaire.v6.estAdresseV6
 
 import android.content.Intent
 import android.net.Uri
@@ -689,7 +691,10 @@ private fun GroupDetailScreen(
                 Encadre {
                     champsConstants(tab, rows).forEach { (label, value) ->
                         Text(label, fontSize = 11.sp, color = VertMenthe)
-                        Text(value, fontSize = 15.sp)
+                        if (estAdresseV6(label)) {
+                            /* Adresse du groupe (mairie...) : itinéraire Maps */
+                            LigneAdresseV6(value)
+                        } else Text(value, fontSize = 15.sp)
                         Spacer(Modifier.height(6.dp))
                     }
                 }
@@ -770,7 +775,12 @@ private fun RowDetailScreen(
                     if (v.isNotBlank()) {
                         auMoinsUn = true
                         Text(f.label, fontSize = 11.sp, color = VertMenthe)
-                        if (estTelV5(f.label)) {
+                        if (estAdresseV6(f.label)) {
+                            /* Ligne adresse : toucher = itinéraire Google Maps
+                               depuis la position actuelle (voiture, ou à pied
+                               si moins de 5 km) */
+                            LigneAdresseV6(v)
+                        } else if (estTelV5(f.label)) {
                             /* Ligne téléphone : toucher = composeur pré-rempli */
                             val ctxF = LocalContext.current
                             Row(
