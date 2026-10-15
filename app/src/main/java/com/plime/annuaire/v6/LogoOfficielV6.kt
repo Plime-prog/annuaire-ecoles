@@ -64,11 +64,11 @@ fun LogoOfficielV6(
                 Spacer(Modifier.height((1.2 * k).dp))
                 Text(
                     "Circonscription de " + circonscription,
-                    fontSize = (3.4 * k).sp,
+                    fontSize = (2.6 * k).sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF3CB371),
-                    lineHeight = (4 * k).sp,
-                    maxLines = 1
+                    lineHeight = (3 * k).sp,
+                    maxLines = 2
                 )
             }
         }
