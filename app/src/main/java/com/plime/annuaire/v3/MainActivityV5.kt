@@ -329,15 +329,15 @@ fun AnnuaireV5App() {
                                 Row(Modifier.align(Alignment.Bottom)) {
                                     IconButton(
                                         onClick = { showCarte = true },
-                                        modifier = Modifier.size(38.dp)
+                                        modifier = Modifier.size(32.dp)
                                     ) { Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe) }
                                     IconButton(
                                         onClick = { showSchema = true },
-                                        modifier = Modifier.size(38.dp)
+                                        modifier = Modifier.size(32.dp)
                                     ) { Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe) }
                                     IconButton(
                                         onClick = { showSettings = true },
-                                        modifier = Modifier.size(38.dp)
+                                        modifier = Modifier.size(32.dp)
                                     ) { Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe) }
                                 }
                             }
@@ -772,18 +772,7 @@ private fun RowDetailScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
                 actions = {
-                    if (onToggleFavori != null) IconButton(
-                        onClick = onToggleFavori,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        /* Étoile favori : caractère toujours rendu (pas d'icône) */
-                        Text(
-                            if (favori) "\u2605" else "\u2606",
-                            fontSize = 24.sp,
-                            color = if (favori) Color(0xFFFFB300) else VertMenthe
-                        )
-                    }
-                    IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
+                    IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
                         Icon(Icons.Filled.Edit, "Modifier")
                     }
                 }
@@ -844,6 +833,18 @@ private fun RowDetailScreen(
                 if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Spacer(Modifier.height(12.dp))
+            /* Bouton favori, visible dans le corps de la fiche :
+               cette fiche s'ouvrira par défaut au démarrage de l'app. */
+            if (onToggleFavori != null) Button(
+                onClick = onToggleFavori,
+                modifier = Modifier.fillMaxWidth(),
+                colors = if (favori) ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFB300), contentColor = Color.Black
+                ) else ButtonDefaults.buttonColors()
+            ) {
+                Text(if (favori) "\u2605 Fiche favorite" else "\u2606 Définir comme favorite")
+            }
+            Spacer(Modifier.height(4.dp))
             TextButton(onClick = { confirmDelete = true }) {
                 Text("Supprimer cette fiche", color = MaterialTheme.colorScheme.error)
             }
