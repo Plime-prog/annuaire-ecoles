@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Itinéraires Google Maps : position de départ de l'utilisateur -->
+    <!-- ItinÃ©raires Google Maps : position de dÃ©part de l'utilisateur -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -12,7 +12,7 @@
         android:allowBackup="false">
 
         <activity
-            android:name=".v3.MainActivityV5"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
