@@ -16,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -24,23 +23,21 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
 import kotlin.math.cos
-import kotlin.math.roundToInt
 
 /* ==================== CARTE DE L'AUBE (hors ligne) ==================== */
 
-/* DessinÃ©e Ã  partir de deux assets :
-   - aube-geo.json  : contour du dÃ©partement + une Ã©tiquette par circonscription ;
-   - aube-zones.json : contour des communes ayant au moins une Ã©cole,
-     groupÃ©es par circonscription (open data IGN + annuaire MENJ).
-   Chaque circonscription a sa couleur ; celle choisie est en teinte foncÃ©e.
-   Toucher une commune colorÃ©e sÃ©lectionne sa circonscription.
-   La circonscription de Troyes ASH (0100042S) est adaptÃ©e : elle n'a pas
+/* Dessinée à partir de deux assets :
+   - aube-geo.json  : contour du département ;
+   - aube-zones.json : contour des communes ayant au moins une école,
+     groupées par circonscription (open data IGN + annuaire MENJ).
+   Chaque circonscription a sa couleur ; celle choisie est en teinte foncée.
+   Toucher une commune colorée sélectionne sa circonscription.
+   La circonscription de Troyes ASH (0100042S) est adaptée : elle n'a pas
    de territoire propre, on la choisit seulement dans la liste. */
 
 private val VertCarte = Color(0xFF3CB371)
@@ -48,7 +45,7 @@ private val VertCarteFonce = Color(0xFF2E8B57)
 private val FondCarte = Color(0xFFEAF7F0)
 private val BordCommune = Color(0x33000000)
 
-/* Couleur de chaque circonscription : pastel au repos, foncÃ©e si choisie */
+/* Couleur de chaque circonscription : pastel au repos, foncée si choisie */
 private data class CouleurZone(val pastel: Color, val foncee: Color)
 
 private val CouleursZones = mapOf(
@@ -126,8 +123,8 @@ object GeoAubeV6 {
     }
 }
 
-/* Projection plate carrÃ©e : la longitude est Ã©tirÃ©e selon la latitude
-   moyenne de l'Aube (~48,3 degrÃ©s) pour rester fidÃ¨le. */
+/* Projection plate carrée : la longitude est étirée selon la latitude
+   moyenne de l'Aube (~48,3 degrés) pour rester fidèle. */
 private class ProjectionV6(pts: List<Pair<Double, Double>>) {
     val minLon = pts.minOf { it.first }
     val maxLat = pts.maxOf { it.second }
@@ -143,7 +140,7 @@ private class ProjectionV6(pts: List<Pair<Double, Double>>) {
         minOf(w / spanX.toFloat(), h / spanY.toFloat()) * 0.86f
 }
 
-/* ParamÃ¨tres d'affichage pour une taille donnÃ©e */
+/* Paramètres d'affichage pour une taille donnée */
 private data class ParamsV6(val k: Float, val ox: Float, val oy: Float)
 
 private fun paramsV6(proj: ProjectionV6, w: Float, h: Float): ParamsV6 {
@@ -188,17 +185,6 @@ fun CarteScreenV6(
         paramsV6(proj, taille.width.toFloat(), taille.height.toFloat())
     }
 
-    /* Ãtiquette : position du coin haut-gauche (px) + point rÃ©el reliÃ© par un trait */
-    data class Place(val x: Float, val y: Float, val reelle: Offset)
-    val places = remember(taille) {
-        if (taille.width < 2 || taille.height < 2) emptyList()
-        else pins.map { p ->
-            val px = params.ox + (proj.x(p.lon) * params.k).toFloat()
-            val py = params.oy + (proj.y(p.lat) * params.k).toFloat()
-            Place(px + p.dx, py + p.dy, Offset(px, py))
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -210,7 +196,7 @@ fun CarteScreenV6(
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            /* --- La carte --- */
+            /* --- La carte (sans étiquettes : la plus lisible) --- */
             Box(
                 Modifier.fillMaxWidth().weight(1f).onSizeChanged { taille = it }
                     .pointerInput(taille, filtreActif) {
@@ -227,7 +213,7 @@ fun CarteScreenV6(
                     }
             ) {
                 Canvas(Modifier.fillMaxSize()) {
-                    /* Fond du dÃ©partement */
+                    /* Fond du département */
                     val path = Path()
                     dept.forEachIndexed { i, (lon, lat) ->
                         val px = params.ox + (proj.x(lon) * params.k).toFloat()
@@ -237,7 +223,7 @@ fun CarteScreenV6(
                     path.close()
                     drawPath(path, FondCarte)
 
-                    /* Communes colorÃ©es par circonscription */
+                    /* Communes colorées par circonscription */
                     zones.forEach { z ->
                         val c = couleurZone(z.code)
                         val choisie = z.code == filtreActif
@@ -257,48 +243,20 @@ fun CarteScreenV6(
                         }
                     }
 
-                    /* Contour du dÃ©partement par-dessus */
+                    /* Contour du département par-dessus */
                     drawPath(path, VertCarte, style = Stroke(width = 4f))
-
-                    /* Point rÃ©el + trait vers l'Ã©tiquette */
-                    places.forEach { pl ->
-                        drawCircle(VertCarteFonce, radius = 6f, center = pl.reelle)
-                        drawLine(
-                            VertCarte, pl.reelle,
-                            Offset(pl.x + 55f, pl.y + 30f), strokeWidth = 3f
-                        )
-                    }
-                }
-                places.zip(pins).forEach { (pl, pin) ->
-                    val c = couleurZone(pin.code)
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (pin.code == filtreActif) c.foncee
-                                else if (CouleursZones.containsKey(pin.code)) c.pastel
-                                else VertCarte,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset { IntOffset(pl.x.roundToInt(), pl.y.roundToInt()) }
-                            .clickable { onCirco(pin.code) }
-                    ) {
-                        Text(
-                            pin.nom,
-                            Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            color = if (pin.code == filtreActif) Color.White else Color.Black,
-                            fontSize = 13.sp, fontWeight = FontWeight.SemiBold
-                        )
-                    }
                 }
             }
             HorizontalDivider()
-            /* --- Liste de secours : les 7 circonscriptions --- */
+            /* --- Les 7 circonscriptions (hauteur fixe, la carte prend le reste) --- */
             Text(
                 "Ou choisir une circonscription :",
                 Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = VertCarte, fontWeight = FontWeight.Bold
             )
             Column(
-                Modifier.fillMaxWidth().weight(0.55f)
+                Modifier.fillMaxWidth()
+                    .heightIn(min = 300.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp)
             ) {
@@ -323,16 +281,15 @@ fun CarteScreenV6(
                             ) {}
                             Spacer(Modifier.width(10.dp))
                             Text(
-                                pin.nom + if (pin.code == "0100042S") " (adaptÃ©e, sans territoire)" else "",
-    
-                            color = if (actif) Color.White else Color.Black,
+                                pin.nom + if (pin.code == "0100042S") " (adaptée, sans territoire)" else "",
+                                color = if (actif) Color.White else Color.Black,
                                 fontSize = 15.sp, fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
                 }
                 Text(
-                    "Seules les communes abritant au moins une Ã©cole sont colorÃ©es.",
+                    "Seules les communes abritant au moins une école sont colorées.",
                     Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
                     fontSize = 12.sp, color = Color.Gray
                 )
