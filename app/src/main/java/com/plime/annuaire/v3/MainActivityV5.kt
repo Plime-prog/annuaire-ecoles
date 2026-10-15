@@ -325,18 +325,20 @@ fun AnnuaireV5App() {
                                         ) { LogoOfficielV6(echelle = 2.4f) }
                                     }
                                 }
-                                /* Icônes alignées vers le bas : elles ne surplombent
-                                   plus le texte du logo mais restent accessibles */
+                                /* Icônes alignées vers le bas, resserrées à droite */
                                 Row(Modifier.align(Alignment.Bottom)) {
-                                    IconButton(onClick = { showCarte = true }) {
-                                        Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe)
-                                    }
-                                    IconButton(onClick = { showSchema = true }) {
-                                        Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe)
-                                    }
-                                    IconButton(onClick = { showSettings = true }) {
-                                        Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe)
-                                    }
+                                    IconButton(
+                                        onClick = { showCarte = true },
+                                        modifier = Modifier.size(38.dp)
+                                    ) { Icon(Icons.Filled.Map, "Carte de l'Aube", tint = VertMenthe) }
+                                    IconButton(
+                                        onClick = { showSchema = true },
+                                        modifier = Modifier.size(38.dp)
+                                    ) { Icon(Icons.Filled.Science, "Éditer la structure", tint = VertMenthe) }
+                                    IconButton(
+                                        onClick = { showSettings = true },
+                                        modifier = Modifier.size(38.dp)
+                                    ) { Icon(Icons.Filled.Settings, "Réglages", tint = VertMenthe) }
                                 }
                             }
                         }
@@ -770,14 +772,20 @@ private fun RowDetailScreen(
                     IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
                 actions = {
-                    if (onToggleFavori != null) IconButton(onClick = onToggleFavori) {
-                        Icon(
-                            if (favori) Icons.Filled.Star else Icons.Filled.StarBorder,
-                            if (favori) "Retirer des favoris" else "Ajouter aux favoris",
-                            tint = if (favori) Color(0xFFFFB300) else VertMenthe
+                    if (onToggleFavori != null) IconButton(
+                        onClick = onToggleFavori,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        /* Étoile favori : caractère toujours rendu (pas d'icône) */
+                        Text(
+                            if (favori) "\u2605" else "\u2606",
+                            fontSize = 24.sp,
+                            color = if (favori) Color(0xFFFFB300) else VertMenthe
                         )
                     }
-                    IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, "Modifier") }
+                    IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
+                        Icon(Icons.Filled.Edit, "Modifier")
+                    }
                 }
             )
         }
