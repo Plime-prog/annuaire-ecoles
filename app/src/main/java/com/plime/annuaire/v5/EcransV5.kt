@@ -25,8 +25,11 @@ private val VertMenthe = Color(0xFF3CB371)
 private val GrisClair = Color(0xFFE0E0E0)   /* fond non sélectionné */
 private val GrisTexte = Color(0xFF888888)   /* texte non sélectionné */
 
-/** Nom affiché dans le filtre : « Troyes », « Bar-sur-Aube »… */
-fun nomCourt(nomCirco: String): String = nomCirco.removePrefix("Circonscription de ")
+/** Nom affiché dans le filtre : « Troyes », « Bar-sur-Aube »…
+    V6 : Saint-Julien s'écrit « Saint-Julien/Arcis », comme sur la carte. */
+fun nomCourt(nomCirco: String): String =
+    nomCirco.removePrefix("Circonscription de ")
+        .replace("Saint-Julien-Arcis", "Saint-Julien/Arcis")
 
 @Composable
 private fun EncadreV5(
