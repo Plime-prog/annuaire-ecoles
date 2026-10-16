@@ -498,12 +498,20 @@ fun AppAnnuaire() {
                                             filtre == "dsden" -> Text("Aucun onglet DSDEN g\u00E9n\u00E9r\u00E9. Videz les donn\u00E9es de l'application puis relancez.", Modifier.padding(16.dp), color = Color(0xFFB3261E))
                                             tabCommunes != null -> {
                                                 val lignes = tabCommunes.rows.filter { circoDeLigne(it) == filtre }
-                                                if (lignes.isEmpty()) {
+                                                /* Ecoles sans rattachement : elles restent
+                                                   visibles, en fin de liste de chaque
+                                                   circonscription, pour ne jamais perdre
+                                                   une ecole importee. */
+                                                val sansRattach = tabCommunes.rows.filter { circoDeLigne(it).isEmpty() }
+                                                if (lignes.isEmpty() && sansRattach.isEmpty()) {
                                                     Text("Aucune \u00E9cole rattach\u00E9e \u00E0 cette circonscription.", Modifier.padding(16.dp))
                                                 } else {
                                                     val parCommune = lignes.groupBy { it[tabCommunes.groupBy] ?: "(sans commune)" }.toSortedMap()
+                                                    val communes = parCommune.map { it.key to it.value }.toMutableList()
+                                                    if (sansRattach.isNotEmpty())
+                                                        communes.add("\u00C9coles sans rattachement" to sansRattach)
                                                     ListeEcolesParCommune(
-                                                        communes = parCommune.map { it.key to it.value },
+                                                        communes = communes,
                                                         titreEcole = { row -> titreDetail(tabCommunes, row) },
                                                         onOpenRow = { ongletFiche = tabCommunes; openRow = it }
                                                     )
@@ -854,6 +862,9 @@ private fun RowDetailScreen(
             Encadre {
                 var auMoinsUn = false
                 tab.fields.forEach { f ->
+                    /* Colonne " Circonscription " : technique (rattachement
+                       a une circo), jamais affichee dans la fiche. */
+                    if (norme(f.label) == "circonscription") return@forEach
                     val v = row[f.key] ?: ""
                     if (v.isNotBlank()) {
                         auMoinsUn = true
