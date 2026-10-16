@@ -276,9 +276,13 @@ object ExcelIO {
         var n = name.replace(Regex("[:\\\\/?*\\[\\]]"), "-").trim()
         if (n.length > 31) n = n.take(31)
         if (n.isBlank()) n = "Onglet"
+        /* Excel distingue les noms SANS la casse (" Equipe " et " EQUIPE "
+           sont un doublon pour lui) : le controle utilise des minuscules. */
+        val lower = { s: String -> s.lowercase() }
+        val usedLower = used.map { lower(it) }.toMutableSet()
         var base = n; var i = 2
-        while (n in used) { n = (base.take(28) + "_" + i); i++ }
-        used.add(n)
+        while (lower(n) in usedLower) { n = (base.take(28) + "_" + i); i++ }
+        used.add(n); usedLower.add(lower(n))
         return n
     }
 
