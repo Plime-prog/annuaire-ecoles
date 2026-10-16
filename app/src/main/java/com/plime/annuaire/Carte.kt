@@ -121,6 +121,20 @@ object GeoAube {
         }
         return out
     }
+
+    /* Noms des communes, DANS L'ORDRE des contours de chaque circonscription
+       (asset aube-communes.json). L'indice du contour touche = le nom. */
+    fun communes(ctx: Context): Map<String, List<String>> {
+        val racine = lire(ctx, "aube-communes.json").getJSONObject("zones")
+        val out = mutableMapOf<String, List<String>>()
+        for (code in racine.keys()) {
+            val arr = racine.getJSONArray(code)
+            val noms = mutableListOf<String>()
+            for (i in 0 until arr.length()) noms.add(arr.getString(i))
+            out[code] = noms
+        }
+        return out
+    }
 }
 
 /* Projection plate carree : la longitude est etiree selon la latitude
@@ -172,23 +186,41 @@ private fun dansPolygone(lon: Double, lat: Double, anneau: List<Pair<Double, Dou
 fun EcranCarte(
     filtreActif: String,
     onCirco: (String) -> Unit,
-    onFermer: () -> Unit
+    onFermer: () -> Unit,
+    /* Circonscription choisie : toucher une commune OUVRIRA cette commune. */
+    onCommune: (String) -> Unit = {}
 ) {
     val ctx = LocalContext.current
     val dept = remember { GeoAube.dept(ctx) }
     val pins = remember { GeoAube.circos(ctx) }
     val zones = remember { GeoAube.zones(ctx) }
-    val proj = remember { Projection(dept) }
+    val zonesNoms = remember { GeoAube.communes(ctx) }
+    /* Mode circonscription : si une circo est choisie (pas la DSDEN et elle
+       possede un territoire), la carte se concentre sur SES communes et
+       toucher une commune l'ouvre ; sinon carte complete du departement. */
+    val zoneActive =
+        if (filtreActif == "dsden") null
+        else zones.firstOrNull { it.code == filtreActif }
+    val proj = remember(filtreActif) {
+        if (zoneActive != null) Projection(zoneActive.contours.flatten())
+        else Projection(dept)
+    }
     var taille by remember { mutableStateOf(IntSize(1, 1)) }
 
-    val params = remember(taille) {
+    val params = remember(proj, taille) {
         params(proj, taille.width.toFloat(), taille.height.toFloat())
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Carte de l'Aube", fontWeight = FontWeight.Bold, color = VertCarte) },
+                title = {
+                    Text(
+                        if (zoneActive != null) "Communes de la circonscription"
+                        else "Carte de l'Aube",
+                        fontWeight = FontWeight.Bold, color = VertCarte
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onFermer) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 }
@@ -203,31 +235,31 @@ fun EcranCarte(
                         detectTapGestures { tap ->
                             val lon = proj.minLon + (tap.x - params.ox) / (params.k * proj.kx)
                             val lat = proj.maxLat - (tap.y - params.oy) / params.k
-                            for (z in zones) {
-                                if (z.contours.any { dansPolygone(lon, lat, it) }) {
-                                    onCirco(z.code)
-                                    return@detectTapGestures
+                            if (zoneActive != null) {
+                                /* Toucher une commune : ouvrir la commune touchee */
+                                zoneActive.contours.forEachIndexed { idx, anneau ->
+                                    if (dansPolygone(lon, lat, anneau)) {
+                                        zonesNoms[zoneActive.code]?.getOrNull(idx)
+                                            ?.let { onCommune(it) }
+                                    }
+                                }
+                            } else {
+                                for (z in zones) {
+                                    if (z.contours.any { dansPolygone(lon, lat, it) }) {
+                                        onCirco(z.code)
+                                        return@detectTapGestures
+                                    }
                                 }
                             }
                         }
                     }
             ) {
                 Canvas(Modifier.fillMaxSize()) {
-                    /* Fond du departement */
-                    val path = Path()
-                    dept.forEachIndexed { i, (lon, lat) ->
-                        val px = params.ox + (proj.x(lon) * params.k).toFloat()
-                        val py = params.oy + (proj.y(lat) * params.k).toFloat()
-                        if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
-                    }
-                    path.close()
-                    drawPath(path, FondCarte)
-
-                    /* Communes colorees par circonscription */
-                    zones.forEach { z ->
-                        val c = couleurZone(z.code)
-                        val choisie = z.code == filtreActif
-                        z.contours.forEach { anneau ->
+                    if (zoneActive != null) {
+                        /* Vue concentratee : uniquement les communes de la
+                           circonscription, en teinte foncee, contour vert. */
+                        val c = couleurZone(zoneActive.code)
+                        zoneActive.contours.forEach { anneau ->
                             val p = Path()
                             anneau.forEachIndexed { i, (lon, lat) ->
                                 val px = params.ox + (proj.x(lon) * params.k).toFloat()
@@ -235,22 +267,50 @@ fun EcranCarte(
                                 if (i == 0) p.moveTo(px, py) else p.lineTo(px, py)
                             }
                             p.close()
-                            drawPath(p, if (choisie) c.foncee else c.pastel)
-                            drawPath(
-                                p, if (choisie) c.foncee else BordCommune,
-                                style = Stroke(width = if (choisie) 3f else 1f)
-                            )
+                            drawPath(p, c.pastel)
+                            drawPath(p, c.foncee, style = Stroke(width = 2f))
                         }
-                    }
+                    } else {
+                        /* Fond du departement */
+                        val path = Path()
+                        dept.forEachIndexed { i, (lon, lat) ->
+                            val px = params.ox + (proj.x(lon) * params.k).toFloat()
+                            val py = params.oy + (proj.y(lat) * params.k).toFloat()
+                            if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                        }
+                        path.close()
+                        drawPath(path, FondCarte)
 
-                    /* Contour du departement par-dessus */
-                    drawPath(path, VertCarte, style = Stroke(width = 4f))
+                        /* Communes colorees par circonscription */
+                        zones.forEach { z ->
+                            val c = couleurZone(z.code)
+                            val choisie = z.code == filtreActif
+                            z.contours.forEach { anneau ->
+                                val p = Path()
+                                anneau.forEachIndexed { i, (lon, lat) ->
+                                    val px = params.ox + (proj.x(lon) * params.k).toFloat()
+                                    val py = params.oy + (proj.y(lat) * params.k).toFloat()
+                                    if (i == 0) p.moveTo(px, py) else p.lineTo(px, py)
+                                }
+                                p.close()
+                                drawPath(p, if (choisie) c.foncee else c.pastel)
+                                drawPath(
+                                    p, if (choisie) c.foncee else BordCommune,
+                                    style = Stroke(width = if (choisie) 3f else 1f)
+                                )
+                            }
+                        }
+
+                        /* Contour du departement par-dessus */
+                        drawPath(path, VertCarte, style = Stroke(width = 4f))
+                    }
                 }
             }
             HorizontalDivider()
             /* --- Les 7 circonscriptions (hauteur fixe, la carte prend le reste) --- */
             Text(
-                "Ou choisir une circonscription :",
+                if (zoneActive != null) "Toucher une commune pour l'ouvrir, ou changer de circonscription :"
+                else "Ou choisir une circonscription :",
                 Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = VertCarte, fontWeight = FontWeight.Bold
             )
