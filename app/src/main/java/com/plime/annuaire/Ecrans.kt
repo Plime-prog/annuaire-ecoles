@@ -22,11 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val VertMenthe = Color(0xFF3CB371)
-private val GrisClair = Color(0xFFE0E0E0)   /* fond non sÃ©lectionnÃ© */
-private val GrisTexte = Color(0xFF888888)   /* texte non sÃ©lectionnÃ© */
+private val GrisClair = Color(0xFFE0E0E0)   /* fond non selectionne */
+private val GrisTexte = Color(0xFF888888)   /* texte non selectionne */
 
-/** Nom affichÃ© dans le filtre : Â« Troyes Â», Â« Bar-sur-Aube Â»â¦
-    Saint-Julien s'Ã©crit Â« Saint-Julien/Arcis Â», comme sur la carte. */
+/** Nom affiche dans le filtre : " Troyes ", " Bar-sur-Aube "...
+    Saint-Julien s'ecrit " Saint-Julien/Arcis ", comme sur la carte. */
 fun nomCourt(nomCirco: String): String =
     nomCirco.removePrefix("Circonscription de ")
         .replace("Saint-Julien-Arcis", "Saint-Julien/Arcis")
@@ -63,17 +63,17 @@ private fun ChipFiltre(texte: String, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-/* ==================== ÃCRAN D'ACCUEIL ==================== */
+/* ==================== ECRAN D'ACCUEIL ==================== */
 
 /**
  * Accueil v6 : plus de logo ni de grand titre dans la page (le logo est
- * dans la barre du haut). Les chips de filtre sont collÃ©es tout en haut,
- * la ligne verte, puis les onglets contextuels â le bloc du bas occupe
+ * dans la barre du haut). Les chips de filtre sont collees tout en haut,
+ * la ligne verte, puis les onglets contextuels - le bloc du bas occupe
  * TOUTE la place restante.
  *
- *dÃ¨s qu'une circonscription (ou la DSDEN) est sÃ©lectionnÃ©e, la
- * rangÃ©e de boutons dÃ©file automatiquement pour montrer le bouton actif.
- * Idem pour la rangÃ©e des onglets (Communes, Circonscription, CollÃ¨ges...).
+ *des qu'une circonscription (ou la DSDEN) est selectionnee, la
+ * rangee de boutons defile automatiquement pour montrer le bouton actif.
+ * Idem pour la rangee des onglets (Communes, Circonscription, Colleges...).
  */
 @Composable
 fun EcranAccueil(
@@ -86,8 +86,8 @@ fun EcranAccueil(
     bas: @Composable () -> Unit
 ) {
     Column(Modifier.fillMaxSize().background(Color.White)) {
-        /* ---- Filtres collÃ©s en haut : DSDEN puis les 7 circonscriptions ---- */
-        /* Position du bouton sÃ©lectionnÃ© : 0 = DSDEN, sinon 1 + rang de la
+        /* ---- Filtres colles en haut : DSDEN puis les 7 circonscriptions ---- */
+        /* Position du bouton selectionne : 0 = DSDEN, sinon 1 + rang de la
            circonscription dans la liste. */
         val indexFiltre = if (filtre == "dsden") 0
             else 1 + (circos.indexOfFirst { it.code == filtre }).coerceAtLeast(-1)
@@ -103,13 +103,13 @@ fun EcranAccueil(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             contentPadding = PaddingValues(horizontal = 12.dp)
         ) {
-            item { ChipFiltre("ð DSDEN", filtre == "dsden") { onFiltre("dsden") } }
+            item { ChipFiltre("\uD83C\uDFDB DSDEN", filtre == "dsden") { onFiltre("dsden") } }
             items(circos) { c ->
                 ChipFiltre(nomCourt(c.nom), filtre == c.code) { onFiltre(c.code) }
             }
         }
         HorizontalDivider(color = VertMenthe, thickness = 2.dp)
-        /* ---- Onglets contextuels : mÃªmes chips vert/gris que le haut ---- */
+        /* ---- Onglets contextuels : memes chips vert/gris que le haut ---- */
         val etatOnglets = rememberLazyListState()
         LaunchedEffect(ongletIndex, onglets) {
             if (ongletIndex < onglets.size) {
@@ -130,7 +130,7 @@ fun EcranAccueil(
     }
 }
 
-/* ==================== ÃCOLES DE LA CIRCO (communes dÃ©pliantes) ==================== */
+/* ==================== ECOLES DE LA CIRCO (communes depliantes) ==================== */
 
 @Composable
 fun ListeEcolesParCommune(
@@ -138,13 +138,13 @@ fun ListeEcolesParCommune(
     titreEcole: (Map<String, String>) -> String,
     onOpenRow: (MutableMap<String, String>) -> Unit
 ) {
-    /* Une seule commune dÃ©pliÃ©e Ã  la fois */
+    /* Une seule commune depliee a la fois */
     var communeOuverte by remember { mutableStateOf<String?>(null) }
     LazyColumn(Modifier.fillMaxSize()) {
         communes.forEach { (nomCommune, ecoles) ->
             item {
                 val open = nomCommune == communeOuverte
-                /* MÃªme systÃ¨me : verte si ouverte, grisÃ©e sinon */
+                /* Meme systeme : verte si ouverte, grisee sinon */
                 Surface(
                     onClick = {
                         communeOuverte = if (open) null else nomCommune
@@ -165,7 +165,7 @@ fun ListeEcolesParCommune(
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            "${ecoles.size} Ã©cole(s)", fontSize = 12.sp,
+                            "${ecoles.size} \u00E9cole(s)", fontSize = 12.sp,
                             color = if (open) Color.White else GrisTexte
                         )
                         Icon(
