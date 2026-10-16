@@ -132,7 +132,6 @@ fun EcranAccueil(
 
 /* ==================== ECOLES DE LA CIRCO (communes depliantes) ==================== */
 
-@Composable
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ListeEcolesParCommune(
