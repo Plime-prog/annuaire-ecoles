@@ -353,7 +353,18 @@ fun AppAnnuaire() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             OutlinedTextField(
-                                value = query, onValueChange = { query = it },
+                                value = query,
+                                onValueChange = {
+                                    query = it
+                                    /* Toute saisie relance une recherche globale dans
+                                       TOUT l'annuaire : on ferme la fiche ou le groupe
+                                       ouvert pour afficher les resultats. */
+                                    if (it.isNotBlank()) {
+                                        openRow = null
+                                        ongletFiche = null
+                                        openGroup = null
+                                    }
+                                },
                                 modifier = Modifier.weight(1f),
                                 placeholder = { Text("Rechercher...", fontSize = 13.sp) },
                                 singleLine = true,
