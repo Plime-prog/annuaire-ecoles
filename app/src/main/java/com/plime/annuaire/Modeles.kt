@@ -269,23 +269,37 @@ private val RE_CIRCO = Regex("1er degr\u00E9 de (.+?) \u2014")
 
 /** Nom de circonscription \u00E9crit dans une ligne de l'onglet Communes, sinon "". */
 fun nomCircoDeLigne(row: Map<String, String>): String {
-    val officiel: String? =
-        row.values.firstNotNullOfOrNull { v ->
-            RE_CIRCO.find(v)?.groupValues?.get(1)?.trim()
-        }
-    if (officiel != null) return officiel
-    /* Repli : si aucun " 1er degr\u00E9 de ... - " n'apparait, on accepte une
-       valeur courte contenant le nom d'une circonscription connue (ex. la
-       colonne " Circonscription " remplie " Saint-Julien/Arcis "). */
-    val court: String? =
-        row.values.firstNotNullOfOrNull { v ->
-            val n = norme(v)
-            if (n.length <= 40 && ("chapelle" in n || "julien" in n || "romilly" in n ||
-                ("aube" in n && "bar" in n) || ("seine" in n && "bar" in n) || "troyes" in n)
-            ) v.trim() else null
-        }
-    return court ?: ""
+    /* 1. Libelle officiel " 1er degr\u00E9 de X - ". */
+    row.values.forEach { v ->
+        RE_CIRCO.find(v)?.groupValues?.get(1)?.trim()?.let { return it }
+    }
+    /* 2. " Circonscription de X " ou " 1er degr\u00E9 de X " meme sans tiret,
+          dans une cellule longue (tout le detail est mis dans Observations) :
+          on capture le nom qui suit, jusqu'a la premiere ponctuation. */
+    row.values.forEach { v ->
+        val m = RE_CIRCO_LIBRE.find(v) ?: return@forEach
+        var nom = m.groupValues[1].trim()
+        if (nom.length > 40) nom = nom.take(40)
+        if (nomCircoConnu(nom)) return nom
+    }
+    /* 3. Repli : cellule courte contenant un nom de circonscription connu
+          (ex. la colonne remplie juste " Saint-Julien/Arcis "). */
+    row.values.forEach { v ->
+        if (v.length <= 40 && nomCircoConnu(v)) return v.trim()
+    }
+    return ""
 }
+
+/** Le texte contient-il un nom de circonscription de l'Aube ? */
+private fun nomCircoConnu(s: String): Boolean {
+    val n = norme(s)
+    return "chapelle" in n || "julien" in n || "romilly" in n ||
+        ("aube" in n && "bar" in n) || ("seine" in n && "bar" in n) || "troyes" in n
+}
+
+/** " ... circonscription de X ... " / " ... 1er degr\u00E9 de X ... " : capture X. */
+private val RE_CIRCO_LIBRE =
+    Regex("(?:1er degr\\u00E9|circonscription) de ([^;,.\n]+)", RegexOption.IGNORE_CASE)
 
 /** Associe le nom trouve dans l'Excel au code UAI de la circonscription. */
 fun codeCirco(nomCirco: String): String {
