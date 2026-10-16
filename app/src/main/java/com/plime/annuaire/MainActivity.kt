@@ -270,6 +270,50 @@ fun AppAnnuaire() {
                        la fiche) : simplement memorisee ; la carte reste
                        affichee sur la vue circonscription. */
                     onCommuneSel = { nom -> communeCarte = nom },
+                    /* Liste (commune, \u00E9cole) de l'onglet Communes, pour
+                       afficher directement les \u00E9coles en pastilles sous la
+                       carte de la circonscription. */
+                    ecolesParCommune = run {
+                        val tabC = annuaire.tabs.firstOrNull {
+                            it.name.equals("Communes", ignoreCase = true)
+                        }
+                        val cleC = tabC?.groupBy
+                        val cleE = tabC?.fields?.firstOrNull {
+                            norme(it.label) == "ecole"
+                        }?.key
+                        if (tabC != null && cleC != null && cleE != null)
+                            tabC.rows.mapNotNull { r ->
+                                val c = r[cleC] ?: ""
+                                val e = r[cleE] ?: ""
+                                if (e.isBlank()) null else c to e
+                            }
+                        else emptyList()
+                    },
+                    /* Pastille \u00E9cole touch\u00E9e : ouvrir directement SA fiche. */
+                    onEcole = { nomCommune, nomEcole ->
+                        showCarte = false
+                        val tb = annuaire.tabs.firstOrNull {
+                            it.name.equals("Communes", ignoreCase = true)
+                        }
+                        val cle = tb?.groupBy
+                        val cleE = tb?.fields?.firstOrNull {
+                            norme(it.label) == "ecole"
+                        }?.key
+                        val cible = if (tb != null && cle != null && cleE != null)
+                            tb.rows.firstOrNull {
+                                norme(it[cle] ?: "") == norme(nomCommune) &&
+                                norme(it[cleE] ?: "") == norme(nomEcole)
+                            }
+                        else null
+                        if (cible != null) {
+                            ongletFiche = tb
+                            openGroup = cible[cle]
+                            openRow = cible
+                            communeCarte = nomCommune
+                        } else {
+                            message = "\u00C9cole introuvable dans l'annuaire : " + nomEcole
+                        }
+                    },
                     /* Une commune touchee sur la carte : retrouver le groupe
                        du meme nom dans l'onglet Communes (accents et casse
                        ignores) et l'ouvrir. */
@@ -404,11 +448,11 @@ fun AppAnnuaire() {
                                     }
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
-                                placeholder = { Text("Rechercher...", fontSize = 12.sp) },
+                                placeholder = { Text("Rechercher...", fontSize = 15.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
                                 textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
-                                    fontSize = 12.sp
+                                    fontSize = 15.sp
                                 )
                             )
                             Spacer(Modifier.width(4.dp))
