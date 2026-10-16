@@ -270,53 +270,6 @@ fun AppAnnuaire() {
                        la fiche) : simplement memorisee ; la carte reste
                        affichee sur la vue circonscription. */
                     onCommuneSel = { nom -> communeCarte = nom },
-                    /* Liste (commune, \u00E9cole) de l'onglet Communes, pour
-                       afficher directement les \u00E9coles en pastilles sous la
-                       carte de la circonscription. La colonne \u00E9cole est
-                       retrouvee par son libell\u00E9 (accents, casse, espaces
-                       et ponctuation ignor\u00E9s) : " \u00C9cole ", " Ecole ",
-                       " \u00C9cole  " ... fonctionnent tous. */
-                    ecolesParCommune = run {
-                        val tabC = annuaire.tabs.firstOrNull {
-                            it.name.equals("Communes", ignoreCase = true)
-                        }
-                        val cleC = tabC?.groupBy
-                        val cleE = tabC?.fields?.firstOrNull {
-                            cleTexte(it.label) == "ecole"
-                        }?.key
-                        if (tabC != null && cleC != null && cleE != null)
-                            tabC.rows.mapNotNull { r ->
-                                val c = r[cleC] ?: ""
-                                val e = r[cleE] ?: ""
-                                if (e.isBlank()) null else c to e
-                            }
-                        else emptyList()
-                    },
-                    /* Pastille \u00E9cole touch\u00E9e : ouvrir directement SA fiche. */
-                    onEcole = { nomCommune, nomEcole ->
-                        showCarte = false
-                        val tb = annuaire.tabs.firstOrNull {
-                            it.name.equals("Communes", ignoreCase = true)
-                        }
-                        val cle = tb?.groupBy
-                        val cleE = tb?.fields?.firstOrNull {
-                            cleTexte(it.label) == "ecole"
-                        }?.key
-                        val cible = if (tb != null && cle != null && cleE != null)
-                            tb.rows.firstOrNull {
-                                norme(it[cle] ?: "") == norme(nomCommune) &&
-                                norme(it[cleE] ?: "") == norme(nomEcole)
-                            }
-                        else null
-                        if (cible != null) {
-                            ongletFiche = tb
-                            openGroup = cible[cle]
-                            openRow = cible
-                            communeCarte = nomCommune
-                        } else {
-                            message = "\u00C9cole introuvable dans l'annuaire : " + nomEcole
-                        }
-                    },
                     /* Une commune touchee sur la carte : retrouver le groupe
                        du meme nom dans l'onglet Communes (accents et casse
                        ignores) et l'ouvrir. */
