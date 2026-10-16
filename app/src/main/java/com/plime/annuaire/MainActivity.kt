@@ -414,7 +414,31 @@ fun AppAnnuaire() {
                             Spacer(Modifier.width(4.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 IconButton(
-                                    onClick = { showCarte = true },
+                                    onClick = {
+                                        /* Fiche d'une \u00E9cole ouverte : afficher
+                                           sur la carte la commune de cette \u00E9cole
+                                           (la carte s'ouvre en vue circonscription,
+                                           commune remplie). Sinon, ouverture
+                                           normale de la carte. */
+                                        val tbF = annuaire.tabs.firstOrNull {
+                                            it.name.equals("Communes", ignoreCase = true)
+                                        }
+                                        val cleF = tbF?.groupBy
+                                        if (tbF != null && cleF != null && openRow != null) {
+                                            val nomC = openRow?.get(cleF) ?: ""
+                                            if (nomC.isNotBlank()) {
+                                                communeCarte = nomC
+                                                /* L'\u00E9cole peut appartenir \u00E0 une autre
+                                                   circonscription que le filtre actif : la
+                                                   carte doit montrer SA circonscription. */
+                                                val codeC = openRow?.let { circoDeLigne(it) } ?: ""
+                                                if (codeC.isNotBlank() && codeC != filtre) {
+                                                    filtre = codeC
+                                                }
+                                            }
+                                        }
+                                        showCarte = true
+                                    },
                                     modifier = Modifier.size(36.dp)
                                 ) {
                                     Icon(Icons.Filled.Map, "Carte de l'Aube",
