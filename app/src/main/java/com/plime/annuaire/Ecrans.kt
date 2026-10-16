@@ -151,17 +151,20 @@ fun ListeEcolesParCommune(
                     Modifier.fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    /* Toutes les pastilles sur deux lignes au maximum. */
+                    maxLines = 2
                 ) {
-                    /* Pastille commune : simple reperage visuel. */
+                    /* Pastille commune : centree verticalement avec
+                       les pastilles ecoles qui l'accompagnent. */
                     Text(
                         nomCommune,
-                        Modifier.padding(top = 6.dp),
+                        Modifier.padding(top = 3.dp),
                         fontSize = 14.sp, fontWeight = FontWeight.Bold,
                         color = GrisTexte
                     )
-                    /* Pastilles ecoles : vert pale, texte normal.
-                       Une touche ouvre la fiche. */
+                    /* Pastilles ecoles : vert pale, texte normal et
+                       plus petit. Une touche ouvre la fiche. */
                     ecoles.forEach { e ->
                         Surface(
                             onClick = { onOpenRow(e) },
@@ -171,8 +174,8 @@ fun ListeEcolesParCommune(
                         ) {
                             Text(
                                 titreEcole(e),
-                                Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                fontSize = 12.sp,
+                                Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                fontSize = 11.sp,
                                 color = Color.Black
                             )
                         }
