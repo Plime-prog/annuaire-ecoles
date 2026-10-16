@@ -292,7 +292,7 @@ fun AppAnnuaire() {
                            */
                         Surface(color = Color.White) {
                             Row(
-                                Modifier.fillMaxWidth().height(112.dp)
+                                Modifier.fillMaxWidth().height(120.dp)
                                     .padding(horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -307,7 +307,7 @@ fun AppAnnuaire() {
                                     if (logoImage != null) {
                                         Image(
                                             logoImage, "Logo - toucher pour changer",
-                                            Modifier.fillMaxWidth().heightIn(max = 100.dp),
+                                            Modifier.fillMaxWidth().heightIn(max = 116.dp),
                                             contentScale = ContentScale.Fit
                                         )
                                     } else {
@@ -317,11 +317,11 @@ fun AppAnnuaire() {
                                            inscrit EN VERT dans le logo, 4e ligne du bloc ;
                                            rien n'est ajoute pour la DSDEN. */
                                         Box(
-                                            Modifier.fillMaxWidth().height(100.dp),
+                                            Modifier.fillMaxWidth().height(116.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             LogoOfficiel(
-                                                echelle = 2.4f,
+                                                echelle = 2.6f,
                                                 circonscription =
                                                     if (filtre == "dsden") ""
                                                     else circos.firstOrNull { it.code == filtre }
@@ -349,9 +349,12 @@ fun AppAnnuaire() {
                            (carte / structure / reglages) resserrees et collees
                            a sa droite - le logo occupe ainsi sa ligne entiere. */
                         Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
+                            Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 1.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            /* Champ de recherche compact : hauteur reduite
+                               (le cadre par defaut est trop haut), le texte
+                               reste centre verticalement. */
                             OutlinedTextField(
                                 value = query,
                                 onValueChange = {
@@ -365,7 +368,7 @@ fun AppAnnuaire() {
                                         openGroup = null
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).height(44.dp),
                                 placeholder = { Text("Rechercher...", fontSize = 13.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
