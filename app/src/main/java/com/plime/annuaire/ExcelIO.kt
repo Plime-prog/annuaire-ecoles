@@ -215,15 +215,29 @@ object ExcelIO {
             //  - Communes  -> le champ " Commune "
             //  - Colleges  -> le champ " Nom " (nom du college)
             //  - Circonscription -> aucun : liste a plat des personnes
+            /* Reconnaissance par LES EN-TETES (pas seulement le nom de la
+               feuille) : si Excel a "recupere" le classeur, les feuilles sont
+               renommees "Recupere_FeuilN" et leur nom ne dit plus rien.
+               - onglet des ecoles = colonnes " Commune " ET " Ecole "
+                 -> renomme " Communes ", regroupe par commune ;
+               - onglet des colleges = colonnes " Nom " et college/contact. */
             val nomOnglet = norme(tab.name)
-            tab.groupBy = when {
-                nomOnglet.contains("commune") ->
+            val labels = tab.fields.map { norme(it.label) }
+            val estCommunes = nomOnglet.contains("commune") ||
+                (labels.any { it == "commune" } && labels.any { it.contains("ecole") })
+            val estColleges = !estCommunes && (nomOnglet.contains("college") ||
+                (labels.any { it == "nom" } && labels.any { it.contains("college") }))
+            if (estCommunes) {
+                tab.name = "Communes"
+                tab.groupBy =
                     tab.fields.firstOrNull { norme(it.label).contains("commune") }?.key ?: ""
-                nomOnglet.contains("college") || nomOnglet.contains("coll\u00E8ge") ->
-                    tab.fields.firstOrNull {
-                        norme(it.label) == "nom" || norme(it.label).contains("college")
-                    }?.key ?: ""
-                else -> ""
+            } else if (estColleges) {
+                tab.groupBy = tab.fields.firstOrNull {
+                    norme(it.label) == "nom" || norme(it.label).contains("college")
+                }?.key ?: ""
+            } else {
+                /* autre onglet (Circonscription...) : liste a plat */
+                tab.groupBy = ""
             }
             a.tabs.add(tab)
         }
