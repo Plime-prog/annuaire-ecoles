@@ -37,12 +37,12 @@ import java.util.Locale
 
 private val VertItineraire = Color(0xFF3CB371)
 
-/** Champ adresse ? (libellÃ© contenant Â« adresse Â») */
+/** Champ adresse ? (libelle contenant " adresse ") */
 fun estAdresse(label: String): Boolean = norme(label).contains("adresse")
 
-/** Ouvre Google Maps avec l'itinÃ©raire vers la destination, dans le mode
-    donnÃ© (Â« driving Â» ou Â« walking Â»). L'itinÃ©raire part de la position
-    actuelle, Maps la demande si nÃ©cessaire. */
+/** Ouvre Google Maps avec l'itineraire vers la destination, dans le mode
+    donne (" driving " ou " walking "). L'itineraire part de la position
+    actuelle, Maps la demande si necessaire. */
 fun ouvrirMaps(ctx: Context, destination: String, mode: String) {
     val url = "https://www.google.com/maps/dir/?api=1&destination=" +
         Uri.encode(destination) + "&travelmode=" + mode
@@ -55,13 +55,13 @@ fun ouvrirMaps(ctx: Context, destination: String, mode: String) {
                 Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=" + Uri.encode(destination)))
             )
         } catch (_: Exception) {
-            /* rien d'installÃ© : on ignore silencieusement */
+            /* rien d'installe : on ignore silencieusement */
         }
     }
 }
 
-/** DerniÃ¨re position connue de l'appareil (GPS, rÃ©seau, passive),
-    sans attente - peut Ãªtre null. */
+/** Derniere position connue de l'appareil (GPS, reseau, passive),
+    sans attente - peut etre null. */
 private fun dernierePosition(ctx: Context): Location? {
     val lm = ctx.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
     return try {
@@ -75,9 +75,9 @@ private fun dernierePosition(ctx: Context): Location? {
     } catch (_: Exception) { null }
 }
 
-/** Lance l'itinÃ©raire vers l'adresse : Ã  pied si elle est Ã  moins de 5 km,
-    en voiture sinon. Sans position connue ou sans gÃ©ocodage, on ouvre
-    en voiture (Maps proposera la position de dÃ©part lui-mÃªme). */
+/** Lance l'itineraire vers l'adresse : a pied si elle est a moins de 5 km,
+    en voiture sinon. Sans position connue ou sans geocodage, on ouvre
+    en voiture (Maps proposera la position de depart lui-meme). */
 fun lancerItineraire(ctx: Context, adresse: String) {
     if (adresse.isBlank()) return
     val pos = dernierePosition(ctx)
@@ -107,10 +107,10 @@ fun lancerItineraire(ctx: Context, adresse: String) {
     }.start()
 }
 
-/** Ligne Â« adresse Â» cliquable, utilisÃ©e partout dans l'annuaire :
+/** Ligne " adresse " cliquable, utilisee partout dans l'annuaire :
     au premier toucher elle demande la permission de localisation,
-    puis ouvre l'itinÃ©raire Google Maps. Si la permission est refusÃ©e,
-    l'itinÃ©raire s'ouvre quand mÃªme (en voiture, dÃ©part choisi par Maps). */
+    puis ouvre l'itineraire Google Maps. Si la permission est refusee,
+    l'itineraire s'ouvre quand meme (en voiture, depart choisi par Maps). */
 @Composable
 fun LigneAdresse(adresse: String) {
     val ctx = LocalContext.current
@@ -139,7 +139,7 @@ fun LigneAdresse(adresse: String) {
         },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Filled.Directions, "ItinÃ©raire", tint = VertItineraire)
+        Icon(Icons.Filled.Directions, "Itin\u00E9raire", tint = VertItineraire)
         Spacer(Modifier.width(6.dp))
         Text(
             adresse,
