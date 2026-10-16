@@ -8,14 +8,12 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -182,7 +180,7 @@ private fun dansPolygone(lon: Double, lat: Double, anneau: List<Pair<Double, Dou
     return dedans
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EcranCarte(
     filtreActif: String,
@@ -413,9 +411,14 @@ fun EcranCarte(
                 Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = VertCarte, fontWeight = FontWeight.Bold
             )
+            /* Choix compact en petites pastilles cote a cote (FlowRow) :
+               la carte garde TOUJOURS la place principale. La zone de
+               choix est plafonnee en hauteur ; avec des pastilles
+               compactes, presque toutes les communes tiennent sans
+               ascenseur. */
             Column(
                 Modifier.fillMaxWidth()
-                    .heightIn(min = 300.dp)
+                    .heightIn(max = 170.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp)
             ) {
@@ -423,76 +426,71 @@ fun EcranCarte(
                     /* Communes de la circonscription, par ordre alphabetique ;
                        la commune choisie est mise en evidence. */
                     val c = couleurZone(zoneActive!!.code)
-                    (zonesNoms[zoneActive.code] ?: emptyList())
-                        .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
-                        .forEach { nom ->
-                            val actif = nom == communeSel
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = if (actif) c.foncee else Color.White,
-                                border = BorderStroke(2.dp, c.foncee),
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                                    .clickable { communeSel = nom; onCommuneSel(nom) }
-                            ) {
-                                Row(
-                                    Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                    FlowRow(
+                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        (zonesNoms[zoneActive.code] ?: emptyList())
+                            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
+                            .forEach { nom ->
+                                val actif = nom == communeSel
+                                Surface(
+                                    shape = RoundedCornerShape(50),
+                                    color = if (actif) c.foncee else Color.White,
+                                    border = BorderStroke(1.dp, c.foncee),
+                                    modifier = Modifier.clickable {
+                                        communeSel = nom; onCommuneSel(nom)
+                                    }
                                 ) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = c.pastel,
-                                        modifier = Modifier.size(14.dp)
-                                    ) {}
-                                    Spacer(Modifier.width(10.dp))
                                     Text(
                                         nom,
+                                        Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                         color = if (actif) Color.White else Color.Black,
-                                        fontSize = 15.sp, fontWeight = FontWeight.SemiBold
+                                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }
-                        }
+                    }
                     Text(
                         "Toutes les communes rattach\u00E9es \u00E0 cette circonscription.",
-                        Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
-                        fontSize = 12.sp, color = Color.Gray
+                        Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        fontSize = 11.sp, color = Color.Gray
                     )
                 } else {
-                pins.forEach { pin ->
-                    val actif = pin.code == filtreActif
-                    val c = couleurZone(pin.code)
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (actif) c.foncee else Color.White,
-                        border = BorderStroke(2.dp, if (CouleursZones.containsKey(pin.code)) c.foncee else VertCarte),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                            .clickable { onCirco(pin.code); vue = "circo"; communeSel = ""; reinitZoom() }
+                    FlowRow(
+                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Row(
-                            Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        pins.forEach { pin ->
+                            val actif = pin.code == filtreActif
+                            val c = couleurZone(pin.code)
                             Surface(
-                                shape = CircleShape,
-                                color = if (CouleursZones.containsKey(pin.code)) c.pastel else Color.Gray,
-                                modifier = Modifier.size(14.dp)
-                            ) {}
-                            Spacer(Modifier.width(10.dp))
-                            Text(
-                                pin.nom + if (pin.code == "0100042S") " (adapt\u00E9e, sans territoire)" else "",
-                                color = if (actif) Color.White else Color.Black,
-                                fontSize = 15.sp, fontWeight = FontWeight.SemiBold
-                            )
+                                shape = RoundedCornerShape(50),
+                                color = if (actif) c.foncee else Color.White,
+                                border = BorderStroke(1.dp,
+                                    if (CouleursZones.containsKey(pin.code)) c.foncee else VertCarte),
+                                modifier = Modifier.clickable {
+                                    onCirco(pin.code); vue = "circo"; communeSel = ""; reinitZoom()
+                                }
+                            ) {
+                                Text(
+                                    pin.nom + if (pin.code == "0100042S") " (adapt\u00E9e)" else "",
+                                    Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    color = if (actif) Color.White else Color.Black,
+                                    fontSize = 12.sp, fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
+                    Text(
+                        "Seules les communes abritant au moins une \u00E9cole sont color\u00E9es.",
+                        Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                        fontSize = 11.sp, color = Color.Gray
+                    )
                 }
-                Text(
-                    "Seules les communes abritant au moins une \u00E9cole sont color\u00E9es.",
-                    Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
-                    fontSize = 12.sp, color = Color.Gray
-                )
-                Spacer(Modifier.height(12.dp))
-                }
+                Spacer(Modifier.height(6.dp))
             }
         }
     }
