@@ -57,17 +57,17 @@ fun LogoOfficiel(
         Box(Modifier.width((0.5 * k).dp).height((37 * k).dp).background(Color.Black))
         Spacer(Modifier.width((6 * k).dp))
         Column {
-            Text("Direction des services d\u00E9partementaux", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
-            Text("de l'\u00E9ducation nationale", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
-            Text("de l'Aube", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
+            Text("Direction des services d\u00E9partementaux", fontSize = (3.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.9 * k).sp)
+            Text("de l'\u00E9ducation nationale", fontSize = (3.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.9 * k).sp)
+            Text("de l'Aube", fontSize = (3.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.9 * k).sp)
             if (circonscription.isNotBlank()) {
                 Spacer(Modifier.height((1.2 * k).dp))
                 Text(
                     "Circonscription de " + circonscription,
-                    fontSize = (2.6 * k).sp,
+                    fontSize = (2.9 * k).sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF3CB371),
-                    lineHeight = (3 * k).sp,
+                    lineHeight = (3.3 * k).sp,
                     maxLines = 2
                 )
             }
