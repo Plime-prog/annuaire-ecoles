@@ -20,23 +20,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.plime.annuaire.R
 
-/* Logo officiel Â« AcadÃ©mie de Reims â DSDEN de l'Aube Â», construit comme
-   une signature de l'Ãtat : bloc Marianne (tracÃ© officiel du systÃ¨me de
-   design de l'Ãtat, dans res/drawable/marianne_officielle.xml), intitulÃ©
-   ACADÃMIE DE REIMS sur deux lignes, devise rÃ©publicaine en italique,
-   trait sÃ©parateur vertical, puis le bloc des services dÃ©partementaux.
-   Il s'affiche dans la barre du haut tant qu'aucun logo.jpg personnalisÃ©
-   n'a Ã©tÃ© choisi ; toucher le logo ouvre le sÃ©lecteur d'image.
-   Le paramÃ¨tre Â« echelle Â» agrandit TOUT le logo nativement (tailles de
+/* Logo officiel " Academie de Reims - DSDEN de l'Aube ", construit comme
+   une signature de l'Etat : bloc Marianne (trace officiel du systeme de
+   design de l'Etat, dans res/drawable/marianne_officielle.xml), intitule
+   ACADEMIE DE REIMS sur deux lignes, devise republicaine en italique,
+   trait separateur vertical, puis le bloc des services departementaux.
+   Il s'affiche dans la barre du haut tant qu'aucun logo.jpg personnalise
+   n'a ete choisi ; toucher le logo ouvre le selecteur d'image.
+   Le parametre " echelle " agrandit TOUT le logo nativement (tailles de
    layout incluses) : 1f = hauteur d'origine 42 dp, 2.4f = 100 dp environ.
    Ne pas utiliser Modifier.scale() : il agrandit le dessin sans agrandir
-   l'espace rÃ©servÃ©, ce qui rogne le logo et le dÃ©cale. */
+   l'espace reserve, ce qui rogne le logo et le decale. */
 @Composable
 fun LogoOfficiel(
     modifier: Modifier = Modifier,
     echelle: Float = 1f,
-    /* nom de la circonscription ajoutÃ© en vert sous Â« de l'Aube Â».
-       ChaÃ®ne vide (ou DSDEN) = rien d'affichÃ©. */
+    /* nom de la circonscription ajoute en vert sous " de l'Aube ".
+       Chaine vide (ou DSDEN) = rien d'affiche. */
     circonscription: String = ""
 ) {
     val k = echelle
@@ -47,18 +47,18 @@ fun LogoOfficiel(
                 "Bloc Marianne",
                 Modifier.width((22 * k).dp).height((9 * k).dp)
             )
-            Text("ACADÃMIE", fontSize = (6.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7 * k).sp)
+            Text("ACAD\u00C9MIE", fontSize = (6.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7 * k).sp)
             Text("DE REIMS", fontSize = (6.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7 * k).sp)
-            Text("LibertÃ©", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
-            Text("ÃgalitÃ©", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
-            Text("FraternitÃ©", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
+            Text("Libert\u00E9", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
+            Text("\u00C9galit\u00E9", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
+            Text("Fraternit\u00E9", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
         }
         Spacer(Modifier.width((6 * k).dp))
         Box(Modifier.width((0.5 * k).dp).height((37 * k).dp).background(Color.Black))
         Spacer(Modifier.width((6 * k).dp))
         Column {
-            Text("Direction des services dÃ©partementaux", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
-            Text("de l'Ã©ducation nationale", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
+            Text("Direction des services d\u00E9partementaux", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
+            Text("de l'\u00E9ducation nationale", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
             Text("de l'Aube", fontSize = (3.2 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.6 * k).sp)
             if (circonscription.isNotBlank()) {
                 Spacer(Modifier.height((1.2 * k).dp))
