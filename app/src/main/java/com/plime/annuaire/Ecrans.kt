@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 private val VertMenthe = Color(0xFF3CB371)
 private val GrisClair = Color(0xFFE0E0E0)   /* fond non selectionne */
 private val GrisTexte = Color(0xFF888888)   /* texte non selectionne */
+private val VertPale = Color(0xFFEAF7F0)   /* fond vert pale des pastilles ecoles */
 
 /** Nom affiche dans le filtre : " Troyes ", " Bar-sur-Aube "...
     Saint-Julien s'ecrit " Saint-Julien/Arcis ", comme sur la carte. */
@@ -140,8 +141,9 @@ fun ListeEcolesParCommune(
     onOpenRow: (MutableMap<String, String>) -> Unit
 ) {
     /* Pastilles compactes : le nom de la commune (gras) suivi
-       DIRECTEMENT de ses ecoles, sans avoir a ouvrir la commune.
-       Une touche sur une pastille ecole ouvre sa fiche. */
+       DIRECTEMENT de ses ecoles en pastilles vert pale ; une fine
+       ligne de separation verte isole chaque commune. Une touche
+       sur une pastille ecole ouvre sa fiche. */
     LazyColumn(Modifier.fillMaxSize()) {
         communes.forEach { (nomCommune, ecoles) ->
             item {
@@ -158,23 +160,29 @@ fun ListeEcolesParCommune(
                         fontSize = 14.sp, fontWeight = FontWeight.Bold,
                         color = GrisTexte
                     )
-                    /* Pastilles ecoles : une touche ouvre la fiche. */
+                    /* Pastilles ecoles : vert pale, texte normal.
+                       Une touche ouvre la fiche. */
                     ecoles.forEach { e ->
                         Surface(
                             onClick = { onOpenRow(e) },
                             shape = RoundedCornerShape(50),
-                            color = GrisClair,
+                            color = VertPale,
                             border = BorderStroke(1.dp, VertMenthe)
                         ) {
                             Text(
                                 titreEcole(e),
                                 Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp,
                                 color = Color.Black
                             )
                         }
                     }
                 }
+                /* Petite ligne de separation verte entre les communes. */
+                HorizontalDivider(
+                    Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                    thickness = 1.dp, color = VertMenthe
+                )
             }
         }
         item { Spacer(Modifier.height(24.dp)) }
