@@ -292,7 +292,7 @@ fun AppAnnuaire() {
                            */
                         Surface(color = Color.White) {
                             Row(
-                                Modifier.fillMaxWidth().height(130.dp)
+                                Modifier.fillMaxWidth().height(140.dp)
                                     .padding(horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -307,7 +307,7 @@ fun AppAnnuaire() {
                                     if (logoImage != null) {
                                         Image(
                                             logoImage, "Logo - toucher pour changer",
-                                            Modifier.fillMaxWidth().heightIn(max = 126.dp),
+                                            Modifier.fillMaxWidth().heightIn(max = 136.dp),
                                             contentScale = ContentScale.Fit
                                         )
                                     } else {
@@ -317,11 +317,11 @@ fun AppAnnuaire() {
                                            inscrit EN VERT dans le logo, 4e ligne du bloc ;
                                            rien n'est ajoute pour la DSDEN. */
                                         Box(
-                                            Modifier.fillMaxWidth().height(126.dp),
+                                            Modifier.fillMaxWidth().height(136.dp),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             LogoOfficiel(
-                                                echelle = 2.8f,
+                                                echelle = 3.0f,
                                                 circonscription =
                                                     if (filtre == "dsden") ""
                                                     else circos.firstOrNull { it.code == filtre }
@@ -369,11 +369,11 @@ fun AppAnnuaire() {
                                     }
                                 },
                                 modifier = Modifier.weight(1f).height(36.dp),
-                                placeholder = { Text("Rechercher...", fontSize = 11.sp) },
+                                placeholder = { Text("Rechercher...", fontSize = 9.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
                                 textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
-                                    fontSize = 11.sp
+                                    fontSize = 9.sp
                                 )
                             )
                             Spacer(Modifier.width(4.dp))
