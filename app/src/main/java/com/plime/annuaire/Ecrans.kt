@@ -133,53 +133,47 @@ fun EcranAccueil(
 /* ==================== ECOLES DE LA CIRCO (communes depliantes) ==================== */
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
 fun ListeEcolesParCommune(
     communes: List<Pair<String, List<MutableMap<String, String>>>>,
     titreEcole: (Map<String, String>) -> String,
     onOpenRow: (MutableMap<String, String>) -> Unit
 ) {
-    /* Une seule commune depliee a la fois */
-    var communeOuverte by remember { mutableStateOf<String?>(null) }
+    /* Pastilles compactes : le nom de la commune (gras) suivi
+       DIRECTEMENT de ses ecoles, sans avoir a ouvrir la commune.
+       Une touche sur une pastille ecole ouvre sa fiche. */
     LazyColumn(Modifier.fillMaxSize()) {
         communes.forEach { (nomCommune, ecoles) ->
             item {
-                val open = nomCommune == communeOuverte
-                /* Meme systeme : verte si ouverte, grisee sinon */
-                Surface(
-                    onClick = {
-                        communeOuverte = if (open) null else nomCommune
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (open) VertMenthe else GrisClair,
-                    border = BorderStroke(2.dp, if (open) VertMenthe else GrisClair)
+                FlowRow(
+                    Modifier.fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Row(
-                        Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            nomCommune, fontSize = 15.sp,
-                            fontWeight = if (open) FontWeight.Bold else FontWeight.Normal,
-                            color = if (open) Color.White else GrisTexte,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            "${ecoles.size} \u00E9cole(s)", fontSize = 12.sp,
-                            color = if (open) Color.White else GrisTexte
-                        )
-                        Icon(
-                            if (open) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                            null,
-                            tint = if (open) Color.White else GrisTexte
-                        )
-                    }
-                }
-            }
-            if (nomCommune == communeOuverte) {
-                items(ecoles) { e ->
-                    Encadre(onClick = { onOpenRow(e) }) {
-                        Text(titreEcole(e), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    /* Pastille commune : simple reperage visuel. */
+                    Text(
+                        nomCommune,
+                        Modifier.padding(top = 6.dp),
+                        fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                        color = GrisTexte
+                    )
+                    /* Pastilles ecoles : une touche ouvre la fiche. */
+                    ecoles.forEach { e ->
+                        Surface(
+                            onClick = { onOpenRow(e) },
+                            shape = RoundedCornerShape(50),
+                            color = GrisClair,
+                            border = BorderStroke(1.dp, VertMenthe)
+                        ) {
+                            Text(
+                                titreEcole(e),
+                                Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                                fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
             }
