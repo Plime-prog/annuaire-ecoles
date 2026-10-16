@@ -194,11 +194,6 @@ fun EcranCarte(
     /* Commune choisie pr\u00E9c\u00E9demment : la carte se rouvre sur la vue
        circonscription avec cette commune remplie. */
     communeSelectionnee: String = "",
-    /* Paires (commune, \u00E9cole) de l'annuaire : affich\u00E9es en petites
-       pastilles sous le nom de la commune, dans la vue circo. */
-    ecolesParCommune: List<Pair<String, String>> = emptyList(),
-    /* Pastille \u00E9cole touch\u00E9e : ouvrir directement la fiche. */
-    onEcole: (String, String) -> Unit = { _, _ -> }
 ) {
     val ctx = LocalContext.current
     val dept = remember { GeoAube.dept(ctx) }
@@ -464,28 +459,6 @@ fun EcranCarte(
                                         fontSize = 12.sp, fontWeight = FontWeight.SemiBold
                                     )
                                 }
-                                /* Petites pastilles \u00E9coles de la commune :
-                                   une touche ouvre directement la fiche. */
-                                ecolesParCommune
-                                    .filter { cleTexte(it.first) == cleTexte(nom) }
-                                    .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.second })
-                                    .forEach { (_, ecole) ->
-                                        Surface(
-                                            shape = RoundedCornerShape(50),
-                                            color = FondCarte,
-                                            border = BorderStroke(1.dp, VertCarte),
-                                            modifier = Modifier.clickable {
-                                                onEcole(nom, ecole)
-                                            }
-                                        ) {
-                                            Text(
-                                                ecole,
-                                                Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                                                color = VertCarteFonce,
-                                                fontSize = 11.sp
-                                            )
-                                        }
-                                    }
                             }
                     }
                     Text(
