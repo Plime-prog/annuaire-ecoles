@@ -253,7 +253,7 @@ fun AppAnnuaire() {
             )
 
             if (showCarte) {
-                /* Commune choisie via la carte : mémorisée pour qu'elle
+                /* Commune choisie via la carte : memorisee pour qu'elle
                    apparaisse en fonce a la reouverture de la carte. */
                 EcranCarte(
                     filtreActif = filtre,
@@ -265,8 +265,11 @@ fun AppAnnuaire() {
                         openGroup = null
                         openRow = null
                         ongletFiche = null
-                        showCarte = false
                     },
+                    /* Selection d'une commune sur la carte (sans ouvrir
+                       la fiche) : simplement memorisee ; la carte reste
+                       affichee sur la vue circonscription. */
+                    onCommuneSel = { nom -> communeCarte = nom },
                     /* Une commune touchee sur la carte : retrouver le groupe
                        du meme nom dans l'onglet Communes (accents et casse
                        ignores) et l'ouvrir. */
