@@ -11,12 +11,12 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 /**
- * Import/Export Excel â TOTALEMENT DYNAMIQUE.
- * L'import lit les noms d'onglets et les en-tÃªtes du fichier :
+ * Import/Export Excel - TOTALEMENT DYNAMIQUE.
+ * L'import lit les noms d'onglets et les en-tetes du fichier :
  *  - un onglet inconnu devient un nouvel onglet ;
  *  - une colonne inconnue devient un nouveau champ ;
- *  - le mapping se fait PAR NOM D'EN-TÃTE (pas par position).
- * L'export Ã©crit exactement la structure en cours (onglets + champs de l'app).
+ *  - le mapping se fait PAR NOM D'EN-TETE (pas par position).
+ * L'export ecrit exactement la structure en cours (onglets + champs de l'app).
  */
 object ExcelIO {
 
@@ -185,7 +185,7 @@ object ExcelIO {
         val files = readZip(ctx, uri)
         val shared = files["xl/sharedStrings.xml"]?.let { parseSharedStrings(it) } ?: emptyList()
         val sheets = sheetMap(files)
-        if (sheets.isEmpty()) throw IllegalArgumentException("aucune feuille trouvÃ©e")
+        if (sheets.isEmpty()) throw IllegalArgumentException("aucune feuille trouv\u00E9e")
 
         val a = Annuaire()
         for ((sheetName, path) in sheets) {
@@ -194,7 +194,7 @@ object ExcelIO {
             if (all.isEmpty()) continue
             val headers = all.first().map { it.trim() }
             val tab = Onglet(nouvelleCle(), sheetName)
-            // Colonne -> clÃ© de champ (mapping par nom d'en-tÃªte)
+            // Colonne -> cle de champ (mapping par nom d'en-tete)
             val colKeys = mutableListOf<Pair<Int, String>>()
             headers.forEachIndexed { i, h ->
                 if (h.isBlank()) return@forEachIndexed
@@ -212,14 +212,14 @@ object ExcelIO {
                 tab.rows.add(m)
             }
             // Regroupement automatique selon le NOM du champ (pas la position) :
-            //  - Communes  -> le champ Â« Commune Â»
-            //  - CollÃ¨ges  -> le champ Â« Nom Â» (nom du collÃ¨ge)
-            //  - Circonscription -> aucun : liste Ã  plat des personnes
+            //  - Communes  -> le champ " Commune "
+            //  - Colleges  -> le champ " Nom " (nom du college)
+            //  - Circonscription -> aucun : liste a plat des personnes
             val nomOnglet = norme(tab.name)
             tab.groupBy = when {
                 nomOnglet.contains("commune") ->
                     tab.fields.firstOrNull { norme(it.label).contains("commune") }?.key ?: ""
-                nomOnglet.contains("college") || nomOnglet.contains("collÃ¨ge") ->
+                nomOnglet.contains("college") || nomOnglet.contains("coll\u00E8ge") ->
                     tab.fields.firstOrNull {
                         norme(it.label) == "nom" || norme(it.label).contains("college")
                     }?.key ?: ""
@@ -228,8 +228,8 @@ object ExcelIO {
             a.tabs.add(tab)
         }
 
-        /* PIAL-ER et RASED sont fusionnÃ©s dans l'onglet Circonscription :
-           leurs personnes reÃ§oivent Â« Circonscription Ã©largie Â» = Oui. */
+        /* PIAL-ER et RASED sont fusionnes dans l'onglet Circonscription :
+           leurs personnes recoivent " Circonscription elargie " = Oui. */
         val aFusionner = a.tabs.filter {
             val n = norme(it.name)
             n.contains("pial") || n.contains("rased") || n.contains("er/")
@@ -240,7 +240,7 @@ object ExcelIO {
             } ?: Onglet(nouvelleCle(), "Circonscription").also { a.tabs.add(it) }
             val fEl = cible.fields.firstOrNull {
                 norme(it.label).contains("elargie")
-            } ?: Champ(nouvelleCle(), "Circonscription Ã©largie").also { cible.fields.add(it) }
+            } ?: Champ(nouvelleCle(), "Circonscription \u00E9largie").also { cible.fields.add(it) }
             aFusionner.forEach { source ->
                 source.rows.forEach { r ->
                     val m = mutableMapOf("_id" to nouvelleCle())
@@ -264,7 +264,7 @@ object ExcelIO {
         return a
     }
 
-    /* ---------- ÃCRITURE (structure en cours) ---------- */
+    /* ---------- ECRITURE (structure en cours) ---------- */
 
     private const val CONTENT_TYPES_HEAD =
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
@@ -346,7 +346,7 @@ object ExcelIO {
         }
     }
 
-    /** Exporte l'annuaire complet : un onglet par table, en-tÃªtes = libellÃ©s des champs. */
+    /** Exporte l'annuaire complet : un onglet par table, en-tetes = libelles des champs. */
     fun export(ctx: Context, uri: Uri, a: Annuaire, withRows: Boolean = true) {
         val sheets = a.tabs.map { tab ->
             val rows = mutableListOf(tab.fields.map { it.label })
@@ -355,10 +355,10 @@ object ExcelIO {
             }
             tab.name to rows
         }
-        if (sheets.isEmpty()) throw IllegalArgumentException("aucun onglet Ã  exporter")
+        if (sheets.isEmpty()) throw IllegalArgumentException("aucun onglet \u00E0 exporter")
         writeZip(ctx, uri, sheets)
     }
 
-    /** ModÃ¨le vierge : structure en cours, sans les donnÃ©es. */
+    /** Modele vierge : structure en cours, sans les donnees. */
     fun writeTemplate(ctx: Context, uri: Uri, a: Annuaire) = export(ctx, uri, a, withRows = false)
 }
