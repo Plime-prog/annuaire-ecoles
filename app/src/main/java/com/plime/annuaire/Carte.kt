@@ -165,12 +165,6 @@ private fun params(proj: Projection, w: Float, h: Float): Params {
     )
 }
 
-/* Cl\u00E9 de comparaison d'un nom de commune : minuscules sans accents,
-   et SANS traits d'union / apostrophes / espaces, pour que
-   " Saint Julien les Villas " = " Saint-Julien-l\u00E8s-Villas ". */
-private fun cleCommune(s: String): String =
-    norme(s).replace(Regex("[^a-z0-9]"), "")
-
 /* Test point dans un polygone (lancement de rayon) */
 private fun dansPolygone(lon: Double, lat: Double, anneau: List<Pair<Double, Double>>): Boolean {
     var dedans = false
@@ -232,7 +226,7 @@ fun EcranCarte(
         mutableStateOf(
             if (communeSelectionnee.isBlank()) ""
             else zonesNoms[zoneActive?.code ?: ""]
-                ?.firstOrNull { cleCommune(it) == cleCommune(communeSelectionnee) } ?: ""
+                ?.firstOrNull { cleTexte(it) == cleTexte(communeSelectionnee) } ?: ""
         )
     }
     val vueCirco = vue == "circo" && zoneActive != null
@@ -473,7 +467,7 @@ fun EcranCarte(
                                 /* Petites pastilles \u00E9coles de la commune :
                                    une touche ouvre directement la fiche. */
                                 ecolesParCommune
-                                    .filter { cleCommune(it.first) == cleCommune(nom) }
+                                    .filter { cleTexte(it.first) == cleTexte(nom) }
                                     .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.second })
                                     .forEach { (_, ecole) ->
                                         Surface(
