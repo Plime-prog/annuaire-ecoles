@@ -47,8 +47,8 @@ fun LogoOfficiel(
                 "Bloc Marianne",
                 Modifier.width((22 * k).dp).height((9 * k).dp)
             )
-            Text("ACAD\u00C9MIE", fontSize = (6.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7 * k).sp)
-            Text("DE REIMS", fontSize = (6.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7 * k).sp)
+            Text("ACAD\u00C9MIE", fontSize = (6.8 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7.4 * k).sp)
+            Text("DE REIMS", fontSize = (6.8 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (7.4 * k).sp)
             Text("Libert\u00E9", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
             Text("\u00C9galit\u00E9", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
             Text("Fraternit\u00E9", fontSize = (2.8 * k).sp, fontStyle = FontStyle.Italic, lineHeight = (3.2 * k).sp)
@@ -57,17 +57,17 @@ fun LogoOfficiel(
         Box(Modifier.width((0.5 * k).dp).height((37 * k).dp).background(Color.Black))
         Spacer(Modifier.width((6 * k).dp))
         Column {
-            Text("Direction des services d\u00E9partementaux", fontSize = (3.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.9 * k).sp)
-            Text("de l'\u00E9ducation nationale", fontSize = (3.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.9 * k).sp)
-            Text("de l'Aube", fontSize = (3.5 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (3.9 * k).sp)
+            Text("Direction des services d\u00E9partementaux", fontSize = (4.0 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (4.4 * k).sp)
+            Text("de l'\u00E9ducation nationale", fontSize = (4.0 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (4.4 * k).sp)
+            Text("de l'Aube", fontSize = (4.0 * k).sp, fontWeight = FontWeight.Bold, lineHeight = (4.4 * k).sp)
             if (circonscription.isNotBlank()) {
                 Spacer(Modifier.height((1.2 * k).dp))
                 Text(
                     "Circonscription de " + circonscription,
-                    fontSize = (2.9 * k).sp,
+                    fontSize = (3.2 * k).sp,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF3CB371),
-                    lineHeight = (3.3 * k).sp,
+                    lineHeight = (3.6 * k).sp,
                     maxLines = 2
                 )
             }
