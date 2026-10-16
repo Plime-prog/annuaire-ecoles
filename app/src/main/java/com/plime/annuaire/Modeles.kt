@@ -86,6 +86,12 @@ fun norme(s: String): String =
         .replace(Regex("\\p{Mn}+"), "")
         .lowercase()
 
+/** Comparaison "tolerante" : minuscules sans accents ni aucun signe
+    (espaces, traits d'union, apostrophes, ponctuation) ignores.
+    " \u00C9cole " = " ecole ", "Saint-Julien-l\u00E8s-Villas" = "saint julien les villas". */
+fun cleTexte(s: String): String =
+    norme(s).replace(Regex("[^a-z0-9]"), "")
+
 /** Titre d'une ligne = premiere valeur non vide selon l'ordre des champs. */
 fun titreLigne(tab: Onglet, row: Map<String, String>): String =
     tab.fields.firstNotNullOfOrNull { row[it.key]?.takeIf { v -> v.isNotBlank() } }
