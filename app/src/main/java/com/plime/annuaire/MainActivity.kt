@@ -260,6 +260,26 @@ fun AppAnnuaire() {
                         ongletFiche = null
                         showCarte = false
                     },
+                    /* Une commune touchee sur la carte : retrouver le groupe
+                       du meme nom dans l'onglet Communes (accents et casse
+                       ignores) et l'ouvrir. */
+                    onCommune = { nom ->
+                        showCarte = false
+                        val tb = annuaire.tabs.firstOrNull {
+                            it.name.equals("Communes", ignoreCase = true)
+                        }
+                        val cle = tb?.groupBy
+                        val cible = if (tb != null && cle != null)
+                            tb.rows.firstOrNull { norme(it[cle] ?: "") == norme(nom) }?.get(cle)
+                        else null
+                        if (cible != null) {
+                            openGroup = cible
+                            openRow = null
+                            ongletFiche = null
+                        } else {
+                            message = "Commune introuvable dans l'annuaire : " + nom
+                        }
+                    },
                     onFermer = { showCarte = false }
                 )
             } else if (showSchema) {
@@ -452,14 +472,22 @@ fun AppAnnuaire() {
                                         message = "Fiche supprim\u00E9e."
                                     }
                                 )
-                            } else if (grp != null && t5 != null) {
-                                GroupDetailScreen(
-                                    tab = t5,
-                                    groupName = grp,
-                                    rows = t5.rows.filter { (it[t5.groupBy] ?: "") == grp },
-                                    onBack = { openGroup = null },
-                                    onOpenRow = { ongletFiche = t5; openRow = it }
-                                )
+                            } else if (grp != null) {
+                                /* Groupe ouvert : onglet actif, ou l'onglet
+                                   Communes quand la carte a ouvert une
+                                   commune depuis la vue Ecoles. */
+                                val tabGrp = t5 ?: tabCommunes
+                                if (tabGrp != null) {
+                                    GroupDetailScreen(
+                                        tab = tabGrp,
+                                        groupName = grp,
+                                        rows = tabGrp.rows.filter { (it[tabGrp.groupBy] ?: "") == grp },
+                                        onBack = { openGroup = null },
+                                        onOpenRow = { ongletFiche = tabGrp; openRow = it }
+                                    )
+                                } else {
+                                    Text("Aucun onglet \u00E0 afficher.", Modifier.padding(16.dp))
+                                }
                             } else {
                                 EcranAccueil(
                                     filtre = filtre,
