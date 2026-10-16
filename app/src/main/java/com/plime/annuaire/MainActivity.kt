@@ -336,8 +336,12 @@ fun AppAnnuaire() {
                     floatingActionButton = {
                         val og5 = ongletsDuFiltre(annuaire, filtre)
                         val t5 = if (og5.isEmpty()) null else og5[onglet.coerceIn(0, og5.size - 1)].second
-                        if (t5 != null) FloatingActionButton(onClick = {
-                            editTab = t5
+                        /* Quand une fiche est ouverte (notamment apres une
+                           recherche globale), le bouton + doit ajouter dans
+                           l'onglet de CETTE fiche, pas dans l'onglet actif. */
+                        val tabAjout = (openRow?.let { ongletFiche }) ?: t5
+                        if (tabAjout != null) FloatingActionButton(onClick = {
+                            editTab = tabAjout
                             editOriginal = null
                             editIsNew = true
                             editRow = mutableMapOf("_id" to nouvelleCle())
@@ -369,11 +373,11 @@ fun AppAnnuaire() {
                                     }
                                 },
                                 modifier = Modifier.weight(1f).height(48.dp),
-                                placeholder = { Text("Rechercher...", fontSize = 10.sp) },
+                                placeholder = { Text("Rechercher...", fontSize = 12.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
                                 textStyle = androidx.compose.material3.LocalTextStyle.current.copy(
-                                    fontSize = 10.sp
+                                    fontSize = 12.sp
                                 )
                             )
                             Spacer(Modifier.width(4.dp))
