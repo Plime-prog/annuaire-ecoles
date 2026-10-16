@@ -7,20 +7,20 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-/* ==================== MODÃLE DYNAMIQUE ==================== */
+/* ==================== MODELE DYNAMIQUE ==================== */
 
-/** DÃ©finition d'un champ (colonne). La clÃ© est stable, le libellÃ© est modifiable. */
+/** Definition d'un champ (colonne). La cle est stable, le libelle est modifiable. */
 data class Champ(
     val key: String,
     var label: String,
     var multiline: Boolean = false
 )
 
-/** Un onglet = une table : liste de champs + lignes (clÃ© -> valeur). */
+/** Un onglet = une table : liste de champs + lignes (cle -> valeur). */
 data class Onglet(
     val id: String,
     var name: String,
-    var groupBy: String = "",        // clÃ© du champ de regroupement ("" = pas de groupes)
+    var groupBy: String = "",        // cl\u00E9 du champ de regroupement ("" = pas de groupes)
     val fields: MutableList<Champ> = mutableListOf(),
     val rows: MutableList<MutableMap<String, String>> = mutableListOf()
 )
@@ -31,7 +31,7 @@ data class Annuaire(
 
 fun nouvelleCle(): String = UUID.randomUUID().toString().substring(0, 8)
 
-/* ==================== SÃRIALISATION JSON ==================== */
+/* ==================== SERIALISATION JSON ==================== */
 
 private fun JSONObject.str(key: String): String =
     if (has(key) && !isNull(key)) getString(key) else ""
@@ -86,7 +86,7 @@ fun norme(s: String): String =
         .replace(Regex("\\p{Mn}+"), "")
         .lowercase()
 
-/** Titre d'une ligne = premiÃ¨re valeur non vide selon l'ordre des champs. */
+/** Titre d'une ligne = premiere valeur non vide selon l'ordre des champs. */
 fun titreLigne(tab: Onglet, row: Map<String, String>): String =
     tab.fields.firstNotNullOfOrNull { row[it.key]?.takeIf { v -> v.isNotBlank() } }
         ?: "(sans titre)"
@@ -94,10 +94,10 @@ fun titreLigne(tab: Onglet, row: Map<String, String>): String =
 /** Sous-titre = les 2 valeurs non vides suivantes. */
 fun sousTitreLigne(tab: Onglet, row: Map<String, String>): String {
     val vals = tab.fields.mapNotNull { row[it.key]?.takeIf { v -> v.isNotBlank() } }
-    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" Â· ") else ""
+    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" \u00B7 ") else ""
 }
 
-/* ==================== SCHÃMA PAR DÃFAUT ==================== */
+/* ==================== SCHEMA PAR DEFAUT ==================== */
 
 private fun fld(label: String): Champ =
     Champ(nouvelleCle(), label, multiline = label.contains("Observation") || label.contains("Adresse") || label.contains("Horaires"))
@@ -105,43 +105,43 @@ private fun fld(label: String): Champ =
 fun schemaParDefaut(): Annuaire {
     val communes = Onglet(nouvelleCle(), "Communes").apply {
         /* Structure en dur de l'onglet Communes :
-           mairie et Ã©lu de la commune, puis l'Ã©cole et sa fiche complÃ¨te,
-           puis la dÃ©charge et les horaires. */
+           mairie et elu de la commune, puis l'ecole et sa fiche complete,
+           puis la decharge et les horaires. */
         listOf(
-            "Commune", "Adresse Mairie", "TÃ©l. Mairie",
-            "Maire", "TÃ©l. Maire", "Mail Maire",
-            "Contact Ãlu", "Fonction Contact Ãlu", "TÃ©l. Ãlu", "Mail Ãlu",
+            "Commune", "Adresse Mairie", "T\u00E9l. Mairie",
+            "Maire", "T\u00E9l. Maire", "Mail Maire",
+            "Contact \u00C9lu", "Fonction Contact \u00C9lu", "T\u00E9l. \u00C9lu", "Mail \u00C9lu",
             "Observations",
-            "Ãcole", "Code UAI", "Statut", "Adresse Ã©cole", "TÃ©l. Ã©cole", "Mail Ã©cole",
-            "Directeur", "TÃ©l. Directeur", "Mail Directeur",
-            "DÃ©charge", "Matin", "AprÃ¨s-midi",
+            "\u00C9cole", "Code UAI", "Statut", "Adresse \u00E9cole", "T\u00E9l. \u00E9cole", "Mail \u00E9cole",
+            "Directeur", "T\u00E9l. Directeur", "Mail Directeur",
+            "D\u00E9charge", "Matin", "Apr\u00E8s-midi",
             "Observations"
         ).forEach { fields.add(fld(it)) }
         groupBy = fields[0].key
     }
     val circo = Onglet(nouvelleCle(), "Circonscription").apply {
-        /* Liste des personnes : IEN, CPC, assistantes, ERUNâ¦ */
-        listOf("Contact", "Fonction", "Adresse", "Mail", "TÃ©l. 1", "TÃ©l. 2",
-            "Observations", "Circonscription Ã©largie")
+        /* Liste des personnes : IEN, CPC, assistantes, ERUN... */
+        listOf("Contact", "Fonction", "Adresse", "Mail", "T\u00E9l. 1", "T\u00E9l. 2",
+            "Observations", "Circonscription \u00E9largie")
             .forEach { fields.add(fld(it)) }
-        groupBy = ""   /* liste Ã  plat des personnes, pas de regroupement */
+        groupBy = ""   /* liste \u00E0 plat des personnes, pas de regroupement */
     }
-    val colleges = Onglet(nouvelleCle(), "CollÃ¨ges").apply {
+    val colleges = Onglet(nouvelleCle(), "Coll\u00E8ges").apply {
         listOf("Nom", "Adresse", "Contact", "Fonction contact", "Adresse contact",
-            "Mail contact", "TÃ©l. 1", "TÃ©l. 2", "Observations")
+            "Mail contact", "T\u00E9l. 1", "T\u00E9l. 2", "Observations")
             .forEach { fields.add(fld(it)) }
-        groupBy = fields[0].key   /* Â« Nom Â» = nom du collÃ¨ge */
+        groupBy = fields[0].key   /* " Nom " = nom du college */
     }
     return Annuaire(mutableListOf(
         communes, circo, colleges
     ))
 }
 
-/* ==================== STOCKAGE CHIFFRÃ ==================== */
+/* ==================== STOCKAGE CHIFFRE ==================== */
 
 object Stockage {
-    /* Nom du fichier de prÃ©fÃ©rences conservÃ© tel quel : les donnÃ©es
-       dÃ©jÃ  enregistrÃ©es sur les appareils restent lisibles. */
+    /* Nom du fichier de preferences conserve tel quel : les donnees
+       deja enregistrees sur les appareils restent lisibles. */
     private const val PREFS = "annuaire_v3_secure"
 
     private fun prefs(ctx: Context) = EncryptedSharedPreferences.create(
@@ -170,7 +170,7 @@ object Stockage {
 
     /* ==================== FAVORI ==================== */
 
-    /** Fiche favorite : Â« idOnglet|idLigne Â», vide si aucun. */
+    /** Fiche favorite : " idOnglet|idLigne ", vide si aucun. */
     fun getFavori(ctx: Context): String = prefs(ctx).getString("favori", "") ?: ""
 
     fun setFavori(ctx: Context, tabId: String, rowId: String) {
@@ -182,7 +182,7 @@ object Stockage {
     }
 }
 
-/* ==================== DONNÃES OFFICIELLES (DSDEN, CIRCONSCRIPTIONS) ==================== */
+/* ==================== DONNEES OFFICIELLES (DSDEN, CIRCONSCRIPTIONS) ==================== */
 
 data class Contact(
     val nom: String,
@@ -263,17 +263,17 @@ fun chargerCircos(ctx: Context): List<Circo> = try {
     }.sortedBy { it.nom }.toList()
 } catch (e: Exception) { emptyList() }
 
-/* ==================== ÃCOLE â CIRCONSCRIPTION ==================== */
+/* ==================== ECOLE → CIRCONSCRIPTION ==================== */
 
-private val RE_CIRCO = Regex("1er degrÃ© de (.+?) â")
+private val RE_CIRCO = Regex("1er degr\u00E9 de (.+?) \u2014")
 
-/** Nom de circonscription Ã©crit dans une ligne de l'onglet Communes, sinon "". */
+/** Nom de circonscription \u00E9crit dans une ligne de l'onglet Communes, sinon "". */
 fun nomCircoDeLigne(row: Map<String, String>): String =
     row.values.firstNotNullOfOrNull { v ->
         RE_CIRCO.find(v)?.groupValues?.get(1)?.trim()
     } ?: ""
 
-/** Associe le nom trouvÃ© dans l'Excel au code UAI de la circonscription. */
+/** Associe le nom trouve dans l'Excel au code UAI de la circonscription. */
 fun codeCirco(nomCirco: String): String {
     val n = nomCirco.lowercase()
     return when {
@@ -282,31 +282,31 @@ fun codeCirco(nomCirco: String): String {
         "aube" in n && "bar" in n -> "0100045V"
         "seine" in n && "bar" in n -> "0100820M"
         "romilly" in n -> "0100044U"
-        else -> "0100041R"   /* Troyes (et ASH par dÃ©faut) */
+        else -> "0100041R"   /* Troyes (et ASH par d\u00E9faut) */
     }
 }
 
-/** Code circonscription d'une ligne d'Ã©cole, ou "" si non renseignÃ©. */
+/** Code circonscription d'une ligne d'\u00E9cole, ou "" si non renseign\u00E9. */
 fun circoDeLigne(row: Map<String, String>): String {
     val nom = nomCircoDeLigne(row)
     return if (nom.isEmpty()) "" else codeCirco(nom)
 }
 
-/* ==================== ONGLETS DSDEN / CIRCONSCRIPTIONS (Ã©ditables) ==================== */
+/* ==================== ONGLETS DSDEN / CIRCONSCRIPTIONS (editables) ==================== */
 
-/* Les identifiants Â« v5_... Â» sont conservÃ©s tels quels : ils sont dÃ©jÃ 
-   enregistrÃ©s dans les donnÃ©es des appareils, les changer casserait la
+/* Les identifiants " v5_... " sont conserves tels quels : ils sont deja
+   enregistres dans les donnees des appareils, les changer casserait la
    correspondance avec les fiches existantes. */
 
 private fun cle(s: String): String =
     s.lowercase().replace(Regex("[^a-z0-9]+"), "_").trim('_')
 
-/** Champs d'une fiche personne (le ð§ª permet d'en ajouter : TÃ©l. 3â¦). */
+/** Champs d'une fiche personne (le 🧪 permet d'en ajouter : Tel. 3...). */
 private fun champsPersonne(): MutableList<Champ> = mutableListOf(
     Champ("contact", "Contact"),
     Champ("fonction", "Fonction"),
-    Champ("tel1", "TÃ©l. 1"),
-    Champ("tel2", "TÃ©l. 2"),
+    Champ("tel1", "T\u00E9l. 1"),
+    Champ("tel2", "T\u00E9l. 2"),
     Champ("mail", "Mail"),
     Champ("obs", "Observations", multiline = true)
 )
@@ -323,8 +323,8 @@ private fun lignePersonne(
 }
 
 /**
- * GÃ©nÃ¨re les onglets DSDEN et circonscriptions depuis les JSON des assets.
- * Identifiants stables : v5_dsden_<bureau> et v5_circo_<code>_<Ã©quipe/rased/pial/colleges>.
+ * Genere les onglets DSDEN et circonscriptions depuis les JSON des assets.
+ * Identifiants stables : v5_dsden_<bureau> et v5_circo_<code>_<equipe/rased/pial/colleges>.
  */
 fun genererOnglets(ctx: Context): List<Onglet> {
     val out = mutableListOf<Onglet>()
@@ -346,10 +346,10 @@ fun genererOnglets(ctx: Context): List<Onglet> {
         }
     }
     chargerCircos(ctx).forEach { cir ->
-        val equipe = Onglet("v5_circo_" + cir.code + "_equipe", "Ãquipe")
+        val equipe = Onglet("v5_circo_" + cir.code + "_equipe", "\u00C9quipe")
         equipe.fields.addAll(champsPersonne())
         if (cir.ien.isNotBlank())
-            equipe.rows.add(lignePersonne(cir.ien, "Inspecteur de l'Ãducation nationale", cir.tel, mail = cir.mail, obs = cir.adresse))
+            equipe.rows.add(lignePersonne(cir.ien, "Inspecteur de l'\u00C9ducation nationale", cir.tel, mail = cir.mail, obs = cir.adresse))
         if (cir.assistante.isNotBlank())
             equipe.rows.add(lignePersonne(cir.assistante, "Assistante de circonscription"))
         cir.cpc.forEach { equipe.rows.add(lignePersonne(it.nom, "CPC", it.tel, mail = it.mail)) }
@@ -366,26 +366,26 @@ fun genererOnglets(ctx: Context): List<Onglet> {
         cir.pialEr.forEach { pial.rows.add(lignePersonne(it.nom, it.fonction, it.tel, mail = it.mail, obs = it.note)) }
         out.add(pial)
 
-        val col = Onglet("v5_circo_" + cir.code + "_colleges", "CollÃ¨ges")
+        val col = Onglet("v5_circo_" + cir.code + "_colleges", "Coll\u00E8ges")
         col.fields.addAll(champsPersonne())
-        cir.colleges.forEach { col.rows.add(lignePersonne(it, "CollÃ¨ge partenaire")) }
+        cir.colleges.forEach { col.rows.add(lignePersonne(it, "Coll\u00E8ge partenaire")) }
         out.add(col)
     }
     return out
 }
 
-/** Ajoute UNE SEULE FOIS les onglets manquants (les Ã©ditions sont prÃ©servÃ©es). */
+/** Ajoute UNE SEULE FOIS les onglets manquants (les editions sont preservees). */
 fun assurerOnglets(a: Annuaire, ctx: Context) {
     val ids = a.tabs.map { it.id }.toHashSet()
     genererOnglets(ctx).forEach { if (!ids.contains(it.id)) a.tabs.add(it) }
 }
 
-/** Onglets du bas pour un filtre : (nom affichÃ©, onglet). null = Ãcoles. */
+/** Onglets du bas pour un filtre : (nom affiche, onglet). null = Ecoles. */
 fun ongletsDuFiltre(a: Annuaire, filtre: String): List<Pair<String, Onglet?>> =
     if (filtre == "dsden") {
         a.tabs.filter { it.id.startsWith("v5_dsden_") }.map { it.name to it }
     } else {
-        val l = mutableListOf<Pair<String, Onglet?>>("Ãcoles" to null)
+        val l = mutableListOf<Pair<String, Onglet?>>("\u00C9coles" to null)
         for (sfx in listOf("_equipe", "_rased", "_pial", "_colleges")) {
             a.tabs.firstOrNull { it.id == "v5_circo_" + filtre + sfx }
                 ?.let { l.add(it.name to it) }
