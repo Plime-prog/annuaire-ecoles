@@ -266,6 +266,22 @@ object ExcelIO {
 
     /* ---------- ECRITURE (structure en cours) ---------- */
 
+    /* Excel interdit certains caracteres dans le nom d'un onglet
+       ( : \ / ? * [ ] ) et limite a 31 caracteres ; un nom non conforme
+       declenche la "recuperation" du classeur a l'ouverture.
+       On nettoie les noms avant d'ecrire : " Saint-Julien/Arcis "
+       devient " Saint-Julien-Arcis ". L'import retablit le rattachement
+       par le nom d'en-tete, donc l'aller-retour reste correct. */
+    private fun safeSheetName(name: String, used: MutableSet<String>): String {
+        var n = name.replace(Regex("[:\\\\/?*\\[\\]]"), "-").trim()
+        if (n.length > 31) n = n.take(31)
+        if (n.isBlank()) n = "Onglet"
+        var base = n; var i = 2
+        while (n in used) { n = (base.take(28) + "_" + i); i++ }
+        used.add(n)
+        return n
+    }
+
     private const val CONTENT_TYPES_HEAD =
         "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
         "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">" +
@@ -348,12 +364,13 @@ object ExcelIO {
 
     /** Exporte l'annuaire complet : un onglet par table, en-tetes = libelles des champs. */
     fun export(ctx: Context, uri: Uri, a: Annuaire, withRows: Boolean = true) {
+        val used = mutableSetOf<String>()
         val sheets = a.tabs.map { tab ->
             val rows = mutableListOf(tab.fields.map { it.label })
             if (withRows) for (row in tab.rows) {
                 rows.add(tab.fields.map { row[it.key] ?: "" })
             }
-            tab.name to rows
+            safeSheetName(tab.name, used) to rows
         }
         if (sheets.isEmpty()) throw IllegalArgumentException("aucun onglet \u00E0 exporter")
         writeZip(ctx, uri, sheets)
