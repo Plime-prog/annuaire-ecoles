@@ -59,27 +59,27 @@ fun AppAnnuaire() {
     var message by remember { mutableStateOf("") }
     var revision by remember { mutableStateOf(0) }
 
-    /* Ãdition d'une ligne : onglet + copie de la ligne (ou ligne neuve) */
+    /* Edition d'une ligne : onglet + copie de la ligne (ou ligne neuve) */
     var editTab by remember { mutableStateOf<Onglet?>(null) }
     var editRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
     var editIsNew by remember { mutableStateOf(false) }
-    /* Ligne d'origine pour l'Ã©dition (null si nouvelle) */
+    /* Ligne d'origine pour l'edition (null si nouvelle) */
     var editOriginal by remember { mutableStateOf<MutableMap<String, String>?>(null) }
 
-    /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. Ã©cole) */
+    /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. ecole) */
     var openGroup by remember { mutableStateOf<String?>(null) }
     var openRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
 
-    /* Logo .jpg personnalisÃ© (remplace le logo officiel) */
+    /* Logo .jpg personnalise (remplace le logo officiel) */
     var logoVersion by remember { mutableStateOf(0) }
-    /* par dÃ©faut, la circonscription de Saint-Julien-Arcis est
-       sÃ©lectionnÃ©e ; la fiche favorite (Ã©toile) s'ouvre automatiquement. */
+    /* par defaut, la circonscription de Saint-Julien-Arcis est
+       selectionnee ; la fiche favorite (etoile) s'ouvre automatiquement. */
     var filtre by remember { mutableStateOf("0100043T") }
     var favoriVersion by remember { mutableStateOf(0) }
     var onglet by remember { mutableStateOf(0) }
     var ongletFiche by remember { mutableStateOf<Onglet?>(null) }
 
-    /* donnÃ©es des circonscriptions (chips du filtre) */
+    /* donnees des circonscriptions (chips du filtre) */
     var circos by remember { mutableStateOf(listOf<Circo>()) }
 
     fun saveAll() {
@@ -91,7 +91,7 @@ fun AppAnnuaire() {
         annuaire = Stockage.load(ctx)
         hasPin = Stockage.hasPin(ctx)
         circos = chargerCircos(ctx)
-        /* Ouvrir la fiche favorite (Ã©toile) au dÃ©marrage si elle existe */
+        /* Ouvrir la fiche favorite (etoile) au demarrage si elle existe */
         val fav = Stockage.getFavori(ctx)
         if (fav.isNotBlank()) {
             val parties = fav.split("|")
@@ -106,8 +106,8 @@ fun AppAnnuaire() {
         }
     }
 
-    /* les onglets DSDEN/circonscriptions sont recrÃ©Ã©s dÃ¨s qu'ils manquent - y compris
-       aprÃ¨s un import Excel, Â« Tout effacer Â» ou Â« DÃ©fauts Â». */
+    /* les onglets DSDEN/circonscriptions sont recrees des qu'ils manquent - y compris
+       apres un import Excel, " Tout effacer " ou " Defauts ". */
     LaunchedEffect(annuaire) {
         if (annuaire.tabs.none { it.id.startsWith("v5_") }) {
             assurerOnglets(annuaire, ctx)
@@ -124,10 +124,10 @@ fun AppAnnuaire() {
             Stockage.save(ctx, annuaire)
             revision++
             val n = annuaire.tabs.sumOf { it.rows.size }
-            message = "Import rÃ©ussi : ${annuaire.tabs.size} onglet(s), $n ligne(s). " +
-                "(Onglets et champs reconstruits d'aprÃ¨s le fichier.)"
+            message = "Import r\u00E9ussi : ${annuaire.tabs.size} onglet(s), $n ligne(s). " +
+                "(Onglets et champs reconstruits d'apr\u00E8s le fichier.)"
         } catch (e: Exception) {
-            message = "Ãchec de l'import : ${e.message ?: "fichier invalide"}"
+            message = "\u00C9chec de l'import : ${e.message ?: "fichier invalide"}"
         }
     }
 
@@ -136,9 +136,9 @@ fun AppAnnuaire() {
     ) { uri ->
         if (uri != null) try {
             ExcelIO.export(ctx, uri, annuaire)
-            message = "Export rÃ©ussi."
+            message = "Export r\u00E9ussi."
         } catch (e: Exception) {
-            message = "Ãchec de l'export : ${e.message ?: "erreur"}"
+            message = "\u00C9chec de l'export : ${e.message ?: "erreur"}"
         }
     }
 
@@ -147,9 +147,9 @@ fun AppAnnuaire() {
     ) { uri ->
         if (uri != null) try {
             ExcelIO.writeTemplate(ctx, uri, annuaire)
-            message = "ModÃ¨le crÃ©Ã© (en-tÃªtes actuels, sans donnÃ©es)."
+            message = "Mod\u00E8le cr\u00E9\u00E9 (en-t\u00EAtes actuels, sans donn\u00E9es)."
         } catch (e: Exception) {
-            message = "Ãchec : ${e.message ?: "erreur"}"
+            message = "\u00C9chec : ${e.message ?: "erreur"}"
         }
     }
 
@@ -162,16 +162,16 @@ fun AppAnnuaire() {
                 dest.outputStream().use { input.copyTo(it) }
             }
             logoVersion++
-            message = "Logo ajoutÃ©."
+            message = "Logo ajout\u00E9."
         } catch (e: Exception) {
-            message = "Ãchec du logo : ${e.message ?: "erreur"}"
+            message = "\u00C9chec du logo : ${e.message ?: "erreur"}"
         }
     }
 
-    /* ThÃ¨me : fond blanc partout, Ã©criture noire, accents vert menthe.
+    /* Theme : fond blanc partout, ecriture noire, accents vert menthe.
        TOUTES les cases de couleur sont remplies : plus aucune couleur
-       par dÃ©faut (rose ou violet) de Material 3 ne peut apparaÃ®tre,
-       y compris dans les boÃ®tes de dialogue (RÃ©glages, PIN...). */
+       par defaut (rose ou violet) de Material 3 ne peut apparaitre,
+       y compris dans les boites de dialogue (Reglages, PIN...). */
     MaterialTheme(
         colorScheme = lightColorScheme(
             background = Color.White,
@@ -238,14 +238,14 @@ fun AppAnnuaire() {
                     }
                     editTab = null; editRow = null
                     saveAll()
-                    message = "Modifications enregistrÃ©es."
+                    message = "Modifications enregistr\u00E9es."
                 },
                 onCancel = { editTab = null; editRow = null },
                 onDelete = if (editIsNew) null else {{
                     editOriginal?.let { orig -> t.rows.removeIf { it === orig } }
                     editTab = null; editRow = null
                     saveAll()
-                    message = "Ligne supprimÃ©e."
+                    message = "Ligne supprim\u00E9e."
                 }}
             )
 
@@ -265,12 +265,12 @@ fun AppAnnuaire() {
             } else if (showSchema) {
                 SchemaEditorScreen(
                     annuaire = annuaire,
-                    onDone = { saveAll(); showSchema = false; message = "Structure enregistrÃ©e." },
+                    onDone = { saveAll(); showSchema = false; message = "Structure enregistr\u00E9e." },
                     onRestore = {
                         annuaire = schemaParDefaut()
                         saveAll()
                         tabIndex = 0
-                        message = "Structure par dÃ©faut restaurÃ©e (donnÃ©es effacÃ©es)."
+                        message = "Structure par d\u00E9faut restaur\u00E9e (donn\u00E9es effac\u00E9es)."
                     }
                 )
             } else {
@@ -285,9 +285,9 @@ fun AppAnnuaire() {
                 }
                 Scaffold(
                     topBar = {
-                        /* En-tÃªte sur mesure, plus haut qu'une TopAppBar,
+                        /* En-tete sur mesure, plus haut qu'une TopAppBar,
                            pour afficher le logo en grand.
-                           Le bandeau tricolore historique a Ã©tÃ© retirÃ©
+                           Le bandeau tricolore historique a ete retire
                            au profit du logo officiel.
                            */
                         Surface(color = Color.White) {
@@ -311,11 +311,11 @@ fun AppAnnuaire() {
                                             contentScale = ContentScale.Fit
                                         )
                                     } else {
-                                        /* Logo officiel agrandi nativement (Ã©chelle 2,4),
-                                           sans Modifier.scale qui rogne et dÃ©cale le logo.
+                                        /* Logo officiel agrandi nativement (echelle 2,4),
+                                           sans Modifier.scale qui rogne et decale le logo.
                                            le nom de la circonscription choisie est
                                            inscrit EN VERT dans le logo, 4e ligne du bloc ;
-                                           rien n'est ajoutÃ© pour la DSDEN. */
+                                           rien n'est ajoute pour la DSDEN. */
                                         Box(
                                             Modifier.fillMaxWidth().height(100.dp),
                                             contentAlignment = Alignment.Center
@@ -345,9 +345,9 @@ fun AppAnnuaire() {
                     }
                 ) { padding ->
                     Column(Modifier.fillMaxSize().padding(padding)) {
-                        /* barre de recherche raccourcie, avec les icÃ´nes
-                           (carte / structure / rÃ©glages) resserrÃ©es et collÃ©es
-                           Ã  sa droite - le logo occupe ainsi sa ligne entiÃ¨re. */
+                        /* barre de recherche raccourcie, avec les icones
+                           (carte / structure / reglages) resserrees et collees
+                           a sa droite - le logo occupe ainsi sa ligne entiere. */
                         Row(
                             Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -375,14 +375,14 @@ fun AppAnnuaire() {
                                     onClick = { showSchema = true },
                                     modifier = Modifier.size(36.dp)
                                 ) {
-                                    Icon(Icons.Filled.Science, "Ãditer la structure",
+                                    Icon(Icons.Filled.Science, "\u00C9diter la structure",
                                         tint = VertMenthe, modifier = Modifier.size(20.dp))
                                 }
                                 IconButton(
                                     onClick = { showSettings = true },
                                     modifier = Modifier.size(36.dp)
                                 ) {
-                                    Icon(Icons.Filled.Settings, "RÃ©glages",
+                                    Icon(Icons.Filled.Settings, "R\u00E9glages",
                                         tint = VertMenthe, modifier = Modifier.size(20.dp))
                                 }
                             }
@@ -431,7 +431,7 @@ fun AppAnnuaire() {
                                         tabFiche.rows.removeIf { it === fiche }
                                         openRow = null; ongletFiche = null
                                         saveAll()
-                                        message = "Fiche supprimÃ©e."
+                                        message = "Fiche supprim\u00E9e."
                                     }
                                 )
                             } else if (grp != null && t5 != null) {
@@ -452,11 +452,11 @@ fun AppAnnuaire() {
                                     onOnglet = { onglet = it; openGroup = null; openRow = null; ongletFiche = null },
                                     bas = {
                                         if (query.isNotBlank()) {
-                                            /* Recherche globale : rÃ©sultats dans TOUS les onglets.
-                                               ouvrir un rÃ©sultat bascule le filtre sur la
-                                               circonscription (ou la DSDEN) d'oÃ¹ vient la fiche -
+                                            /* Recherche globale : resultats dans TOUS les onglets.
+                                               ouvrir un resultat bascule le filtre sur la
+                                               circonscription (ou la DSDEN) d'ou vient la fiche -
                                                le fil d'Ariane vert et la barre de boutons
-                                               retrouvent ainsi le chemin qui y a menÃ©. */
+                                               retrouvent ainsi le chemin qui y a mene. */
                                             RechercheGlobale(annuaire, query) { tb, r ->
                                                 ongletFiche = tb
                                                 openRow = r
@@ -477,11 +477,11 @@ fun AppAnnuaire() {
                                                 },
                                                 onOpenRow = { ongletFiche = t5; openRow = it }
                                             )
-                                            filtre == "dsden" -> Text("Aucun onglet DSDEN gÃ©nÃ©rÃ©. Videz les donnÃ©es de l'application puis relancez.", Modifier.padding(16.dp), color = Color(0xFFB3261E))
+                                            filtre == "dsden" -> Text("Aucun onglet DSDEN g\u00E9n\u00E9r\u00E9. Videz les donn\u00E9es de l'application puis relancez.", Modifier.padding(16.dp), color = Color(0xFFB3261E))
                                             tabCommunes != null -> {
                                                 val lignes = tabCommunes.rows.filter { circoDeLigne(it) == filtre }
                                                 if (lignes.isEmpty()) {
-                                                    Text("Aucune Ã©cole rattachÃ©e Ã  cette circonscription.", Modifier.padding(16.dp))
+                                                    Text("Aucune \u00E9cole rattach\u00E9e \u00E0 cette circonscription.", Modifier.padding(16.dp))
                                                 } else {
                                                     val parCommune = lignes.groupBy { it[tabCommunes.groupBy] ?: "(sans commune)" }.toSortedMap()
                                                     ListeEcolesParCommune(
@@ -491,7 +491,7 @@ fun AppAnnuaire() {
                                                     )
                                                 }
                                             }
-                                            else -> Text("Aucune Ã©cole rattachÃ©e Ã  cette circonscription.", Modifier.padding(16.dp))
+                                            else -> Text("Aucune \u00E9cole rattach\u00E9e \u00E0 cette circonscription.", Modifier.padding(16.dp))
                                         }
                                     }
                                 )
@@ -522,12 +522,12 @@ fun AppAnnuaire() {
                     annuaire = schemaParDefaut()
                     saveAll()
                     tabIndex = 0
-                    message = "DonnÃ©es effacÃ©es (structure par dÃ©faut)."
+                    message = "Donn\u00E9es effac\u00E9es (structure par d\u00E9faut)."
                 },
                 onChangePin = { old, new ->
                     if (Stockage.checkPin(ctx, old)) {
                         Stockage.setPin(ctx, new)
-                        message = "Code PIN modifiÃ©."
+                        message = "Code PIN modifi\u00E9."
                     } else message = "Ancien code incorrect."
                 }
             )
@@ -535,15 +535,15 @@ fun AppAnnuaire() {
     }
 }
 
-/* ==================== APPEL TÃLÃPHONE (ACTION_DIAL, sans permission) ==================== */
+/* ==================== APPEL TELEPHONE (ACTION_DIAL, sans permission) ==================== */
 
-/** Champ tÃ©lÃ©phone ? (libellÃ© contenant tel, phone, portable, mobile...) */
+/** Champ telephone ? (libelle contenant tel, phone, portable, mobile...) */
 private fun estTel(label: String): Boolean {
     val l = norme(label)
     return l.contains("tel") || l.contains("phone") || l.contains("portable") || l.contains("mobile")
 }
 
-/** Ouvre le composeur avec le numÃ©ro prÃ©-rempli (aucune permission requise). */
+/** Ouvre le composeur avec le numero pre-rempli (aucune permission requise). */
 private fun appelTelephone(ctx: android.content.Context, numero: String) {
     val nettoye = numero.filter { it.isDigit() || it == '+' }
     if (nettoye.isBlank()) return
@@ -554,11 +554,11 @@ private fun appelTelephone(ctx: android.content.Context, numero: String) {
     }
 }
 
-/* ==================== STYLE : encadrÃ© vert menthe sur fond blanc ==================== */
+/* ==================== STYLE : encadre vert menthe sur fond blanc ==================== */
 
 private val VertMenthe = Color(0xFF3CB371)
 
-/** EncadrÃ© vert menthe, fond blanc, texte taille 16 - utilisÃ© sur toutes les pages. */
+/** Encadre vert menthe, fond blanc, texte taille 16 - utilise sur toutes les pages. */
 @Composable
 private fun Encadre(
     onClick: (() -> Unit)? = null,
@@ -577,8 +577,8 @@ private fun Encadre(
 
 /* ==================== TITRES DE FICHES ==================== */
 
-/** Titre d'une fiche : Â« Ãcole Â» pour les communes, Â« Nom Â» pour les collÃ¨ges,
-    Â« Contact Â» pour la circonscription - sinon 1Ã¨re valeur du groupe. */
+/** Titre d'une fiche : " Ecole " pour les communes, " Nom " pour les colleges,
+    " Contact " pour la circonscription - sinon 1ere valeur du groupe. */
 private fun titreDetail(tab: Onglet, row: Map<String, String>): String {
     for (p in listOf("\u00E9cole", "ecole", "nom")) {
         tab.fields.firstOrNull {
@@ -607,7 +607,7 @@ private fun champsConstants(tab: Onglet, rows: List<Map<String, String>>): List<
         }
     }
 
-/** Valeurs qui changent d'une fiche Ã  l'autre dans le groupe (ex. Ã©cole). */
+/** Valeurs qui changent d'une fiche a l'autre dans le groupe (ex. ecole). */
 private fun valeursVariables(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): List<String> =
     tab.fields.mapNotNull { f ->
         if (f.key == tab.groupBy) null
@@ -618,21 +618,21 @@ private fun valeursVariables(tab: Onglet, rows: List<Map<String, String>>, row: 
         }
     }
 
-/** Titre d'une fiche du groupe : 1Ã¨re valeur variable (ex. nom de l'Ã©cole). */
+/** Titre d'une fiche du groupe : 1ere valeur variable (ex. nom de l'ecole). */
 private fun titreDansGroupe(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): String =
     valeursVariables(tab, rows, row).firstOrNull()
         ?: tab.fields.firstNotNullOfOrNull { f ->
             if (f.key != tab.groupBy) (row[f.key] ?: "").takeIf { it.isNotBlank() } else null
         }
-        ?: "(dÃ©tails)"
+        ?: "(d\u00E9tails)"
 
 /** Sous-titre d'une fiche du groupe : les 2 valeurs variables suivantes. */
 private fun sousTitreDansGroupe(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): String {
     val vals = valeursVariables(tab, rows, row)
-    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" Â· ") else ""
+    return if (vals.size > 1) vals.drop(1).take(2).joinToString(" \u00B7 ") else ""
 }
 
-/** Liste : noms seulement (communes, collÃ¨ges) ou personnes (circonscription). */
+/** Liste : noms seulement (communes, colleges) ou personnes (circonscription). */
 @Composable
 private fun EcranOnglet(
     tab: Onglet,
@@ -644,14 +644,14 @@ private fun EcranOnglet(
     val filtered = if (q.isBlank()) tab.rows
     else tab.rows.filter { row -> row.values.any { norme(it).contains(q) } }
 
-    /* Champ Â« Circonscription Ã©largie Â» Ã©ventuel */
+    /* Champ " Circonscription elargie " eventuel */
     val keyEl = tab.fields.firstOrNull { norme(it.label).contains("elargie") }?.key
     val normales = if (keyEl != null) filtered.filter { norme(it[keyEl] ?: "") != "oui" } else filtered
     val elargies = if (keyEl != null) filtered.filter { norme(it[keyEl] ?: "") == "oui" } else emptyList()
     var elargieOuvert by remember(tab.id) { mutableStateOf(false) }
 
     LazyColumn(Modifier.fillMaxSize().padding(vertical = 4.dp)) {
-        /* Bascule Â« Circonscription Ã©largie (PIAL-ER) Â» */
+        /* Bascule " Circonscription elargie (PIAL-ER) " */
         if (keyEl != null && elargies.isNotEmpty()) {
             item(key = "elargie_titre") {
                 Encadre(onClick = { elargieOuvert = !elargieOuvert }) {
@@ -661,7 +661,7 @@ private fun EcranOnglet(
                             null, tint = VertMenthe
                         )
                         Text(
-                            "Circonscription Ã©largie  (${elargies.size})",
+                            "Circonscription \u00E9largie  (${elargies.size})",
                             fontSize = 16.sp, fontWeight = FontWeight.Bold, color = VertMenthe
                         )
                     }
@@ -678,7 +678,7 @@ private fun EcranOnglet(
         }
 
         if (tab.groupBy.isNotBlank() && normales.isNotEmpty()) {
-            /* Liste des noms de groupes : communes, collÃ¨ges... */
+            /* Liste des noms de groupes : communes, colleges... */
             val groups = normales.groupBy { it[tab.groupBy] ?: "" }
                 .map { (k, v) -> k.ifBlank { "(sans titre)" } to v.size }
                 .sortedBy { norme(it.first) }
@@ -690,7 +690,7 @@ private fun EcranOnglet(
                 }
             }
         } else {
-            /* Liste Ã  plat : les personnes de la circonscription... */
+            /* Liste a plat : les personnes de la circonscription... */
             items(normales, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
                 Encadre(onClick = { onOpenRow(row) }) {
                     Text(titreDetail(tab, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -703,7 +703,7 @@ private fun EcranOnglet(
         if (filtered.isEmpty()) item {
             Text(
                 if (query.isBlank()) "Aucune fiche. Touchez \u2795 pour en ajouter."
-                else "Aucun rÃ©sultat.",
+                else "Aucun r\u00E9sultat.",
                 Modifier.padding(16.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -711,7 +711,7 @@ private fun EcranOnglet(
     }
 }
 
-/* ==================== NIVEAU 2 : DÃTAIL D'UN GROUPE (ex. une commune) ==================== */
+/* ==================== NIVEAU 2 : DETAIL D'UN GROUPE (ex. une commune) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -747,14 +747,14 @@ private fun GroupDetailScreen(
                     champsConstants(tab, rows).forEach { (label, value) ->
                         Text(label, fontSize = 11.sp, color = VertMenthe)
                         if (estAdresse(label)) {
-                            /* Adresse du groupe (mairie...) : itinÃ©raire Maps */
+                            /* Adresse du groupe (mairie...) : itineraire Maps */
                             LigneAdresse(value)
                         } else Text(value, fontSize = 15.sp)
                         Spacer(Modifier.height(6.dp))
                     }
                 }
             }
-            /* Les fiches du groupe : les Ã©coles de CETTE commune... */
+            /* Les fiches du groupe : les ecoles de CETTE commune... */
             items(rows, key = { it["_id"] ?: it.hashCode().toString() }) { row ->
                 Encadre(onClick = { onOpenRow(row) }) {
                     Text(titreDansGroupe(tab, rows, row), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -767,7 +767,7 @@ private fun GroupDetailScreen(
     }
 }
 
-/* ==================== NIVEAU 3 : DÃTAIL D'UNE FICHE (Ã©cole, collÃ¨ge, personne) ==================== */
+/* ==================== NIVEAU 3 : DETAIL D'UNE FICHE (ecole, college, personne) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -777,9 +777,9 @@ private fun RowDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    /* fil d'Ariane - les boutons verts qui ont menÃ© Ã  cette fiche */
+    /* fil d'Ariane - les boutons verts qui ont mene a cette fiche */
     filAriane: List<String> = emptyList(),
-    /* favori - l'Ã©toile affiche cette fiche par dÃ©faut au dÃ©marrage */
+    /* favori - l'etoile affiche cette fiche par defaut au demarrage */
     favori: Boolean = false,
     onToggleFavori: (() -> Unit)? = null
 ) {
@@ -841,12 +841,12 @@ private fun RowDetailScreen(
                         auMoinsUn = true
                         Text(f.label, fontSize = 11.sp, color = VertMenthe)
                         if (estAdresse(f.label)) {
-                            /* Ligne adresse : toucher = itinÃ©raire Google Maps
-                               depuis la position actuelle (voiture, ou Ã  pied
+                            /* Ligne adresse : toucher = itineraire Google Maps
+                               depuis la position actuelle (voiture, ou a pied
                                si moins de 5 km) */
                             LigneAdresse(v)
                         } else if (estTel(f.label)) {
-                            /* Ligne tÃ©lÃ©phone : toucher = composeur prÃ©-rempli */
+                            /* Ligne telephone : toucher = composeur pre-rempli */
                             val ctxF = LocalContext.current
                             Row(
                                 Modifier.clickable { appelTelephone(ctxF, v) },
@@ -880,8 +880,8 @@ private fun RowDetailScreen(
 
 /* ==================== RECHERCHE GLOBALE (tout l'annuaire) ==================== */
 
-/** DÃ¨s qu'on tape dans le champ du haut : rÃ©sultats tirÃ©s de TOUS les
-    onglets (DSDEN, circonscriptions, communes, Ã©coles, collÃ¨ges...). */
+/** Des qu'on tape dans le champ du haut : resultats tires de TOUS les
+    onglets (DSDEN, circonscriptions, communes, ecoles, colleges...). */
 @Composable
 private fun RechercheGlobale(
     annuaire: Annuaire,
@@ -899,7 +899,7 @@ private fun RechercheGlobale(
         if (resultats.isEmpty()) {
             item {
                 Text(
-                    "Aucun rÃ©sultat pour Â« ${query} Â».",
+                    "Aucun r\u00E9sultat pour \u00AB ${query} \u00BB.",
                     Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -907,7 +907,7 @@ private fun RechercheGlobale(
         } else {
             item {
                 Text(
-                    "${resultats.size} rÃ©sultat(s)",
+                    "${resultats.size} r\u00E9sultat(s)",
                     Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     color = VertMenthe, fontWeight = FontWeight.Bold
                 )
@@ -922,7 +922,7 @@ private fun RechercheGlobale(
     }
 }
 
-/* ==================== BOÃTE DE DIALOGUE : Ã©diter une ligne ==================== */
+/* ==================== BOITE DE DIALOGUE : editer une ligne ==================== */
 
 @Composable
 private fun EntityDialog(
@@ -935,8 +935,8 @@ private fun EntityDialog(
 ) {
     val scroll = rememberScrollState()
 
-    /* la saisie passe par des Ã©tats Compose - sans cela, l'Ã©criture
-       directe dans la Map ne dÃ©clenche aucun rafraÃ®chissement et le
+    /* la saisie passe par des etats Compose - sans cela, l'ecriture
+       directe dans la Map ne declenche aucun rafraichissement et le
        clavier semble ne rien saisir. */
     val saisies = remember(tab, values) {
         tab.fields.associate { f -> f.key to mutableStateOf(values[f.key] ?: "") }
@@ -983,7 +983,7 @@ private fun EntityDialog(
     )
 }
 
-/* ==================== ÃDITEUR DE STRUCTURE (onglets + champs) ==================== */
+/* ==================== EDITEUR DE STRUCTURE (onglets + champs) ==================== */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1013,11 +1013,11 @@ private fun SchemaEditorScreen(
                 )
             },
             navigationIcon = {
-                IconButton(onClick = onDone) { Icon(Icons.Filled.Check, "TerminÃ©") }
+                IconButton(onClick = onDone) { Icon(Icons.Filled.Check, "Termin\u00E9") }
             },
             actions = {
                 TextButton(onClick = { confirmRestore = true }) {
-                    Text("DÃ©fauts", color = MaterialTheme.colorScheme.error)
+                    Text("D\u00E9fauts", color = MaterialTheme.colorScheme.error)
                 }
             }
         )
@@ -1044,14 +1044,14 @@ private fun SchemaEditorScreen(
                     }
                 }
                 if (selected == t.id) {
-                    /* --- Ãditeur des champs de l'onglet --- */
+                    /* --- Editeur des champs de l'onglet --- */
                     Surface(
                         tonalElevation = 1.dp,
                         shape = MaterialTheme.shapes.medium,
                         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, bottom = 8.dp)
                     ) {
                         Column(Modifier.padding(12.dp)) {
-                            Text("Champs de Â« ${t.name} Â»", fontWeight = FontWeight.SemiBold)
+                            Text("Champs de \u00AB ${t.name} \u00BB", fontWeight = FontWeight.SemiBold)
                             /* groupBy */
                             Row(Modifier.fillMaxWidth().padding(top = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically) {
@@ -1111,14 +1111,14 @@ private fun SchemaEditorScreen(
             }
             Text(
                 "\u00B6 = champ multi-lignes. Les suppressions de champs/onglets " +
-                    "n'effacent que la structure : les valeurs concernÃ©es sont perdues.",
+                    "n'effacent que la structure : les valeurs concern\u00E9es sont perdues.",
                 fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 12.dp)
             )
         }
     }
 
-    /* --- Petites boÃ®tes de saisie --- */
+    /* --- Petites boites de saisie --- */
     if (renameTab != null) TextPromptDialog(
         title = "Renommer l'onglet", initial = renameTab!!.name
     ) { s ->
@@ -1134,7 +1134,7 @@ private fun SchemaEditorScreen(
         addTab = false
     }
     if (delTab != null) ConfirmDialog(
-        "Supprimer l'onglet Â« ${delTab!!.name} Â» et ses ${delTab!!.rows.size} ligne(s) ?",
+        "Supprimer l'onglet \u00AB ${delTab!!.name} \u00BB et ses ${delTab!!.rows.size} ligne(s) ?",
         onDismiss = { delTab = null }
     ) {
         annuaire.tabs.remove(delTab!!)
@@ -1157,7 +1157,7 @@ private fun SchemaEditorScreen(
         addField = null
     }
     if (delField != null) ConfirmDialog(
-        "Supprimer le champ Â« ${delField!!.second.label} Â» ?\n" +
+        "Supprimer le champ \u00AB ${delField!!.second.label} \u00BB ?\n" +
             "Les valeurs de ce colonne seront perdues.",
         onDismiss = { delField = null }
     ) {
@@ -1187,7 +1187,7 @@ private fun SchemaEditorScreen(
         )
     }
     if (confirmRestore) ConfirmDialog(
-        "Restaurer les 5 onglets par dÃ©faut ?\nTOUTES les donnÃ©es et la structure actuelles seront effacÃ©es.",
+        "Restaurer les 5 onglets par d\u00E9faut ?\nTOUTES les donn\u00E9es et la structure actuelles seront effac\u00E9es.",
         onDismiss = { confirmRestore = false }
     ) {
         confirmRestore = false
@@ -1212,8 +1212,8 @@ private fun TextPromptDialog(title: String, initial: String, onOk: (String) -> U
     )
 }
 
-/** BoÃ®te de confirmation : le 2e paramÃ¨tre ferme la boÃ®te (annuler),
- *  le 3e (trailing lambda) exÃ©cute l'action puis ferme. */
+/** Boite de confirmation : le 2e parametre ferme la boite (annuler),
+ *  le 3e (trailing lambda) execute l'action puis ferme. */
 @Composable
 private fun ConfirmDialog(
     text: String,
@@ -1233,7 +1233,7 @@ private fun ConfirmDialog(
     )
 }
 
-/* ==================== ÃCRANS PIN ==================== */
+/* ==================== ECRANS PIN ==================== */
 
 @Composable
 private fun PinDefineScreen(onDone: (String) -> Unit) {
@@ -1245,7 +1245,7 @@ private fun PinDefineScreen(onDone: (String) -> Unit) {
     verticalArrangement = Arrangement.Center
 ) {
         Text(
-            "DÃ©finissez votre code PIN",
+            "D\u00E9finissez votre code PIN",
             fontSize = 18.sp, fontWeight = FontWeight.Bold, color = VertMenthe
         )
         Spacer(Modifier.height(16.dp))
@@ -1302,12 +1302,12 @@ private fun PinEnterScreen(onSuccess: (String) -> Unit) {
             Button(
                 onClick = { if (pin.isNotBlank()) onSuccess(pin) },
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("DÃ©verrouiller") }
+            ) { Text("D\u00E9verrouiller") }
         }
     }
 }
 
-/* ==================== PANNEAU RÃGLAGES ==================== */
+/* ==================== PANNEAU REGLAGES ==================== */
 
 @Composable
 private fun SettingsDialog(
@@ -1327,7 +1327,7 @@ private fun SettingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("RÃ©glages", color = VertMenthe) },
+        title = { Text("R\u00E9glages", color = VertMenthe) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -1337,13 +1337,13 @@ private fun SettingsDialog(
                     Icon(Icons.Filled.Download, null); Spacer(Modifier.width(8.dp)); Text("Exporter vers Excel")
                 }
                 Button(onClick = onTemplate, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                    Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("CrÃ©er le modÃ¨le d'import")
+                    Icon(Icons.Filled.Description, null); Spacer(Modifier.width(8.dp)); Text("Cr\u00E9er le mod\u00E8le d'import")
                 }
                 OutlinedButton(onClick = onLogo, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Image, null); Spacer(Modifier.width(8.dp)); Text("Choisir le logo (image)")
                 }
                 Text(
-                    "Astuce : l'import reconstruit onglets et champs d'aprÃ¨s les en-tÃªtes du fichier.",
+                    "Astuce : l'import reconstruit onglets et champs d'apr\u00E8s les en-t\u00EAtes du fichier.",
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
