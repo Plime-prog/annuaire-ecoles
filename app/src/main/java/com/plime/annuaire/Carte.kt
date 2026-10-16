@@ -218,8 +218,14 @@ fun EcranCarte(
        en teinte fonc\u00E9e, titre = son nom. */
     var communeSel by remember(filtreActif) { mutableStateOf(communeSelectionnee) }
     val vueCirco = vue == "circo" && zoneActive != null
-    val proj = remember(filtreActif) {
-        if (zoneActive != null) Projection(zoneActive.contours.flatten())
+    /* Projection de la VUE courante : departement complet en vue "dept",
+       contours de la circonscription en vue "circo". Attention : la vue
+       "dept" doit TOUJOURS utiliser la projection du departement, sinon
+       la carte entiere est dessinee a l'echelle d'une seule circo et
+       parait vide. */
+    val proj = remember(filtreActif, vue) {
+        if (vue == "circo" && zoneActive != null)
+            Projection(zoneActive.contours.flatten())
         else Projection(dept)
     }
     var taille by remember { mutableStateOf(IntSize(1, 1)) }
@@ -229,9 +235,9 @@ fun EcranCarte(
     }
     /* Zoom a deux doigts + deplacement ; remis a zero quand on change
        de vue. " aff " = parametres reels apres zoom/deplacement. */
-    var zoom by remember(filtreActif) { mutableStateOf(1f) }
-    var panX by remember(filtreActif) { mutableStateOf(0f) }
-    var panY by remember(filtreActif) { mutableStateOf(0f) }
+    var zoom by remember(filtreActif, vue) { mutableStateOf(1f) }
+    var panX by remember(filtreActif, vue) { mutableStateOf(0f) }
+    var panY by remember(filtreActif, vue) { mutableStateOf(0f) }
     fun reinitZoom() { zoom = 1f; panX = 0f; panY = 0f }
     val aff = Params(params.k * zoom, params.ox * zoom + panX, params.oy * zoom + panY)
 
