@@ -272,14 +272,17 @@ fun AppAnnuaire() {
                     onCommuneSel = { nom -> communeCarte = nom },
                     /* Liste (commune, \u00E9cole) de l'onglet Communes, pour
                        afficher directement les \u00E9coles en pastilles sous la
-                       carte de la circonscription. */
+                       carte de la circonscription. La colonne \u00E9cole est
+                       retrouvee par son libell\u00E9 (accents, casse, espaces
+                       et ponctuation ignor\u00E9s) : " \u00C9cole ", " Ecole ",
+                       " \u00C9cole  " ... fonctionnent tous. */
                     ecolesParCommune = run {
                         val tabC = annuaire.tabs.firstOrNull {
                             it.name.equals("Communes", ignoreCase = true)
                         }
                         val cleC = tabC?.groupBy
                         val cleE = tabC?.fields?.firstOrNull {
-                            norme(it.label) == "ecole"
+                            cleTexte(it.label) == "ecole"
                         }?.key
                         if (tabC != null && cleC != null && cleE != null)
                             tabC.rows.mapNotNull { r ->
@@ -297,7 +300,7 @@ fun AppAnnuaire() {
                         }
                         val cle = tb?.groupBy
                         val cleE = tb?.fields?.firstOrNull {
-                            norme(it.label) == "ecole"
+                            cleTexte(it.label) == "ecole"
                         }?.key
                         val cible = if (tb != null && cle != null && cleE != null)
                             tb.rows.firstOrNull {
@@ -447,7 +450,7 @@ fun AppAnnuaire() {
                                         openGroup = null
                                     }
                                 },
-                                modifier = Modifier.weight(1f).height(48.dp),
+                                modifier = Modifier.weight(1f).height(56.dp),
                                 placeholder = { Text("Rechercher...", fontSize = 15.sp) },
                                 singleLine = true,
                                 leadingIcon = { Icon(Icons.Filled.Search, null, tint = VertMenthe) },
