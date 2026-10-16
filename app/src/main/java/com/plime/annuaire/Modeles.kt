@@ -271,7 +271,16 @@ private val RE_CIRCO = Regex("1er degr\u00E9 de (.+?) \u2014")
 fun nomCircoDeLigne(row: Map<String, String>): String =
     row.values.firstNotNullOfOrNull { v ->
         RE_CIRCO.find(v)?.groupValues?.get(1)?.trim()
-    } ?: ""
+    }
+    /* Repli : si aucun " 1er degr\u00E9 de ... - " n'apparait, on accepte une
+       valeur courte contenant le nom d'une circonscription connue (ex. la
+       colonne " Circonscription " remplie " Saint-Julien/Arcis "). */
+    ?: row.values.firstNotNullOfOrNull { v ->
+        val n = norme(v)
+        if (n.length <= 40 && ("chapelle" in n || "julien" in n || "romilly" in n ||
+            ("aube" in n && "bar" in n) || ("seine" in n && "bar" in n) || "troyes" in n)
+        ) v.trim() else null
+    }
 
 /** Associe le nom trouve dans l'Excel au code UAI de la circonscription. */
 fun codeCirco(nomCirco: String): String {
