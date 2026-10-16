@@ -112,7 +112,7 @@ fun schemaParDefaut(): Annuaire {
             "Maire", "T\u00E9l. Maire", "Mail Maire",
             "Contact \u00C9lu", "Fonction Contact \u00C9lu", "T\u00E9l. \u00C9lu", "Mail \u00C9lu",
             "Observations",
-            "\u00C9cole", "Code UAI", "Circonscription", "IPIAL", "Statut", "Adresse \u00E9cole", "T\u00E9l. \u00E9cole", "Mail \u00E9cole",
+            "\u00C9cole", "Code UAI", "Statut", "Adresse \u00E9cole", "T\u00E9l. \u00E9cole", "Mail \u00E9cole",
             "Directeur", "T\u00E9l. Directeur", "Mail Directeur",
             "D\u00E9charge", "Matin", "Apr\u00E8s-midi",
             "Observations"
