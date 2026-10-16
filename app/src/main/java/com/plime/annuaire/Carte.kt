@@ -188,10 +188,13 @@ fun EcranCarte(
     filtreActif: String,
     onCirco: (String) -> Unit,
     onFermer: () -> Unit,
-    /* Circonscription choisie : toucher une commune OUVRIRA cette commune. */
+    /* Ouvrir la fiche de la commune (ic\u00F4ne en haut \u00E0 droite). */
     onCommune: (String) -> Unit = {},
-    /* Commune choisie precedemment : affichee en fonce sur la carte
-       circonscription (l'etat survit a la fermeture de la carte). */
+    /* Selection de commune sur la carte : m\u00E9moris\u00E9e par l'app
+       (sans ouvrir la fiche). */
+    onCommuneSel: (String) -> Unit = {},
+    /* Commune choisie pr\u00E9c\u00E9demment : la carte se rouvre sur la vue
+       circonscription avec cette commune remplie. */
     communeSelectionnee: String = ""
 ) {
     val ctx = LocalContext.current
@@ -205,6 +208,16 @@ fun EcranCarte(
     val zoneActive =
         if (filtreActif == "dsden") null
         else zones.firstOrNull { it.code == filtreActif }
+    /* Vue courante : "dept" = carte de l'Aube, "circo" = carte zoom\u00E9e
+       sur la circonscription. Premier toucher : d\u00E9partement ; si une
+       commune \u00E9tait d\u00E9j\u00E0 choisie, on rouvre sur la vue circo. */
+    var vue by remember {
+        mutableStateOf(if (communeSelectionnee.isNotBlank()) "circo" else "dept")
+    }
+    /* Commune s\u00E9lectionn\u00E9e dans la vue circonscription : remplie
+       en teinte fonc\u00E9e, titre = son nom. */
+    var communeSel by remember(filtreActif) { mutableStateOf(communeSelectionnee) }
+    val vueCirco = vue == "circo" && zoneActive != null
     val proj = remember(filtreActif) {
         if (zoneActive != null) Projection(zoneActive.contours.flatten())
         else Projection(dept)
@@ -219,34 +232,60 @@ fun EcranCarte(
     var zoom by remember(filtreActif) { mutableStateOf(1f) }
     var panX by remember(filtreActif) { mutableStateOf(0f) }
     var panY by remember(filtreActif) { mutableStateOf(0f) }
-    /* Retour arriere : vue circonscription -> carte complete du departement. */
-    var vueDept by remember { mutableStateOf(false) }
-    val vueCirco = zoneActive != null && !vueDept
+    fun reinitZoom() { zoom = 1f; panX = 0f; panY = 0f }
     val aff = Params(params.k * zoom, params.ox * zoom + panX, params.oy * zoom + panY)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
+                    /* Titre : Aube / nom de la circonscription / nom de
+                       la commune selectionnee. */
                     Text(
-                        if (vueCirco) "Communes de la circonscription"
-                        else "Carte de l'Aube",
+                        when {
+                            vueCirco && communeSel.isNotBlank() -> communeSel
+                            vueCirco ->
+                                pins.firstOrNull { it.code == filtreActif }?.nom ?: "Circonscription"
+                            else -> "Aube"
+                        },
                         fontWeight = FontWeight.Bold, color = VertCarte
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onFermer) { Icon(Icons.Filled.ArrowBack, "Retour") }
                 },
-                /* Vue circonscription : bouton pour revenir a la carte
-                   complete ; vue complete : retour a la circonscription. */
+                /* Icones en haut a droite :
+                   - vue departement : aller a la carte de la circonscription ;
+                   - vue circonscription : ouvrir la fiche de la commune
+                     selectionnee, puis enlever la selection ; un deuxieme
+                     appui sur " enlever " revient a la carte de l'Aube
+                     (la circonscription reste selectionnee). */
                 actions = {
-                    if (zoneActive != null && vueCirco) {
-                        TextButton(onClick = { vueDept = true; zoom = 1f; panX = 0f; panY = 0f }) {
-                            Text("Carte compl\\u00E8te", color = VertCarte)
+                    if (!vueCirco) {
+                        if (zoneActive != null) {
+                            IconButton(onClick = { vue = "circo"; reinitZoom() }) {
+                                Icon(Icons.Filled.LocationOn, "Carte de la circonscription",
+                                    tint = VertCarte)
+                            }
                         }
-                    } else if (zoneActive != null) {
-                        TextButton(onClick = { vueDept = false; zoom = 1f; panX = 0f; panY = 0f }) {
-                            Text("Ma circonscription", color = VertCarte)
+                    } else {
+                        if (communeSel.isNotBlank()) {
+                            IconButton(onClick = { onCommune(communeSel) }) {
+                                Icon(Icons.Filled.Info, "Fiche de la commune",
+                                    tint = VertCarte)
+                            }
+                        }
+                        IconButton(onClick = {
+                            if (communeSel.isNotBlank()) {
+                                communeSel = ""
+                                onCommuneSel("")
+                            } else {
+                                vue = "dept"
+                                reinitZoom()
+                            }
+                        }) {
+                            Icon(Icons.Filled.Close, "Enlever la s\u00E9lection",
+                                tint = if (communeSel.isNotBlank()) Color(0xFFB3261E) else VertCarte)
                         }
                     }
                 }
@@ -267,24 +306,35 @@ fun EcranCarte(
                             panY = (panY + pan.y).coerceIn(-(h * (zoom - 1f)), 0f)
                         }
                     }
-                    .pointerInput(taille, filtreActif, vueDept) {
+                    .pointerInput(taille, filtreActif, vue) {
                         detectTapGestures { tap ->
                             /* Position tactile -> coordonnees reelles
                                (tenant compte du zoom/deplacement). */
                             val lon = proj.minLon + (tap.x - aff.ox) / (aff.k * proj.kx)
                             val lat = proj.maxLat - (tap.y - aff.oy) / aff.k
                             if (vueCirco) {
-                                /* Toucher une commune : ouvrir la commune touchee */
+                                /* Toucher une commune : la SELECTIONNER
+                                   (remplie en fonce, titre = son nom).
+                                   La fiche s'ouvre par l'icone en haut
+                                   a droite. */
                                 zoneActive?.contours?.forEachIndexed { idx, anneau ->
                                     if (dansPolygone(lon, lat, anneau)) {
                                         zonesNoms[zoneActive.code]?.getOrNull(idx)
-                                            ?.let { onCommune(it) }
+                                            ?.let {
+                                                communeSel = it
+                                                onCommuneSel(it)
+                                            }
                                     }
                                 }
                             } else {
+                                /* Toucher une circonscription : l'affichage
+                                   passe a la carte de la circonscription. */
                                 for (z in zones) {
                                     if (z.contours.any { dansPolygone(lon, lat, it) }) {
                                         onCirco(z.code)
+                                        vue = "circo"
+                                        communeSel = ""
+                                        reinitZoom()
                                         return@detectTapGestures
                                     }
                                 }
@@ -294,9 +344,10 @@ fun EcranCarte(
             ) {
                 Canvas(Modifier.fillMaxSize()) {
                     if (vueCirco) {
-                        /* Vue concentree : uniquement les communes de la
-                           circonscription ; la commune choisie est en
-                           teinte foncee, contour epais. */
+                        /* Vue concentree : communes de la circonscription
+                           DETOUREES SANS REMPLISSAGE (comme les
+                           circonscriptions sur la carte de l'Aube) ; seule
+                           la commune choisie est remplie en teinte foncee. */
                         val c = couleurZone(zoneActive!!.code)
                         val noms = zonesNoms[zoneActive.code] ?: emptyList()
                         zoneActive.contours.forEachIndexed { idx, anneau ->
@@ -307,8 +358,8 @@ fun EcranCarte(
                                 if (i == 0) p.moveTo(px, py) else p.lineTo(px, py)
                             }
                             p.close()
-                            val choisie = noms.getOrNull(idx) == communeSelectionnee
-                            drawPath(p, if (choisie) c.foncee else c.pastel)
+                            val choisie = noms.getOrNull(idx) == communeSel
+                            if (choisie) drawPath(p, c.foncee)
                             drawPath(p, c.foncee, style = Stroke(width = if (choisie) 4f else 2f))
                         }
                     } else {
@@ -351,7 +402,7 @@ fun EcranCarte(
             /* --- Sous la carte : liste des communes de la circonscription
                choisie, ou liste des circonscriptions en vue departement. --- */
             Text(
-                if (vueCirco) "Toucher une commune pour l'ouvrir, ou la choisir ici :"
+                if (vueCirco) "Toucher une commune pour la s\u00E9lectionner, ou la choisir ici :"
                 else "Ou choisir une circonscription :",
                 Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 color = VertCarte, fontWeight = FontWeight.Bold
@@ -369,13 +420,13 @@ fun EcranCarte(
                     (zonesNoms[zoneActive.code] ?: emptyList())
                         .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it })
                         .forEach { nom ->
-                            val actif = nom == communeSelectionnee
+                            val actif = nom == communeSel
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
                                 color = if (actif) c.foncee else Color.White,
                                 border = BorderStroke(2.dp, c.foncee),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                                    .clickable { onCommune(nom) }
+                                    .clickable { communeSel = nom; onCommuneSel(nom) }
                             ) {
                                 Row(
                                     Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -396,7 +447,7 @@ fun EcranCarte(
                             }
                         }
                     Text(
-                        "Toutes les communes rattach\\u00E9es \\u00E0 cette circonscription.",
+                        "Toutes les communes rattach\u00E9es \u00E0 cette circonscription.",
                         Modifier.padding(horizontal = 4.dp, vertical = 6.dp),
                         fontSize = 12.sp, color = Color.Gray
                     )
@@ -409,7 +460,7 @@ fun EcranCarte(
                         color = if (actif) c.foncee else Color.White,
                         border = BorderStroke(2.dp, if (CouleursZones.containsKey(pin.code)) c.foncee else VertCarte),
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                            .clickable { onCirco(pin.code) }
+                            .clickable { onCirco(pin.code); vue = "circo"; communeSel = ""; reinitZoom() }
                     ) {
                         Row(
                             Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
