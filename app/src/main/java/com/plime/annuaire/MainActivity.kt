@@ -68,6 +68,9 @@ fun AppAnnuaire() {
 
     /* Navigation en escalier : groupe ouvert (ex. commune), puis fiche ouverte (ex. ecole) */
     var openGroup by remember { mutableStateOf<String?>(null) }
+    /* Commune choisie via la carte : memorisee pour la reouvrir en fonce
+       sur la carte au retour. */
+    var communeCarte by remember { mutableStateOf("") }
     var openRow by remember { mutableStateOf<MutableMap<String, String>?>(null) }
 
     /* Logo .jpg personnalise (remplace le logo officiel) */
@@ -250,10 +253,14 @@ fun AppAnnuaire() {
             )
 
             if (showCarte) {
+                /* Commune choisie via la carte : mémorisée pour qu'elle
+                   apparaisse en fonce a la reouverture de la carte. */
                 EcranCarte(
                     filtreActif = filtre,
+                    communeSelectionnee = communeCarte,
                     onCirco = { code ->
                         filtre = code
+                        communeCarte = ""
                         onglet = 0
                         openGroup = null
                         openRow = null
@@ -265,6 +272,7 @@ fun AppAnnuaire() {
                        ignores) et l'ouvrir. */
                     onCommune = { nom ->
                         showCarte = false
+                        communeCarte = nom
                         val tb = annuaire.tabs.firstOrNull {
                             it.name.equals("Communes", ignoreCase = true)
                         }
