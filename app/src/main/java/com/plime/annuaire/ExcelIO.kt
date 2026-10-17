@@ -381,6 +381,59 @@ object ExcelIO {
     }
 
     /** Exporte l'annuaire complet : un onglet par table, en-tetes = libelles des champs. */
+    /* Import FUSION : ajoute les donnees du fichier SANS effacer
+       l'annuaire existant. Les lignes deja presentes (meme commune +
+       meme ecole, ou meme contact) sont completees champ par champ
+       (seuls les champs vides sont remplis) ; les nouvelles lignes
+       sont ajoutees. Aucune donnee existante n'est ecrasee. */
+    fun importFusion(ctx: Context, uri: Uri, base: Annuaire): Annuaire {
+        val nouveau = import(ctx, uri)
+        nouveau.tabs.forEach { nt ->
+            val cible = base.tabs.firstOrNull { norme(it.name) == norme(nt.name) }
+            if (cible == null) {
+                base.tabs.add(nt)
+                return@forEach
+            }
+            /* Correspondance des champs par libelle (accents/casse
+               ignores) ; un champ absent est cree dans la cible. */
+            val mapChamps = mutableMapOf<String, String>()
+            nt.fields.forEach { nf ->
+                val ef = cible.fields.firstOrNull { norme(it.label) == norme(nf.label) }
+                if (ef != null) mapChamps[nf.key] = ef.key
+                else { cible.fields.add(nf); mapChamps[nf.key] = nf.key }
+            }
+            /* Cle d'identification d'une ligne : commune + ecole pour
+               l'onglet Communes, sinon premiere valeur non vide. */
+            val kGrp = cible.groupBy
+            val kEcole = cible.fields.firstOrNull { cleTexte(it.label) == "ecole" }?.key
+            fun cleLigne(r: Map<String, String>): String =
+                if (kGrp.isNotBlank())
+                    cleTexte(r[kGrp] ?: "") + "|" + cleTexte(r[kEcole ?: ""] ?: "")
+                else cleTexte(r.values.firstOrNull { it.isNotBlank() } ?: "")
+            val existantes = cible.rows.associateBy { cleLigne(it) }
+            nt.rows.forEach { nr ->
+                val clee = cleLigne(nr)
+                val ex = existantes[clee]
+                if (ex != null) {
+                    /* Completer les champs vides de la ligne existante. */
+                    nr.forEach { (k, v) ->
+                        val kc = mapChamps[k] ?: return@forEach
+                        if (v.isNotBlank() && (ex[kc] ?: "").isBlank()) ex[kc] = v
+                    }
+                } else {
+                    /* Nouvelle ligne : remapper ses cles de champs. */
+                    val m = mutableMapOf("_id" to nouvelleCle())
+                    nr.forEach { (k, v) ->
+                        val kc = mapChamps[k] ?: return@forEach
+                        if (v.isNotBlank()) m[kc] = v
+                    }
+                    cible.rows.add(m)
+                }
+            }
+        }
+        return base
+    }
+
     fun export(ctx: Context, uri: Uri, a: Annuaire, withRows: Boolean = true) {
         val used = mutableSetOf<String>()
         val sheets = a.tabs.map { tab ->
