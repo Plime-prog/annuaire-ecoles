@@ -152,9 +152,9 @@ fun ListeEcolesParCommune(
             item {
                 FlowRow(
                     Modifier.fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 1.dp),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                        .padding(horizontal = 12.dp, vertical = 0.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
                     /* Pastille commune : centree verticalement avec
                        les pastilles ecoles qui l'accompagnent. */
@@ -162,10 +162,14 @@ fun ListeEcolesParCommune(
                         nomCommune,
                         Modifier.align(Alignment.CenterVertically),
                         fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                        color = GrisTexte
+                        color = GrisTexte,
+                        lineHeight = 14.sp
                     )
                     /* Pastilles ecoles : vert pale, texte normal et
-                       plus petit. Une touche ouvre la fiche. */
+                       plus petit. Une touche ouvre la fiche.
+                       lineHeight colle au texte : sans elle, chaque
+                       pastille garde un espace vide au-dessus et en
+                       dessous du libelle, qui creuse l'interligne. */
                     ecoles.forEach { e ->
                         Surface(
                             onClick = { onOpenRow(e) },
@@ -175,8 +179,9 @@ fun ListeEcolesParCommune(
                         ) {
                             Text(
                                 titreEcole(e),
-                                Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                Modifier.padding(horizontal = 7.dp, vertical = 1.dp),
                                 fontSize = 11.sp,
+                                lineHeight = 12.sp,
                                 color = Color.Black
                             )
                         }
