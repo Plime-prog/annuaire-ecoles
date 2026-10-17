@@ -143,17 +143,18 @@ fun ListeEcolesParCommune(
     /* Pastilles compactes : le nom de la commune (gras) suivi
        DIRECTEMENT de ses ecoles en pastilles vert pale ; une fine
        ligne de separation verte isole chaque commune. Une touche
-       sur une pastille ecole ouvre sa fiche. */
+       sur une pastille ecole ouvre sa fiche.
+       PAS de limite de lignes : une grande commune comme Troyes
+       doit montrer TOUTES ses ecoles, le FlowRow s'allonge
+       autant que necessaire. */
     LazyColumn(Modifier.fillMaxSize()) {
         communes.forEach { (nomCommune, ecoles) ->
             item {
                 FlowRow(
                     Modifier.fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    /* Toutes les pastilles sur deux lignes au maximum. */
-                    maxLines = 2
+                        .padding(horizontal = 12.dp, vertical = 1.dp),
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     /* Pastille commune : centree verticalement avec
                        les pastilles ecoles qui l'accompagnent. */
@@ -174,7 +175,7 @@ fun ListeEcolesParCommune(
                         ) {
                             Text(
                                 titreEcole(e),
-                                Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 fontSize = 11.sp,
                                 color = Color.Black
                             )
@@ -183,7 +184,7 @@ fun ListeEcolesParCommune(
                 }
                 /* Petite ligne de separation verte entre les communes. */
                 HorizontalDivider(
-                    Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
+                    Modifier.padding(horizontal = 12.dp, vertical = 0.dp),
                     thickness = 1.dp, color = VertMenthe
                 )
             }
