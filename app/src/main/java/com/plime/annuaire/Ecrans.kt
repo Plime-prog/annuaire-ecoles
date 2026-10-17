@@ -149,9 +149,9 @@ fun ListeEcolesParCommune(
             item {
                 FlowRow(
                     Modifier.fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                        .padding(horizontal = 12.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                     /* Toutes les pastilles sur deux lignes au maximum. */
                     maxLines = 2
                 ) {
@@ -183,7 +183,7 @@ fun ListeEcolesParCommune(
                 }
                 /* Petite ligne de separation verte entre les communes. */
                 HorizontalDivider(
-                    Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+                    Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
                     thickness = 1.dp, color = VertMenthe
                 )
             }
