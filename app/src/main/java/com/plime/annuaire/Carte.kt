@@ -194,6 +194,10 @@ fun EcranCarte(
     /* Commune choisie pr\u00E9c\u00E9demment : la carte se rouvre sur la vue
        circonscription avec cette commune remplie. */
     communeSelectionnee: String = "",
+    /* Retour au niveau d\u00E9partement : l'app remet son \u00E9cran principal
+       sur la DSDEN (Direction). D\u00E9clench\u00E9 quand on quitte la vue
+       d'une circonscription pour revenir \u00E0 la carte de l'Aube. */
+    onVueDept: () -> Unit = {},
 ) {
     val ctx = LocalContext.current
     val dept = remember { GeoAube.dept(ctx) }
@@ -298,8 +302,12 @@ fun EcranCarte(
                                 communeSel = ""
                                 onCommuneSel("")
                             } else {
+                                /* Retour a la carte de l'Aube : prevenir
+                                   l'app, qui bascule l'ecran principal
+                                   sur la DSDEN (Direction). */
                                 vue = "dept"
                                 reinitZoom()
+                                onVueDept()
                             }
                         }) {
                             Icon(Icons.Filled.Close, "Enlever la s\u00E9lection",
