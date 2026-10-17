@@ -159,7 +159,7 @@ fun ListeEcolesParCommune(
                        les pastilles ecoles qui l'accompagnent. */
                     Text(
                         nomCommune,
-                        Modifier.padding(top = 3.dp),
+                        Modifier.align(Alignment.CenterVertically),
                         fontSize = 14.sp, fontWeight = FontWeight.Bold,
                         color = GrisTexte
                     )
