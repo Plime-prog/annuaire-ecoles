@@ -283,9 +283,30 @@ fun AppAnnuaire() {
                         ongletFiche = null
                     },
                     /* Selection d'une commune sur la carte (sans ouvrir
-                       la fiche) : simplement memorisee ; la carte reste
-                       affichee sur la vue circonscription. */
-                    onCommuneSel = { nom -> communeCarte = nom },
+                       la fiche) : memorisee ; la carte reste affichee
+                       sur la vue circonscription. Une DEselection
+                       (commune vide) ferme aussi le groupe ouvert :
+                       au retour, l'ecran principal montrera toutes les
+                       ecoles de la circonscription. */
+                    onCommuneSel = { nom ->
+                        communeCarte = nom
+                        if (nom.isBlank()) {
+                            openGroup = null
+                            openRow = null
+                            ongletFiche = null
+                        }
+                    },
+                    /* Retour au niveau departement depuis la carte : le
+                       filtre passe a la DSDEN, l'ecran principal affiche
+                       la Direction au retour. */
+                    onVueDept = {
+                        filtre = "dsden"
+                        onglet = 0
+                        communeCarte = ""
+                        openGroup = null
+                        openRow = null
+                        ongletFiche = null
+                    },
                     /* Une commune touchee sur la carte : retrouver le groupe
                        du meme nom dans l'onglet Communes (accents et casse
                        ignores) et l'ouvrir. */
