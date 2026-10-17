@@ -305,7 +305,7 @@ private fun nomCircoConnu(s: String): Boolean {
 
 /** " ... circonscription de X ... " / " ... 1er degr\u00E9 de X ... " : capture X. */
 private val RE_CIRCO_LIBRE =
-    Regex("(?:1er degr\\u00E9|circonscription) de ([^;,.\n]+)", RegexOption.IGNORE_CASE)
+    Regex("(?:1er degr\u00E9|circonscription) de ([^;,.\n]+)", RegexOption.IGNORE_CASE)
 
 /** Associe le nom trouve dans l'Excel au code UAI de la circonscription. */
 fun codeCirco(nomCirco: String): String {
@@ -422,7 +422,7 @@ fun restaurerContactsOfficiels(ctx: Context, a: Annuaire): Int {
         val direction = a.tabs.firstOrNull { it.id == "v5_dsden_direction" }
         /* fonction de coordonnees = adresse (voir chargerDsden) */
         ajouteSiAbsent(direction, lignePersonne(
-            d.coordonnees.nom, "Coordonn\\u00E9es DSDEN",
+            d.coordonnees.nom, "Coordonn\u00E9es DSDEN",
             d.coordonnees.tel, "", d.coordonnees.mail, d.coordonnees.fonction
         ))
         d.direction.forEach { c ->
@@ -441,7 +441,7 @@ fun restaurerContactsOfficiels(ctx: Context, a: Annuaire): Int {
     chargerCircos(ctx).forEach { cir ->
         val equipe = a.tabs.firstOrNull { it.id == "v5_circo_" + cir.code + "_equipe" }
         ajouteSiAbsent(equipe, lignePersonne(
-            cir.ien, "Inspecteur de l'\\u00C9ducation nationale (IEN)",
+            cir.ien, "Inspecteur de l'\u00C9ducation nationale (IEN)",
             cir.tel, "", cir.mail, cir.adresse
         ))
         if (cir.assistante.isNotBlank()) {
@@ -465,7 +465,7 @@ fun restaurerContactsOfficiels(ctx: Context, a: Annuaire): Int {
         }
         val col = a.tabs.firstOrNull { it.id == "v5_circo_" + cir.code + "_colleges" }
         cir.colleges.forEach { nom ->
-            ajouteSiAbsent(col, lignePersonne(nom, "Coll\\u00E8ge de rattachement"))
+            ajouteSiAbsent(col, lignePersonne(nom, "Coll\u00E8ge de rattachement"))
         }
     }
     return ajoutes
