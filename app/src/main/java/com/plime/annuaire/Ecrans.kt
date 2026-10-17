@@ -153,10 +153,11 @@ fun ListeEcolesParCommune(
                 FlowRow(
                     Modifier.fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 0.dp),
-                    /* Intervalles quasi nuls entre pastilles : les bords
-                       verts de 1 dp suffisent a les separer visuellement. */
-                    horizontalArrangement = Arrangement.spacedBy(1.dp),
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                    /* Intervalles NULS : les pastilles multi-lignes sont
+                       collees, seuls leurs bords verts de 1 dp les
+                       separent. */
+                    horizontalArrangement = Arrangement.spacedBy(0.dp),
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
                     /* Pastille commune : centree verticalement avec
                        les pastilles ecoles qui l'accompagnent. */
@@ -167,9 +168,9 @@ fun ListeEcolesParCommune(
                         color = GrisTexte,
                         lineHeight = 14.sp
                     )
-                    /* Pastilles ecoles : vert pale, taille de texte
-                       normale et lisible (13 sp). Une touche ouvre
-                       la fiche. */
+                    /* Pastilles ecoles : vert pale, meme taille de
+                       police que le nom de commune (14 sp), texte
+                       semi-gras pour la lisibilite. */
                     ecoles.forEach { e ->
                         Surface(
                             onClick = { onOpenRow(e) },
@@ -179,9 +180,10 @@ fun ListeEcolesParCommune(
                         ) {
                             Text(
                                 titreEcole(e),
-                                Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                fontSize = 13.sp,
-                                lineHeight = 14.sp,
+                                Modifier.padding(horizontal = 6.dp, vertical = 0.dp),
+                                fontSize = 14.sp,
+                                lineHeight = 15.sp,
+                                fontWeight = FontWeight.Medium,
                                 color = Color.Black
                             )
                         }
