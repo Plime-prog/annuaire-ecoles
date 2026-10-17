@@ -707,17 +707,34 @@ private fun valeursVariables(tab: Onglet, rows: List<Map<String, String>>, row: 
         }
     }
 
-/** Titre d'une fiche du groupe : 1ere valeur variable (ex. nom de l'ecole). */
-private fun titreDansGroupe(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): String =
-    valeursVariables(tab, rows, row).firstOrNull()
+/** Titre d'une fiche du groupe : le nom de l'\u00E9cole si la colonne
+    \u00E9cole existe (jamais l'adresse), sinon la 1re valeur variable. */
+private fun titreDansGroupe(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): String {
+    /* Colonne \u00E9cole retrouvee par son libell\u00E9, comparaison tol\u00E9rante. */
+    val keyEcole = tab.fields.firstOrNull { cleTexte(it.label) == "ecole" }?.key
+    if (keyEcole != null) {
+        val e = row[keyEcole] ?: ""
+        if (e.isNotBlank()) return e
+    }
+    return valeursVariables(tab, rows, row).firstOrNull()
         ?: tab.fields.firstNotNullOfOrNull { f ->
             if (f.key != tab.groupBy) (row[f.key] ?: "").takeIf { it.isNotBlank() } else null
         }
         ?: "(d\u00E9tails)"
+}
 
-/** Sous-titre d'une fiche du groupe : les 2 valeurs variables suivantes. */
+/** Sous-titre d'une fiche du groupe : les 2 valeurs variables suivantes,
+    SANS l'adresse ni le nom d'\u00E9cole (d\u00E9j\u00E0 le titre). */
 private fun sousTitreDansGroupe(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): String {
+    val keyEcole = tab.fields.firstOrNull { cleTexte(it.label) == "ecole" }?.key
     val vals = valeursVariables(tab, rows, row)
+        .filterIndexed { i, _ -> true }
+        .toMutableList()
+    /* Retirer le titre deja affiche au-dessus : le nom d'ecole. */
+    if (keyEcole != null) {
+        val e = row[keyEcole] ?: ""
+        if (e.isNotBlank()) vals.remove(e)
+    }
     return if (vals.size > 1) vals.drop(1).take(2).joinToString(" \u00B7 ") else ""
 }
 
