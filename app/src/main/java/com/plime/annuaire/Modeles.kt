@@ -357,7 +357,9 @@ private fun lignePersonne(
 }
 
 /**
- * Genere les onglets DSDEN et circonscriptions depuis les JSON des assets.
+ * Genere les onglets DSDEN et circonscriptions : VIDE, sans aucun
+ * contact pre-rempli. Toutes les donnees doivent venir de l'import
+ * Excel ; les onglets ne sont crees que comme conteneurs vides.
  * Identifiants stables : v5_dsden_<bureau> et v5_circo_<code>_<equipe/rased/pial/colleges>.
  */
 fun genererOnglets(ctx: Context): List<Onglet> {
@@ -366,43 +368,28 @@ fun genererOnglets(ctx: Context): List<Onglet> {
     if (d != null) {
         val direction = Onglet("v5_dsden_direction", "Direction")
         direction.fields.addAll(champsPersonne())
-        (d.direction + d.secretariat).forEach { c ->
-            direction.rows.add(lignePersonne(c.nom, c.fonction, c.tel, mail = c.mail))
-        }
         out.add(direction)
         d.bureaux.forEach { b ->
             val t = Onglet("v5_dsden_" + cle(b.nom), b.nom)
             t.fields.addAll(champsPersonne())
-            b.membres.forEach { c ->
-                t.rows.add(lignePersonne(c.nom, c.fonction, c.tel, mail = c.mail))
-            }
             out.add(t)
         }
     }
     chargerCircos(ctx).forEach { cir ->
         val equipe = Onglet("v5_circo_" + cir.code + "_equipe", "\u00C9quipe")
         equipe.fields.addAll(champsPersonne())
-        if (cir.ien.isNotBlank())
-            equipe.rows.add(lignePersonne(cir.ien, "Inspecteur de l'\u00C9ducation nationale", cir.tel, mail = cir.mail, obs = cir.adresse))
-        if (cir.assistante.isNotBlank())
-            equipe.rows.add(lignePersonne(cir.assistante, "Assistante de circonscription"))
-        cir.cpc.forEach { equipe.rows.add(lignePersonne(it.nom, "CPC", it.tel, mail = it.mail)) }
-        cir.erun.forEach { equipe.rows.add(lignePersonne(it.nom, "ERUN", it.tel, mail = it.mail)) }
         out.add(equipe)
 
         val rased = Onglet("v5_circo_" + cir.code + "_rased", "RASED")
         rased.fields.addAll(champsPersonne())
-        cir.rased.forEach { rased.rows.add(lignePersonne(it.nom, it.fonction, it.tel, mail = it.mail, obs = it.note)) }
         out.add(rased)
 
         val pial = Onglet("v5_circo_" + cir.code + "_pial", "PIAL-ER")
         pial.fields.addAll(champsPersonne())
-        cir.pialEr.forEach { pial.rows.add(lignePersonne(it.nom, it.fonction, it.tel, mail = it.mail, obs = it.note)) }
         out.add(pial)
 
         val col = Onglet("v5_circo_" + cir.code + "_colleges", "Coll\u00E8ges")
         col.fields.addAll(champsPersonne())
-        cir.colleges.forEach { col.rows.add(lignePersonne(it, "Coll\u00E8ge partenaire")) }
         out.add(col)
     }
     return out
