@@ -80,7 +80,7 @@ fun EcranAccueil(
                 ChipFiltre(nomCourt(c.nom), filtre == c.code) { onFiltre(c.code) }
             }
         }
-        HorizontalDivider(color = VertContour, thickness = 1.dp)
+        Box(Modifier.fillMaxWidth().height(1.dp).background(VertContour))
         val etatOnglets = rememberLazyListState()
         LaunchedEffect(ongletIndex, onglets) {
             if (ongletIndex < onglets.size) {
@@ -160,4 +160,35 @@ private fun CarteCommune(
                 }
             }
             ecoles.forEachIndexed { i, e ->
-                if (i > 0) Horizont
+                if (i > 0) {
+                    Box(
+                        Modifier.fillMaxWidth().padding(start = 46.dp)
+                            .height(1.dp).background(VertContour)
+                    )
+                }
+                Row(
+                    Modifier.fillMaxWidth()
+                        .clickable { onOpenRow(e) }
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.School, null,
+                        Modifier.size(20.dp), tint = VertMenthe
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        titreEcole(e),
+                        Modifier.weight(1f),
+                        fontSize = 16.sp, fontWeight = FontWeight.Medium,
+                        lineHeight = 21.sp, color = Color.Black
+                    )
+                    Icon(
+                        Icons.Filled.ChevronRight, null,
+                        tint = GrisTexte
+                    )
+                }
+            }
+        }
+    }
+}
