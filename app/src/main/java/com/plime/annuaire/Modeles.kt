@@ -401,6 +401,76 @@ fun assurerOnglets(a: Annuaire, ctx: Context) {
     genererOnglets(ctx).forEach { if (!ids.contains(it.id)) a.tabs.add(it) }
 }
 
+/**
+ * Restaure les contacts officiels embarques dans les assets
+ * (aube-dsden.json + aube-circonscriptions.json) : remplit les
+ * onglets v5_... SANS jamais ecraser une valeur deja saisie.
+ * Une ligne n'est ajoutee que si aucun contact du meme nom
+ * n'existe deja dans l'onglet. Retourne le nombre de lignes ajoutees.
+ */
+fun restaurerContactsOfficiels(ctx: Context, a: Annuaire): Int {
+    var ajoutes = 0
+    fun ajouteSiAbsent(tab: Onglet?, ligne: MutableMap<String, String>) {
+        if (tab == null) return
+        val nom = cleTexte(ligne["contact"] ?: "")
+        if (nom.isBlank()) return
+        val existe = tab.rows.any { cleTexte(it["contact"] ?: "") == nom }
+        if (!existe) { tab.rows.add(ligne); ajoutes++ }
+    }
+    val d = chargerDsden(ctx)
+    if (d != null) {
+        val direction = a.tabs.firstOrNull { it.id == "v5_dsden_direction" }
+        /* fonction de coordonnees = adresse (voir chargerDsden) */
+        ajouteSiAbsent(direction, lignePersonne(
+            d.coordonnees.nom, "Coordonn\\u00E9es DSDEN",
+            d.coordonnees.tel, "", d.coordonnees.mail, d.coordonnees.fonction
+        ))
+        d.direction.forEach { c ->
+            ajouteSiAbsent(direction, lignePersonne(c.nom, c.fonction, c.tel, "", c.mail, c.note))
+        }
+        d.secretariat.forEach { c ->
+            ajouteSiAbsent(direction, lignePersonne(c.nom, c.fonction, c.tel, "", c.mail, c.note))
+        }
+        d.bureaux.forEach { b ->
+            val t = a.tabs.firstOrNull { it.id == "v5_dsden_" + cle(b.nom) }
+            b.membres.forEach { c ->
+                ajouteSiAbsent(t, lignePersonne(c.nom, c.fonction, c.tel, "", c.mail, c.note))
+            }
+        }
+    }
+    chargerCircos(ctx).forEach { cir ->
+        val equipe = a.tabs.firstOrNull { it.id == "v5_circo_" + cir.code + "_equipe" }
+        ajouteSiAbsent(equipe, lignePersonne(
+            cir.ien, "Inspecteur de l'\\u00C9ducation nationale (IEN)",
+            cir.tel, "", cir.mail, cir.adresse
+        ))
+        if (cir.assistante.isNotBlank()) {
+            ajouteSiAbsent(equipe, lignePersonne(cir.assistante, "Assistante IEN"))
+        }
+        cir.cpc.forEach { c ->
+            ajouteSiAbsent(equipe, lignePersonne(
+                c.nom, c.fonction.ifBlank { "CPC" }, c.tel, "", c.mail, c.note))
+        }
+        cir.erun.forEach { c ->
+            ajouteSiAbsent(equipe, lignePersonne(
+                c.nom, c.fonction.ifBlank { "ERUN" }, c.tel, "", c.mail, c.note))
+        }
+        val rased = a.tabs.firstOrNull { it.id == "v5_circo_" + cir.code + "_rased" }
+        cir.rased.forEach { c ->
+            ajouteSiAbsent(rased, lignePersonne(c.nom, c.fonction, c.tel, "", c.mail, c.note))
+        }
+        val pial = a.tabs.firstOrNull { it.id == "v5_circo_" + cir.code + "_pial" }
+        cir.pialEr.forEach { c ->
+            ajouteSiAbsent(pial, lignePersonne(c.nom, c.fonction, c.tel, "", c.mail, c.note))
+        }
+        val col = a.tabs.firstOrNull { it.id == "v5_circo_" + cir.code + "_colleges" }
+        cir.colleges.forEach { nom ->
+            ajouteSiAbsent(col, lignePersonne(nom, "Coll\\u00E8ge de rattachement"))
+        }
+    }
+    return ajoutes
+}
+
 /** Onglets du bas pour un filtre : (nom affiche, onglet). null = Ecoles. */
 fun ongletsDuFiltre(a: Annuaire, filtre: String): List<Pair<String, Onglet?>> =
     if (filtre == "dsden") {
