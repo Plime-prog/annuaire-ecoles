@@ -207,10 +207,15 @@ fun EcranCarte(
         if (filtreActif == "dsden") null
         else zones.firstOrNull { it.code == filtreActif }
     /* Vue courante : "dept" = carte de l'Aube, "circo" = carte zoom\u00E9e
-       sur la circonscription. Premier toucher : d\u00E9partement ; si une
+       sur la circonscription. Une circonscription est choisie : la carte
+       s'ouvre directement sur SES contours. DSDEN (ou circo sans
+       territoire comme Troyes ASH) : carte de l'Aube complete. Si une
        commune \u00E9tait d\u00E9j\u00E0 choisie, on rouvre sur la vue circo. */
     var vue by remember {
-        mutableStateOf(if (communeSelectionnee.isNotBlank()) "circo" else "dept")
+        mutableStateOf(
+            if (communeSelectionnee.isNotBlank() || zoneActive != null) "circo"
+            else "dept"
+        )
     }
     /* Commune s\u00E9lectionn\u00E9e dans la vue circonscription : remplie
        en teinte fonc\u00E9e, titre = son nom. Au d\u00E9part, la commune
