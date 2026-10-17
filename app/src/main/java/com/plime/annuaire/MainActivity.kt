@@ -134,6 +134,22 @@ fun AppAnnuaire() {
         }
     }
 
+    /* Import FUSION : ajoute les donnees du fichier sans rien effacer
+       (champs vides completes, nouvelles lignes ajoutees). */
+    val fusionneur = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) try {
+            annuaire = ExcelIO.importFusion(ctx, uri, annuaire)
+            Stockage.save(ctx, annuaire)
+            revision++
+            val n = annuaire.tabs.sumOf { it.rows.size }
+            message = "Fusion r\u00E9ussie : $n ligne(s) au total. Donn\u00E9es existantes conserv\u00E9es."
+        } catch (e: Exception) {
+            message = "\u00C9chec de la fusion : ${e.message ?: "fichier invalide"}"
+        }
+    }
+
     val exporter = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     ) { uri ->
@@ -600,6 +616,13 @@ fun AppAnnuaire() {
                         "application/vnd.ms-excel",
                         "application/octet-stream"))
                 },
+                onImportFusion = {
+                    showSettings = false
+                    fusionneur.launch(arrayOf(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "application/vnd.ms-excel",
+                        "application/octet-stream"))
+                },
                 onExport = { showSettings = false; exporter.launch("annuaire-v3.xlsx") },
                 onTemplate = { showSettings = false; modeleur.launch("modele-annuaire-v3.xlsx") },
                 onLogo = {
@@ -686,15 +709,21 @@ private fun titreDetail(tab: Onglet, row: Map<String, String>): String {
 
 /* ==================== NIVEAU 1 : LISTE D'UN ONGLET ==================== */
 
-/** Champs identiques dans toutes les fiches du groupe (ex. maire, mairie). */
-private fun champsConstants(tab: Onglet, rows: List<Map<String, String>>): List<Pair<String, String>> =
-    tab.fields.mapNotNull { f ->
+/** Champs identiques dans toutes les fiches du groupe (ex. maire, mairie).
+    Seulement la section COMMUNE (champs places AVANT la colonne
+    "\u00E9cole") : les champs d'\u00E9cole restent dans les blocs \u00E9coles
+    en dessous, sans redondance. */
+private fun champsConstants(tab: Onglet, rows: List<Map<String, String>>): List<Pair<String, String>> {
+    val idxEcole = tab.fields.indexOfFirst { cleTexte(it.label) == "ecole" }
+    val section = if (idxEcole >= 0) tab.fields.subList(0, idxEcole).toList() else tab.fields
+    return section.mapNotNull { f ->
         if (f.key == tab.groupBy) null
         else {
             val v = rows.first()[f.key] ?: ""
             if (v.isNotBlank() && rows.all { (it[f.key] ?: "") == v }) f.label to v else null
         }
     }
+}
 
 /** Valeurs qui changent d'une fiche a l'autre dans le groupe (ex. ecole). */
 private fun valeursVariables(tab: Onglet, rows: List<Map<String, String>>, row: Map<String, String>): List<String> =
@@ -1423,6 +1452,7 @@ private fun SettingsDialog(
     message: String,
     onDismiss: () -> Unit,
     onImport: () -> Unit,
+    onImportFusion: () -> Unit,
     onExport: () -> Unit,
     onTemplate: () -> Unit,
     onLogo: () -> Unit,
@@ -1441,6 +1471,9 @@ private fun SettingsDialog(
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 Button(onClick = onImport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.UploadFile, null); Spacer(Modifier.width(8.dp)); Text("Importer un fichier Excel")
+                }
+                Button(onClick = onImportFusion, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.MergeType, null); Spacer(Modifier.width(8.dp)); Text("Importer et fusionner (sans effacer)")
                 }
                 Button(onClick = onExport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Download, null); Spacer(Modifier.width(8.dp)); Text("Exporter vers Excel")
