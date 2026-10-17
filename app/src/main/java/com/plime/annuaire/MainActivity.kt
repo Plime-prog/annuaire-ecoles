@@ -630,9 +630,9 @@ fun AppAnnuaire() {
                     val n = restaurerContactsOfficiels(ctx, annuaire)
                     saveAll()
                     message = if (n > 0)
-                        "Contacts officiels restaur\\u00E9s : $n ligne(s) ajout\\u00E9e(s)."
+                        "Contacts officiels restaur\u00E9s : $n ligne(s) ajout\u00E9e(s)."
                     else
-                        "Rien a restaurer : les contacts officiels sont d\\u00E9j\\u00E0 pr\\u00E9sents."
+                        "Rien a restaurer : les contacts officiels sont d\u00E9j\u00E0 pr\u00E9sents."
                 },
                 onExport = { showSettings = false; exporter.launch("annuaire-v3.xlsx") },
                 onTemplate = { showSettings = false; modeleur.launch("modele-annuaire-v3.xlsx") },
