@@ -968,38 +968,58 @@ private fun RowDetailScreen(
                 }
                 Spacer(Modifier.height(8.dp))
             }
-            Encadre {
-                var auMoinsUn = false
-                tab.fields.forEach { f ->
-                    /* Colonne " Circonscription " : technique (rattachement
-                       a une circo), jamais affichee dans la fiche. */
-                    if (norme(f.label) == "circonscription") return@forEach
-                    val v = row[f.key] ?: ""
-                    if (v.isNotBlank()) {
-                        auMoinsUn = true
-                        Text(f.label, fontSize = 11.sp, color = VertMenthe)
-                        if (estAdresse(f.label)) {
-                            /* Ligne adresse : toucher = itineraire Google Maps
-                               depuis la position actuelle (voiture, ou a pied
-                               si moins de 5 km) */
-                            LigneAdresse(v)
-                        } else if (estTel(f.label)) {
-                            /* Ligne telephone : toucher = composeur pre-rempli */
-                            val ctxF = LocalContext.current
-                            Row(
-                                Modifier.clickable { appelTelephone(ctxF, v) },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Filled.Call, "Appeler", tint = VertMenthe)
-                                Spacer(Modifier.width(6.dp))
-                                Text(v, fontSize = 16.sp, color = VertMenthe,
-                                    fontWeight = FontWeight.SemiBold)
-                            }
-                        } else Text(v, fontSize = 16.sp)
-                        Spacer(Modifier.height(8.dp))
+            /* Deux blocs separes : d'abord la section COMMUNE, c'est-a-dire
+               les champs places avant la colonne ecole ; puis la section
+               ECOLE, de la colonne ecole jusqu'a la fin. Sans colonne
+               ecole, un seul bloc comme avant. */
+            val idxEcole = tab.fields.indexOfFirst { cleTexte(it.label) == "ecole" }
+            @Composable
+            fun BlocChamps(champs: List<Champ>, titreBloc: String = "") {
+                Encadre {
+                    if (titreBloc.isNotBlank()) {
+                        Text(titreBloc, fontSize = 13.sp, color = VertMenthe,
+                            fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(6.dp))
                     }
+                    var auMoinsUn = false
+                    champs.forEach { f ->
+                        /* Colonne " Circonscription " : technique (rattachement
+                           a une circo), jamais affichee dans la fiche. */
+                        if (norme(f.label) == "circonscription") return@forEach
+                        val v = row[f.key] ?: ""
+                        if (v.isNotBlank()) {
+                            auMoinsUn = true
+                            Text(f.label, fontSize = 11.sp, color = VertMenthe)
+                            if (estAdresse(f.label)) {
+                                /* Ligne adresse : toucher = itineraire Google Maps
+                                   depuis la position actuelle (voiture, ou a pied
+                                   si moins de 5 km) */
+                                LigneAdresse(v)
+                            } else if (estTel(f.label)) {
+                                /* Ligne telephone : toucher = composeur pre-rempli */
+                                val ctxF = LocalContext.current
+                                Row(
+                                    Modifier.clickable { appelTelephone(ctxF, v) },
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Filled.Call, "Appeler", tint = VertMenthe)
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(v, fontSize = 16.sp, color = VertMenthe,
+                                        fontWeight = FontWeight.SemiBold)
+                                }
+                            } else Text(v, fontSize = 16.sp)
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    }
+                    if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (!auMoinsUn) Text("(fiche vide)", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (idxEcole >= 0) {
+                BlocChamps(tab.fields.subList(0, idxEcole), "Commune")
+                Spacer(Modifier.height(12.dp))
+                BlocChamps(tab.fields.subList(idxEcole, tab.fields.size), "\u00C9cole")
+            } else {
+                BlocChamps(tab.fields)
             }
             Spacer(Modifier.height(12.dp))
             TextButton(onClick = { confirmDelete = true }) {
