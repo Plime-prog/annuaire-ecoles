@@ -22,60 +22,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val VertMenthe = Color(0xFF3CB371)
-private val GrisClair = Color(0xFFE0E0E0)   /* fond non selectionne */
-private val GrisTexte = Color(0xFF888888)   /* texte non selectionne */
-private val VertPale = Color(0xFFEAF7F0)   /* fond vert pale des pastilles ecoles */
+private val VertFonce = Color(0xFF1F7A4A)
+private val VertPale = Color(0xFFEAF7F0)
+private val VertContour = Color(0xFFD3EBDD)
+private val GrisTexte = Color(0xFF6B7B72)
 
-/** Nom affiche dans le filtre : " Troyes ", " Bar-sur-Aube "...
-    Saint-Julien s'ecrit " Saint-Julien/Arcis ", comme sur la carte. */
 fun nomCourt(nomCirco: String): String =
     nomCirco.removePrefix("Circonscription de ")
         .replace("Saint-Julien-Arcis", "Saint-Julien/Arcis")
 
 @Composable
-private fun Encadre(
-    onClick: (() -> Unit)? = null,
-    contenu: @Composable () -> Unit
-) {
-    val base = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 5.dp)
-    Surface(
-        modifier = if (onClick != null) base.clickable(onClick = onClick) else base,
-        shape = RoundedCornerShape(12.dp),
-        color = Color.White,
-        border = BorderStroke(2.dp, VertMenthe)
-    ) { Column(Modifier.padding(12.dp)) { contenu() } }
-}
-
-@Composable
 private fun ChipFiltre(texte: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = if (selected) VertMenthe else GrisClair,
-        border = BorderStroke(2.dp, if (selected) VertMenthe else GrisClair)
+        shape = RoundedCornerShape(50),
+        color = if (selected) VertMenthe else VertPale,
+        border = BorderStroke(1.dp, if (selected) VertMenthe else VertContour),
+        shadowElevation = if (selected) 3.dp else 0.dp
     ) {
         Text(
             texte,
-            Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-            color = if (selected) Color.White else GrisTexte,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = if (selected) Color.White else VertFonce,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             fontSize = 14.sp
         )
     }
 }
 
-/* ==================== ECRAN D'ACCUEIL ==================== */
-
-/**
- * Accueil v6 : plus de logo ni de grand titre dans la page (le logo est
- * dans la barre du haut). Les chips de filtre sont collees tout en haut,
- * la ligne verte, puis les onglets contextuels - le bloc du bas occupe
- * TOUTE la place restante.
- *
- *des qu'une circonscription (ou la DSDEN) est selectionnee, la
- * rangee de boutons defile automatiquement pour montrer le bouton actif.
- * Idem pour la rangee des onglets (Communes, Circonscription, Colleges...).
- */
 @Composable
 fun EcranAccueil(
     filtre: String,
@@ -87,9 +61,6 @@ fun EcranAccueil(
     bas: @Composable () -> Unit
 ) {
     Column(Modifier.fillMaxSize().background(Color.White)) {
-        /* ---- Filtres colles en haut : DSDEN puis les 7 circonscriptions ---- */
-        /* Position du bouton selectionne : 0 = DSDEN, sinon 1 + rang de la
-           circonscription dans la liste. */
         val indexFiltre = if (filtre == "dsden") 0
             else 1 + (circos.indexOfFirst { it.code == filtre }).coerceAtLeast(-1)
         val etatFiltres = rememberLazyListState()
@@ -102,15 +73,14 @@ fun EcranAccueil(
             state = etatFiltres,
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp)
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
         ) {
             item { ChipFiltre("\uD83C\uDFDB DSDEN", filtre == "dsden") { onFiltre("dsden") } }
             items(circos) { c ->
                 ChipFiltre(nomCourt(c.nom), filtre == c.code) { onFiltre(c.code) }
             }
         }
-        HorizontalDivider(color = VertMenthe, thickness = 2.dp)
-        /* ---- Onglets contextuels : memes chips vert/gris que le haut ---- */
+        HorizontalDivider(color = VertContour, thickness = 1.dp)
         val etatOnglets = rememberLazyListState()
         LaunchedEffect(ongletIndex, onglets) {
             if (ongletIndex < onglets.size) {
@@ -121,7 +91,7 @@ fun EcranAccueil(
             state = etatOnglets,
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp)
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
         ) {
             itemsIndexed(onglets) { i, n ->
                 ChipFiltre(n, i == ongletIndex) { onOnglet(i) }
@@ -131,71 +101,63 @@ fun EcranAccueil(
     }
 }
 
-/* ==================== ECOLES DE LA CIRCO (communes depliantes) ==================== */
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ListeEcolesParCommune(
     communes: List<Pair<String, List<MutableMap<String, String>>>>,
     titreEcole: (Map<String, String>) -> String,
     onOpenRow: (MutableMap<String, String>) -> Unit
 ) {
-    /* Pastilles compactes : le nom de la commune (gras) suivi
-       DIRECTEMENT de ses ecoles en pastilles vert pale ; une fine
-       ligne de separation verte isole chaque commune. Une touche
-       sur une pastille ecole ouvre sa fiche.
-       PAS de limite de lignes : une grande commune comme Troyes
-       doit montrer TOUTES ses ecoles, le FlowRow s'allonge
-       autant que necessaire. */
-    LazyColumn(Modifier.fillMaxSize()) {
-        communes.forEach { (nomCommune, ecoles) ->
-            item {
-                FlowRow(
-                    Modifier.fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 0.dp),
-                    /* Intervalles NULS : les pastilles multi-lignes sont
-                       collees, seuls leurs bords verts de 1 dp les
-                       separent. */
-                    horizontalArrangement = Arrangement.spacedBy(0.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-                    /* Pastille commune : centree verticalement avec
-                       les pastilles ecoles qui l'accompagnent. */
-                    Text(
-                        nomCommune,
-                        Modifier.align(Alignment.CenterVertically),
-                        fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                        color = GrisTexte,
-                        lineHeight = 14.sp
-                    )
-                    /* Pastilles ecoles : vert pale, meme taille de
-                       police que le nom de commune (14 sp), texte
-                       semi-gras pour la lisibilite. */
-                    ecoles.forEach { e ->
-                        Surface(
-                            onClick = { onOpenRow(e) },
-                            shape = RoundedCornerShape(50),
-                            color = VertPale,
-                            border = BorderStroke(1.dp, VertMenthe)
-                        ) {
-                            Text(
-                                titreEcole(e),
-                                Modifier.padding(horizontal = 6.dp, vertical = 0.dp),
-                                fontSize = 14.sp,
-                                lineHeight = 15.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-                /* Petite ligne de separation verte entre les communes. */
-                HorizontalDivider(
-                    Modifier.padding(horizontal = 12.dp, vertical = 0.dp),
-                    thickness = 1.dp, color = VertMenthe
-                )
-            }
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(communes) { (nomCommune, ecoles) ->
+            CarteCommune(nomCommune, ecoles, titreEcole, onOpenRow)
         }
         item { Spacer(Modifier.height(24.dp)) }
     }
 }
+
+@Composable
+private fun CarteCommune(
+    nom: String,
+    ecoles: List<MutableMap<String, String>>,
+    titreEcole: (Map<String, String>) -> String,
+    onOpenRow: (MutableMap<String, String>) -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        shadowElevation = 3.dp,
+        border = BorderStroke(1.dp, VertContour)
+    ) {
+        Column {
+            Row(
+                Modifier.fillMaxWidth().background(VertPale)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Filled.LocationCity, null,
+                    Modifier.size(22.dp), tint = VertFonce
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    nom,
+                    Modifier.weight(1f),
+                    fontSize = 18.sp, fontWeight = FontWeight.Bold,
+                    color = VertFonce
+                )
+                Surface(shape = RoundedCornerShape(50), color = VertMenthe) {
+                    Text(
+                        if (ecoles.size == 1) "1 \u00E9cole" else "${ecoles.size} \u00E9coles",
+                        Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+            }
+            ecoles.forEachIndexed { i, e ->
+                if (i > 0) Horizont
