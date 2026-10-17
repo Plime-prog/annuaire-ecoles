@@ -623,6 +623,17 @@ fun AppAnnuaire() {
                         "application/vnd.ms-excel",
                         "application/octet-stream"))
                 },
+                /* Restauration : relit les donnees officielles embarquees
+                   dans l'application et complete les onglets vides. */
+                onRestaurer = {
+                    showSettings = false
+                    val n = restaurerContactsOfficiels(ctx, annuaire)
+                    saveAll()
+                    message = if (n > 0)
+                        "Contacts officiels restaur\\u00E9s : $n ligne(s) ajout\\u00E9e(s)."
+                    else
+                        "Rien a restaurer : les contacts officiels sont d\\u00E9j\\u00E0 pr\\u00E9sents."
+                },
                 onExport = { showSettings = false; exporter.launch("annuaire-v3.xlsx") },
                 onTemplate = { showSettings = false; modeleur.launch("modele-annuaire-v3.xlsx") },
                 onLogo = {
@@ -1473,6 +1484,7 @@ private fun SettingsDialog(
     onDismiss: () -> Unit,
     onImport: () -> Unit,
     onImportFusion: () -> Unit,
+    onRestaurer: () -> Unit,
     onExport: () -> Unit,
     onTemplate: () -> Unit,
     onLogo: () -> Unit,
@@ -1494,6 +1506,9 @@ private fun SettingsDialog(
                 }
                 Button(onClick = onImportFusion, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.MergeType, null); Spacer(Modifier.width(8.dp)); Text("Importer et fusionner (sans effacer)")
+                }
+                Button(onClick = onRestaurer, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Icon(Icons.Filled.Restore, null); Spacer(Modifier.width(8.dp)); Text("Restaurer les contacts officiels")
                 }
                 Button(onClick = onExport, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                     Icon(Icons.Filled.Download, null); Spacer(Modifier.width(8.dp)); Text("Exporter vers Excel")
